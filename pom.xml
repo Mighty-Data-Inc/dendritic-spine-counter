@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<!--  TODO: We will need to update this when we migrate to GitHub -->	
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>26.0.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>com.MightyDataInc</groupId>
+	<artifactId>DscCmd</artifactId>
+	<version>1</version>
+
+	<name>Dendrite Spine Finder</name>
+	<description>ImageJ plug-in for counting dendritic spines</description>
+	<url>http://mightydatainc.com/</url>
+	<inceptionYear>2021</inceptionYear>
+	<organization>
+		<name>Mighty Data Inc</name>
+		<url>http://mightydatainc.com/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Simplified BSD License</name>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<!-- See https://imagej.net/Team -->
+		<developer>
+			<id>mvoloshin</id>
+			<name>Mikhail Voloshin</name>
+			<url>http://mightydatainc.com/</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>		
+		<developer>
+			<id>pcromero</id>
+			<name>Peter Romero</name>
+			<url>none</url>
+			<roles>
+				<role>developer</role>
+				<role>reviewer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Julie Parato</name>
+		</contributor>
+	</contributors>
+
+	<scm>
+		<connection>scm:git:git://github.com/Mighty-Data-Inc/dendritic-spine-counter</connection>
+		<developerConnection>scm:git:git@github.com:Mighty-Data-Inc/dendritic-spine-counter</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/Mighty-Data-Inc/dendritic-spine-counter</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/Mighty-Data-Inc/dendritic-spine-counter/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+
+	<properties>
+		<package-name>com.MightyDataInc.DendriticSpineCounter</package-name>
+		<main-class>com.MightyDataInc.DendriticSpineCounter.DscCmd</main-class>
+		<license.licenseName>bsd_2</license.licenseName>
+		<license.copyrightOwners>Mighty Data, Inc.</license.copyrightOwners>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>scijava.public</id>
+			<url>https://maven.scijava.org/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/net.imglib2/imglib2-script -->
+		<dependency>
+    		<groupId>net.imglib2</groupId>
+    		<artifactId>imglib2-script</artifactId>
+    		</dependency>
+		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
+		<dependency>
+		    <groupId>net.imagej</groupId>
+		    <artifactId>imagej-legacy</artifactId>
+	    </dependency>
+	    <!-- https://crunchify.com/how-to-write-json-object-to-file-in-java/ -->
+
+	    <dependency>
+	    	<groupId>com.googlecode.json-simple</groupId>
+	    	<artifactId>json-simple</artifactId>
+	    	<version>1.1.1</version>
+	    </dependency>
+	</dependencies>
+	
+	<build>
+        <finalName>dendritic-spine-counter</finalName>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
+
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+            </plugin>
+        </plugins>
+    </build>	
+</project>
