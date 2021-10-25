@@ -1,4 +1,21 @@
-This is an example Maven project implementing an ImageJ command.
+This Maven project is an extension for (https://imagej.net/)[ImageJ], 
+the public-domain software for processing and analyzing scientific images.
+Specifically, it's a modular data-entry and automation wizard whose
+objective is to help neuroscience researchers simplify the task of counting
+dendritic spines in microscope images.
+
+This project is built from a 
+[https://github.com/imagej/example-imagej2-command](boilerplate example
+ImageJ command implementation). Users should refer to the example project
+to answer any questions about how to configure and build
+this software in your IDE of choice.
+
+### Deployment
+
+The output 
+
+
+
 
 It is intended as an ideal starting point to develop new ImageJ commands
 in an IDE of your choice. You can even collaborate with developers using a
