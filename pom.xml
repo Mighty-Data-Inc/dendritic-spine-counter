@@ -17,7 +17,7 @@
 	<artifactId>DscCmd</artifactId>
 	<version>1</version>
 
-	<name>Dendrite Spine Finder</name>
+	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
 	<url>http://mightydatainc.com/</url>
 	<inceptionYear>2021</inceptionYear>

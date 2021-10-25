@@ -403,7 +403,7 @@ public class DscControlPanelDialog extends JDialog {
 
 		gridbagConstraints.gridwidth = 1;
 		{
-			JLabel label = new JLabel("<html>" + "<p>Dendrite Spine Finder stores dendrite segments along with "
+			JLabel label = new JLabel("<html>" + "<p>Dendritic Spine Counter stores dendrite segments along with "
 					+ "their associated spines in JSON format.</p>" + "</html>");
 			// We want extra space at the bottom of this label.
 			gridbagConstraints.insets.bottom = 16;
@@ -565,7 +565,8 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridwidth = 2;
 			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
-			JLabel label = new JLabel("<html>" + "Use the Multi-point Tool to mark spines. The Dendrite Spine Finder "
+			JLabel label = new JLabel("<html>" + "Use the Multi-point Tool to mark spines. "
+					+ "Dendritic Spine Counter "
 					+ "will automatically associate each spine with whichever dendrite segment "  
 					+ "is closest to it."
 					+ "<ul>"
@@ -1034,7 +1035,7 @@ public class DscControlPanelDialog extends JDialog {
 		gridbagConstraints.weighty = 0.0;
 
 		String infoMsg = "<html><div style=\"padding-left: 4em;\">"
-				+ "<p>The Dendrite Spine Finder needs to know how big of a window to use "
+				+ "<p>Dendritic Spine Counter needs to know how big of a window to use "
 				+ "when scanning this image for visually discernible features. This window's "
 				+ "size should be set to the approximate size of an observable dendritic spine, "
 				+ "which may depend on factors such as stain quality and image sharpness.</p><br/>"
@@ -1395,7 +1396,7 @@ public class DscControlPanelDialog extends JDialog {
 			radioFeatureDetectionWindowInImageUnits.setEnabled(true);
 
 			lblImageResolution.setText(String.format(
-					"<html>" + "Feature window size set to %d pixels<br/>" + "(image scale set to %.0f pixels per %s)."
+					"<html>" + "Feature window size set to %d pixels<br/>" + "(image scale set to %.3f pixels per %s)."
 							+ "</html>",
 					this.getFeatureDetectionWindowSizeInPixels(), cal.getRawX(1.0), cal.getUnit()));
 		}
