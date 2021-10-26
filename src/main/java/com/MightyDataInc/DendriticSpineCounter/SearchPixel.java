@@ -21,8 +21,8 @@ public class SearchPixel implements Comparable<SearchPixel> {
 	}
 
 	final static double DISTANCE_COST_WEIGHT = 1.0;
-	// Brightness cost of 100 works well
-	final static double BRIGHTNESS_COST_WEIGHT = 100.0;
+	final static double BRIGHTNESS_COST_WEIGHT = 25.0;
+	
 	final static double HEURISTIC_COST_WEIGHT = 0.7;
 	final static double ACCUMULATED_COST_WEIGHT = 1.0;
 

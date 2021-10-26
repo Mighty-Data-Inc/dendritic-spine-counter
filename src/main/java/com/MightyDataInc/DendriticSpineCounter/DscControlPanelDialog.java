@@ -148,11 +148,6 @@ public class DscControlPanelDialog extends JDialog {
 
 		GridBagConstraints gbc = standardPanelGridbagConstraints();
 
-		// panel.setBorder(BorderFactory.createLineBorder(getForeground()));
-
-		// controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-		// controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
 		{
 			JLabel label = new JLabel("<html>" + "The Dendritic Spine Counter plug-in counts spines along "
 					+ "segments of dendrite that you specify.<br/>" + "</html>");

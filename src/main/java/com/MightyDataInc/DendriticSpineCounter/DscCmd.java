@@ -46,13 +46,6 @@ import java.util.List;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-// Here is a dendrite 
-//Point2D.Double[1749.0, 303.0]
-//Point2D.Double[1713.0, 495.0]
-// Big black circle at: 1570,170, about 20px radius
-
-// Nice feature at 1950,425 with radius 10.
-
 @Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
 public class DscCmd implements Command {
 
@@ -140,107 +133,6 @@ public class DscCmd implements Command {
 			workingOverlay = new ij.gui.Overlay();
 			workingImp.setOverlay(workingOverlay);
 		}
-
-		// SearchPixel findThisDammit = SearchPixel.fromImage(this.workingImg, 1950,
-		// 425);
-		// findThisDammit.isDarkCircle(10, 5, null);
-
-		/*
-		 * List<SearchPixel> totalSearchVolume = new ArrayList<SearchPixel>();
-		 * polylineTracedPath = SearchPixelPath.searchPolyline(userPrespecifiedPath,
-		 * workingImg, totalSearchVolume);
-		 * 
-		 * 
-		 * 
-		 * polylineTracedPath.setMinimumSeparation(controlPanelDlg.
-		 * getFeatureDetectionWindowSizeInPixels()); polylineTracedPath.smoothify(0.5);
-		 * 
-		 * polylineTracedPath.computeTangentsAndOrthogonals();
-		 * polylineTracedPath.findSimilarityBoundaries(controlPanelDlg.
-		 * getFeatureDetectionWindowSizeInPixels(), 30);
-		 * polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
-		 * 
-		 * 
-		 * 
-		 * 
-		 * ImagePlus imp = WindowManager.getImage(WORKING_IMAGE_WINDOW_TITLE);
-		 * PolygonRoi roi = this.polylineTracedPath.toLegacyPolylineRoi();
-		 * roi.setName("Dendrite Polyline Trace"); roi.setImage(imp); imp.setRoi(roi,
-		 * true);
-		 * 
-		 */
-		/*
-		 * 
-		 * 
-		 * 
-		 * 
-		 * this.estimateDendriteThicknessAlongCurrentPolylineRoi();
-		 * 
-		 * polylineTracedPath.setMinimumSeparation(controlPanelDlg.
-		 * getFeatureDetectionWindowSizeInPixels() / 2);
-		 * polylineTracedPath.computeTangentsAndOrthogonals();
-		 * polylineTracedPath.findSimilarityBoundaries(controlPanelDlg.
-		 * getFeatureDetectionWindowSizeInPixels(), 30);
-		 * polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
-		 * 
-		 */
-
-		/*
-		 * SearchPixelPath sidepath = polylineTracedPath.createSidePath(PathSide.LEFT,
-		 * featureSize * 1.5, 2);
-		 * 
-		 * ArrayList<SearchPixel> darkCircleCenterPixels = new ArrayList<SearchPixel>();
-		 * for (SearchPixel sidepixel : sidepath.path) { double darkCircleRadius =
-		 * sidepixel.findDarkCircleRadius(featureSize / 2, featureSize * 5, null); if
-		 * (darkCircleRadius == 0) { continue; }
-		 * System.out.println("Dark circle of radius " + darkCircleRadius +
-		 * " found at : " + sidepixel); darkCircleCenterPixels.add(sidepixel); }
-		 * System.out.println("No more dark circles to be found");
-		 * 
-		 * 
-		 * this.plotSearchPixels(darkCircleCenterPixels, 254);
-		 * 
-		 * 
-		 */
-
-		/*
-		 * 
-		 * //SearchPixel px = new SearchPixel(workingImg, 1570,170); //2093, 650);
-		 * //SearchPixel px = new SearchPixel(workingImg, 2093, 650); SearchPixel px =
-		 * new SearchPixel(workingImg, 2019, 590); double darkCircleRadius =
-		 * px.findDarkCircleRadius(7, 100, dendriteVolumeRoi);
-		 * System.out.println(darkCircleRadius);
-		 */
-
-		// Collection<SearchPixel> surroundingPixels =
-		// searchPath.getDarkestSurroundingPixels(30, .25);
-		// plotSearchPixels(surroundingPixels, 254);
-
-		/*
-		 * 
-		 * 
-		 * ArrayList<SearchPixel> pixelsOuterLikeInner = new ArrayList<SearchPixel>();
-		 * for (SearchPixel outpixel : outsidePath.path) { SearchPixel closestInnerPixel
-		 * = searchPath.findNearestPixel(outpixel);
-		 * outpixel.computePixelVicinityStats((double)FEATURE_SIZE_WINDOW_PX / 2.0);
-		 * 
-		 * boolean isDifferent = outpixel.isVicinityDifferent(closestInnerPixel,
-		 * FEATURE_SENSITIVITY_ALLOWANCE); if (!isDifferent) {
-		 * pixelsOuterLikeInner.add(outpixel); } }
-		 * //plotSearchPixels(pixelsOuterLikeInner, 254);
-		 * 
-		 * 
-		 */
-
-		// roiManager.moveRoisToOverlay(imp);
-	}
-
-	public static List<SearchPixel> segmentConsecutiveSearchPixelsByDistanceGaps(List<SearchPixel> pixels) {
-		ArrayList<SearchPixel> pixelReps = new ArrayList<SearchPixel>();
-		for (SearchPixel pixel : pixels) {
-
-		}
-		return pixelReps;
 	}
 
 	public void plotSearchPixels(Collection<SearchPixel> pixels, int color) {
@@ -514,7 +406,7 @@ public class DscCmd implements Command {
 		}
 
 		DendriteSegment polylineTracedPath = DendriteSegment.searchPolyline(pathPoints, workingImg, null);
-
+		
 		int pixelWindowSize = this.controlPanelDlg.getFeatureDetectionWindowSizeInPixels();
 		polylineTracedPath.setMinimumSeparation(pixelWindowSize);
 		polylineTracedPath.smoothify(0.5);
@@ -696,25 +588,14 @@ public class DscCmd implements Command {
 
 		Dataset dataset = null;
 		try {
-			String filePathMikhail = "C:\\\\Users\\\\mvol\\\\Desktop\\\\testpubz-initial\\\\testpubz021.tif";
-			// String filePathMikhail =
-			// "C:\\\\Users\\\\mvol\\\\Desktop\\\\testpubz-MinIP.jpg";
-			dataset = ij.scifio().datasetIO().open(filePathMikhail);
-		} catch (Exception ex) {
+			//dataset = ij.scifio().datasetIO().open("C:\\\\Users\\mvol\\Desktop\\testpubz-MinIP.jpg");			
+		} catch(Exception ex) {			
 		}
-
-		if (dataset == null) {
-			try {
-				String filePathPeter = "/Users/peter/Desktop/testpubzimages/testpubz-initial/testpubz021.tif";
-				dataset = ij.scifio().datasetIO().open(filePathPeter);
-			} catch (Exception ex) {
-			}
-		}
-
+		
 		if (dataset == null) {
 			final File file = ij.ui().chooseFile(null, "open");
 			String filePathFromUserSelection = file.getPath();
-			dataset = ij.scifio().datasetIO().open(filePathFromUserSelection);
+			dataset = ij.scifio().datasetIO().open(filePathFromUserSelection);			
 		}
 
 		// show the image
