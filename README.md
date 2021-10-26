@@ -144,6 +144,21 @@ The button `Copy table data to clipboard` will automatically copy the contents o
 
 ![Optional columns.](/documentation/images/05-03--Optional-Columns.jpg)
 
+### Tab 5: Save/Load
+*Dendritic Spine Counter* is intended to typically be used in one sitting at a time, with a workflow consisting of loading an image, tracing the dendrites, marking the spines, copying to a spreadsheet, and closing the application. However, we recognize that this isn't always possible or even necessarily desirable. For example, we recognize that dendrite tracings might need to be saved for subsequent re-examination, such as in a case where the task of operating this software is delegated to a less-experienced researcher and a more senior staff member might want the opportunity to later review their work. This plugin therefore provides the ability to save and load the dendrite segment tracing information to/from a file.
+
+![Save and load dendrite segment tracing.](/documentation/images/06-02--Save-Load-saves-to-JSON-file.jpg)
+
+This plugin's save files are written in JSON format. Though bulkier than a binary format, JSON was chosen for the sake of an open-source, full-transparency approach. JSON has the advantage of being text-readable and self-documenting (and in fact even text-editable), allowing a researcher to examine or even modify the contents of the file directly if they wish to do so. Though *Dendritic Spine Counter* isn't intended to be used in this manner (i.e. manual editing of save files), we nonetheless provide the potential capability.
+
+![Dendrite tracing information saved as JSON.](/documentation/images/06-03--JSON-format-viewable.jpgjpg)
+
+## Methods
+
+Herein we describe *Dendritic Spine Counter*'s principles of operation and the methods employed in its development.
+
+
+
 
 
 
