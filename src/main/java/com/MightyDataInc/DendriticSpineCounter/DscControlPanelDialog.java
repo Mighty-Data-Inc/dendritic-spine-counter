@@ -623,7 +623,7 @@ public class DscControlPanelDialog extends JDialog {
 					+ "while high contrast sensitivity may try to mark a feature as a spine even if "
 					+ "it is only slightly darker than its background.<br/<br/>"
 					+ "After spines are automatically detected, you will then have the ability to move, "
-					+ "add, or delete them as you see fit."
+					+ "add, or delete them as you see fit.<br/<br/>"
 					+ "NOTE: Using this function will clear your current selection and replace it with "
 					+ "the auto-detected features. If you're going to use this feature, you should "
 					+ "use it <i>first</i>, and <i>then</i> add more spines manually if needed."
