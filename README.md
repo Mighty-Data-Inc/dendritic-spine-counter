@@ -122,9 +122,27 @@ This operation will clear any existing markings and replace them with the automa
 
 When using the automatic detection feature, it's important to remember that the results of the automated process are simply points placed upon the image with the Multi-point Tool. The user is free to make any adjustments to the detected spines that they see fit, using the standard interface and control scheme that they would normally use when operating the Multi-point Tool in any other context. They can add more points to identify spines that the automation might have missed; remove points (through Alt-click) that the automation might have identified as spines erroneously; and move points that don't quite topologically correspond to the feature that the human recognizes as a spine.
 
+### Tab 4: Report results
+In the `Report results` tab, with points marked on the image using the Multi-point Tool to denote spines, the user can click on the button `Count spines near dendrite segments` to tabulate spine densities for every dendrite segment that they've marked. The plugin will automatically associate each spine with its nearest dendrite segment by Euclidean distance. The plugin will then populate a table containing the following information (with distances provided in physical units if the user had set the image's scale, or pixels if not):
+* The name or identifier of the dendrite segment
+* The length of the dendrite segment
+* The average (mean) width of the dendrite segment
+* The count of marked spines along the dendrite segment
+* The density of spines along the segment, expressed as spines per unit distance
 
+![Count spines along each dendrite segment.](/documentation/images/05-01--Count-results.jpg)
 
+#### Copy results to your clipboard and paste to a spreadsheet
+The button `Copy table data to clipboard` will automatically copy the contents of the table to your computer's clipboard. It will preserve row and column information using tab and newline delimiters, which are recognized by all major spreadsheet applications such as 
+[Microsoft Excel](https://www.microsoft.com/en-us/microsoft-365/excel), 
+[Google Sheets](https://www.google.com/sheets/about/), or 
+[Apache OpenOffice Calc](https://www.openoffice.org/product/calc.html). As such, you can paste the table data directly into a spreadsheet. You can choose to copy the header labels when doing so (such as when first starting a new spreadsheet), or go without them (such as when adding subsequent information to an existing sheet).
 
+![Copy results table, paste into Excel.](/documentation/images/05-02--Copy-results-table-paste-into-Excel.jpg)
+
+**Optional columns.** In order to help the researcher (or team of researchers) consolidate data from many different dendrites across many different images, *Dendritic Spine Counter* provides the ability to designate a handful of optional columns. If the user chooses to fill values into these optional column fields, then this value will be copied down across all rows in the table data when the `Copy table data to clipboard` button is clicked. This additional column *will not appear* in the table shown in the dialog, but it will be stored on the clipboard and subsequently pasted into a spreadsheet. Using this option, a team of researchers can easily use the same spreadsheet to perform multiple copy-paste operations, and keep track of metadata such as which researcher was operating the software, which file they were examining, and what specific kinds of spine features they were looking for.
+
+![Optional columns.](/documentation/images/05-03--Optional-Columns.jpg)
 
 
 
