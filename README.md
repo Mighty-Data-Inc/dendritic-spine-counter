@@ -1,9 +1,12 @@
 # Dendritic Spine Counter
-This Maven project builds an extension for [ImageJ](https://imagej.net/), 
+This Maven project builds a plugin for [ImageJ](https://imagej.net/), 
 the public-domain software for processing and analyzing scientific images.
-Specifically, it creates a modular wizard to perform automation and 
-data-entry operations related to the task of counting dendritic spines in 
-microscope images. 
+This plugin creates a modular wizard dialog to assist neuroscientists
+with the task of counting dendritic spines in microscope images. It 
+achieves this through the use of computer vision algorithms to partially 
+(and optionally) automate the detection of features, and the organization 
+of user interfaces to provide a quick and convenient way for users to enter, 
+consolidate, tabulate, and save their data.
 
 It is intended to be used by neuroscience researchers,
 and is made available to the neuroscience community under the 
@@ -103,6 +106,24 @@ Users will probably spend most of their time in the `Trace dendrites` tab and th
 ![Modify the selected region.](/documentation/images/03-06--Make-circled-region-thicker-or-thinner-or-move-it-left-or-right.jpg)
 
 ### Tab 3: Mark spines
+The user can activate the Mutli-point Tool, and click on places in the image that correspond to where the user sees that there are spines, with each point placed by the Multi-point Tool corresponding to one spine. The Multi-point Tool is of course accessible through the ImageJ toolbar, but the plug-in provides an additional button to activate this tool directly from the wizard dialog.
+![Mark spines with Multi-point Tool.](/documentation/images/04-01--Mark-spines-with-Multi-point-tool.jpg)
+
+Marked spines are considered "ephemeral" -- that is, they exist only as a current selection of the Multi-point Tool. They can be cleared easily if the user picks a different selection tool. The user should take care to only mark spines when no other annotation operations need to take place.
+
+The user will have the opportunity to tabulate marked spines in the next tab, `Report results`.
+
+#### Automatically detect spines
+This plugin includes the option to use simple statistics-based image analysis techniques to find spines along the edges of the traced dendrite segments. This can be performed by simply clicking on the button marked `Automatically detect spines on traced dendrites`.
+
+The user can adjust the sensitivity of the automatic detection process. At full sensitivity, any outcropping from the edge of the dendrite that is even slightly darker than its surroundings is marked as a spine. At the lowest sensitivity level, an outcropping has to be much darker than adjacent features in order to be considered a spine.
+
+This operation will clear any existing markings and replace them with the automated results. If the user wishes to perform automated detection, they should do so *first*, and then adjust the output manually if desired.
+
+When using the automatic detection feature, it's important to remember that the results of the automated process are simply points placed upon the image with the Multi-point Tool. The user is free to make any adjustments to the detected spines that they see fit, using the standard interface and control scheme that they would normally use when operating the Multi-point Tool in any other context. They can add more points to identify spines that the automation might have missed; remove points (through Alt-click) that the automation might have identified as spines erroneously; and move points that don't quite topologically correspond to the feature that the human recognizes as a spine.
+
+
+
 
 
 
