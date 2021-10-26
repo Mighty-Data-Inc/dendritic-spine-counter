@@ -1,4 +1,4 @@
-# Dendritic Spine Counter
+# *Dendritic Spine Counter*
 This Maven project builds an extension for [ImageJ](https://imagej.net/), 
 the public-domain software for processing and analyzing scientific images.
 Specifically, it creates a modular wizard to perform automation and 
@@ -13,7 +13,7 @@ It was debuted to the neuroscience community online via a virtual poster
 presentation on Nov 11, 2021, at the [2021 annual meeting of the Society 
 for Neuroscience](https://www.sfn.org/meetings/neuroscience-2021/). 
 
-[**View the recording of the poster presentation**](http://todo-do-this)
+[**View the recording of the Neuroscience 2021 poster presentation**](http://todo-do-this)
 
 ## Build (via Maven)
 This project is built from a 
@@ -36,3 +36,31 @@ this plugin automatically the next time you run ImageJ. You should see this plug
 `Dendritic Spine Counter` under the `Plugins` menu.
 
 ## Usage
+
+Dendritic Spine Counter is designed to be intuitive, self-documenting, and naturally interoperative
+with other ImageJ components. However, most users still appreciate a thorough How-To guide, so here
+we will document *Dendritic Spine Counter*'s intended usage patterns.
+
+### Preparation
+
+*Dendritic Spine Counter* expects ImageJ's user to start the plugin while an active image, or
+"dataset" in ImageJ parlance, has already been selected. If the user attempts to start
+*Dendritic Spine Counter* without an active image, the ImageJ framework will complain.
+
+1. Start ImageJ. (In these screenshots, ImageJ is being run on a Windows 10 PC through the Fiji package.) ![Launch ImageJ.](/documentation/images/01-01--Launch-ImageJ.jpg)
+1. Use `File>Open...` to open an image file. ![Open an image file.](/documentation/images/01-02-a--Open-an-image.jpg)
+1. ImageJ may require you to provide additional configuration information to process the image file. If a stack of images is opened, then ImageJ may provide options by which to consolidate them into a single 2D image, such as minimum intensity projection (MinIP) stacking. Experienced users of ImageJ are likely to already be thoroughly familiar with these techniques. ![Produce a MinIP 2D image.](/documentation/images/01-02-b--Open-an-image.jpg)
+1. Select `Dendritic Spine Counter` from the `Plugins` dropdown. ![Activate *Dendritic Spine Counter*.](/documentation/images/01-03-a--Activate-Dendritic-Spine-Counter.jpg)
+1. 
+
+
+
+
+
+
+
+
+
+
+
+
