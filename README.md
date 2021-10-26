@@ -1,4 +1,4 @@
-# *Dendritic Spine Counter*
+# Dendritic Spine Counter
 This Maven project builds an extension for [ImageJ](https://imagej.net/), 
 the public-domain software for processing and analyzing scientific images.
 Specifically, it creates a modular wizard to perform automation and 
@@ -47,11 +47,20 @@ we will document *Dendritic Spine Counter*'s intended usage patterns.
 "dataset" in ImageJ parlance, has already been selected. If the user attempts to start
 *Dendritic Spine Counter* without an active image, the ImageJ framework will complain.
 
-1. Start ImageJ. (In these screenshots, ImageJ is being run on a Windows 10 PC through the Fiji package.) ![Launch ImageJ.](/documentation/images/01-01--Launch-ImageJ.jpg)
-1. Use `File>Open...` to open an image file. ![Open an image file.](/documentation/images/01-02-a--Open-an-image.jpg)
-1. ImageJ may require you to provide additional configuration information to process the image file. If a stack of images is opened, then ImageJ may provide options by which to consolidate them into a single 2D image, such as minimum intensity projection (MinIP) stacking. Experienced users of ImageJ are likely to already be thoroughly familiar with these techniques. ![Produce a MinIP 2D image.](/documentation/images/01-02-b--Open-an-image.jpg)
-1. Select `Dendritic Spine Counter` from the `Plugins` dropdown. ![Activate *Dendritic Spine Counter*.](/documentation/images/01-03-a--Activate-Dendritic-Spine-Counter.jpg)
-1. 
+1. Start ImageJ. (In these screenshots, ImageJ is being run on a Windows 10 PC through the Fiji package.)\
+![Launch ImageJ.](/documentation/images/01-01--Launch-ImageJ.jpg)
+1. Use `File>Open...` to open an image file.\
+![Open an image file.](/documentation/images/01-02-a--Open-an-image.jpg)
+1. ImageJ may require you to provide additional configuration information to process the image file. If a stack of images is opened, then ImageJ may provide options by which to consolidate them into a single 2D image, such as minimum intensity projection (MinIP) stacking. Experienced users of ImageJ are likely to already be thoroughly familiar with these techniques.\
+![Produce a MinIP 2D image.](/documentation/images/01-02-b--Open-an-image.jpg)
+1. Select `Dendritic Spine Counter` from the `Plugins` dropdown.\
+![Activate *Dendritic Spine Counter*.](/documentation/images/01-03-a--Activate-Dendritic-Spine-Counter.jpg)
+1. If you attempt to select `Dendritic Spine Counter` from the `Plugins` dropdown *without* first loading an active image per the steps above, then the ImageJ framework will complain with a message saying: `A Dataset is required but none exist.`\
+![ImageJ complains if *Dendritic Spine Counter* is activated without an active image.](/documentation/images/01-03-b--Dendritic-Spine-Counter-complains-if-activated-without-an-image.jpg)
+1. If all goes according to plan, then *Dendrite Spine Counter* will display its wizard dialog, opened to the first tab, the `Set feature size` tab. It will also create a "working image", which is a grayscale copy of the active image. *Dendritic Spine Counter* will do all of its work on this "working image". We choose this approach because, under the hood, *Dendritic Spine Counter* only reads image brightness data and ignores color, so working with a grayscale copy allows the user to proverbially see the image through the plugin's metaphorical eyes, and thereby take advantage of (and compensate for) features that might appear differently in grayscale than they do in color.\
+![*Dendritic Spine Counter* opens a grayscale copy "working image".](/documentation/images/02-01--Scale-and-Color-Calibration.jpg)
+
+
 
 
 
