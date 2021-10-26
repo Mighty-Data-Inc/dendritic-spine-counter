@@ -13,7 +13,6 @@ import org.json.simple.JSONObject;
 
 import ij.ImagePlus;
 import ij.gui.EllipseRoi;
-import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;

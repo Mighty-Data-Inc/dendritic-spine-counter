@@ -47,7 +47,7 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
-public class DscCmd implements Command {
+public class Dendritic_Spine_Counter implements Command {
 
 	private static final ImageJ ij = new ImageJ();
 
@@ -496,7 +496,6 @@ public class DscCmd implements Command {
 			spinesRoi.addPoint(spinePoint.getX(), spinePoint.getY());
 		}
 		workingImp.setRoi(spinesRoi, true);
-		
 		workingImp.updateAndRepaintWindow();
 	}
 
@@ -602,7 +601,6 @@ public class DscCmd implements Command {
 		ij.ui().show(dataset);
 
 		// invoke the plugin
-		ij.command().run(DscCmd.class, true);
+		ij.command().run(Dendritic_Spine_Counter.class, true);
 	}
-
 }

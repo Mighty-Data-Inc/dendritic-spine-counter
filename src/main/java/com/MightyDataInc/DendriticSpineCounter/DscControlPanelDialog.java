@@ -1,7 +1,6 @@
 package com.MightyDataInc.DendriticSpineCounter;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -15,7 +14,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
@@ -25,7 +23,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -53,7 +50,6 @@ import ij.Executer;
 import ij.IJ;
 import ij.gui.Roi;
 import ij.measure.Calibration;
-import org.apache.commons.lang3.NotImplementedException;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
@@ -66,7 +62,6 @@ import java.awt.datatransfer.Clipboard;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 public class DscControlPanelDialog extends JDialog {
 
@@ -75,7 +70,7 @@ public class DscControlPanelDialog extends JDialog {
 	 */
 	private static final long serialVersionUID = -3504591526118191273L;
 
-	public DscCmd ownerPlugin;
+	public Dendritic_Spine_Counter ownerPlugin;
 
 	// --------------------------------------
 	// Data-bound UI components
@@ -133,7 +128,7 @@ public class DscControlPanelDialog extends JDialog {
 
 	private FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
-	public DscControlPanelDialog(DscCmd plugin) {
+	public DscControlPanelDialog(Dendritic_Spine_Counter plugin) {
 		super((Frame) null, "Dendritic Spine Counter", false);
 		ownerPlugin = plugin;
 

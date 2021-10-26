@@ -6,7 +6,6 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<!--  TODO: We will need to update this when we migrate to GitHub -->	
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
 		<version>26.0.0</version>
@@ -14,12 +13,12 @@
 	</parent>
 
 	<groupId>com.MightyDataInc</groupId>
-	<artifactId>DscCmd</artifactId>
-	<version>1</version>
+	<artifactId>Dendritic_Spine_Counter_</artifactId>
+	<version>1.1.2</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
-	<url>http://mightydatainc.com/</url>
+	<url>https://github.com/Mighty-Data-Inc/dendritic-spine-counter</url>
 	<inceptionYear>2021</inceptionYear>
 	<organization>
 		<name>Mighty Data Inc</name>
@@ -27,11 +26,12 @@
 	</organization>
 	<licenses>
 		<license>
-			<name>Simplified BSD License</name>
+			<name>GNU General Public License v3+</name>
+			<url>https://www.gnu.org/licenses/gpl.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-
+	
 	<developers>
 		<!-- See https://imagej.net/Team -->
 		<developer>
@@ -87,8 +87,8 @@
 
 	<properties>
 		<package-name>com.MightyDataInc.DendriticSpineCounter</package-name>
-		<main-class>com.MightyDataInc.DendriticSpineCounter.DscCmd</main-class>
-		<license.licenseName>bsd_2</license.licenseName>
+		<main-class>com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter</main-class>
+		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Mighty Data, Inc.</license.copyrightOwners>
 	</properties>
 
@@ -125,7 +125,7 @@
 	</dependencies>
 	
 	<build>
-        <finalName>dendritic-spine-counter</finalName>
+        <finalName>Dendritic_Spine_Counter</finalName>
         <plugins>
 
             <plugin>

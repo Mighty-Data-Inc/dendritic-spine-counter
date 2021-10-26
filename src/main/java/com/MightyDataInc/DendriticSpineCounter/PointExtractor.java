@@ -7,7 +7,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import net.imagej.overlay.GeneralPathOverlay;
 import net.imagej.overlay.Overlay;
