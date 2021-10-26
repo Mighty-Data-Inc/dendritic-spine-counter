@@ -84,6 +84,36 @@ The smallest permissible feature window size is seven (7) pixels. Because this p
 1. *Dendritic Spine Counter* assumes that you are working with images taken with bright field microscopy (BF), and that z-stacked slices are combined into a unified 2D image using MinIP. In short, this plugin assumes that features are represented as dark pixels upon a light background. If the opposite is true, then *Dendritic Spine Counter* provides a convenient button to invert the image. (Sample screenshot uses an image from ["High-throughput synapse-resolving two-photon fluorescence microendoscopy for deep-brain volumetric imaging in vivo", Meng et. al., University of California, _eLife_, Jan 3 2019.](https://elifesciences.org/articles/40805))\
 ![If using fluorescence or other dark-field techniques, click on "Invert image brightness levels".](/documentation/images/02-04--Invert-working-image-if-MaxIP.jpg)
 
+### Tab 2: Trace dendrites
+Users will probably spend most of their time in the `Trace dendrites` tab and the subsequent one, `Mark spines`. In `Trace dendrites`, users can employ the Polyline Tool to trace the approximate centerlines of dendritic segments. The plugin will detect the thicknesses of the dendrite segment at various regions described by the traced centerline, and users will be given the opportunity to refine the plugin's estimation of the dendrite's contours.
+
+1. Activate the Polyline Tool. *Dendritic Spine Counter* initially identifies dendrites through coarse Polyline Tool tracings. You can, of course, use ImageJ's tool menu to select the Polyline Tool, but the plugin provides a convenient button for doing so within the wizard dialog.\
+![Activate the Polyline Tool.](/documentation/images/03-01--Trace-Dendrite-tab.jpg)
+1. Using the Polyline Tool, trace the centerline of a dendrite segment. Your tracing can be approximate; the plugin will try to follow dark regions to connect each subsequent point of your polyline when determining the dendrite segment's contours.\
+![Trace a dendrite segment with the Polyline Tool.](/documentation/images/03-02--Trace-a-dendrite-segment-with-Polyline-Tool.jpg)
+1. When you're done with a polyline trace, return to the wizard dialog and click on "Use existing polyline path to trace a dendrite". You will see the *Dendritic Spine Counter* mark the dendrite path with a blue overlay.\
+![Trace a dendrite segment with the Polyline Tool.](/documentation/images/03-03-a--Click-Use-existing-polyline-to-add-dendrite-segment-to-list.jpg)
+1. You can mark multiple dendrite segments at a time. They will show up in the listbox under "Dendrite Branches".\
+![Add multiple dendrite segments at a time.](/documentation/images/03-03-b--Add-multiple-dendrite-segments.jpg)
+1. You can select dendrite segments to modify. The *Dendritic Spine Counter* uses pixel brightness levels to determine a dendrite's likeliest structure. If you, using your human judgment and visual recognition abilities, disagree with the plugin's assessment, then you can select a segment to modify. The selected branch will appear in green.\
+![Select a segment to modify.](/documentation/images/03-04--Select-a-dendrite-segment-to-modify.jpg)
+1. The selected branch will contain a selected region, which will appear as a bright green circle. You can move this region forward and back along the length of the selected branch using the `Region Fwd` and `Region Back` buttons.\
+![Move the selected region forward and back along the dendrite segment.](/documentation/images/03-05--Navigate-the-cursor-circle-fwd-and-back-along-the-segment.jpg)
+1. You can modify the selected region of the selected branch. You can make it thicker or thinner, and shift it left or right (orthogonally relative to the flow of the dendrite branch.)\
+![Modify the selected region.](/documentation/images/03-06--Make-circled-region-thicker-or-thinner-or-move-it-left-or-right.jpg)
+
+### Tab 3: Mark spines
+
+
+
+
+
+
+
+
+
+
+
 
 
 
