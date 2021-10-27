@@ -16,7 +16,7 @@ It was debuted to the neuroscience community online via a virtual poster
 presentation on Nov 11, 2021, at the [2021 annual meeting of the Society 
 for Neuroscience](https://www.sfn.org/meetings/neuroscience-2021/). 
 
-[**View the recording of the Neuroscience 2021 poster presentation**](http://todo-do-this)
+[**View the Neuroscience 2021 poster presentation**](http://todo-do-this)
 
 ## Build (via Maven)
 This project is built from a 
@@ -54,21 +54,17 @@ too much of an inconvenience to most users, and we will seek ways to ameliorate 
 (elegantly, i.e. without the introduction of prohibitive computational overhead) in the future.
 
 ### Preparation
-*Dendritic Spine Counter* expects ImageJ's user to start the plugin while an active image, or
-"dataset" in ImageJ parlance, has already been selected. If the user attempts to start
-*Dendritic Spine Counter* without an active image, the ImageJ framework will complain.
+After being installed (and ImageJ relaunched), *Dendritic Spine Counter* can be found in the `Plugins` menu.
 
-1. Start ImageJ. (In these screenshots, ImageJ is being run on a Windows 10 PC through the Fiji package.)\
-![Launch ImageJ.](/documentation/images/01-01--Launch-ImageJ.jpg)
-1. Use `File>Open...` to open an image file.\
-![Open an image file.](/documentation/images/01-02-a--Open-an-image.jpg)
-1. ImageJ may require you to provide additional configuration information to process the image file. If a stack of images is opened, then ImageJ may provide options by which to consolidate them into a single 2D image, such as minimum intensity projection (MinIP) stacking. Experienced users of ImageJ are likely to already be thoroughly familiar with these techniques.\
-![Produce a MinIP 2D image.](/documentation/images/01-02-b--Open-an-image.jpg)
-1. Select `Dendritic Spine Counter` from the `Plugins` dropdown.\
-![Activate *Dendritic Spine Counter*.](/documentation/images/01-03-a--Activate-Dendritic-Spine-Counter.jpg)
-1. If you attempt to select `Dendritic Spine Counter` from the `Plugins` dropdown *without* first loading an active image per the steps above, then the ImageJ framework will complain with a message saying: `A Dataset is required but none exist.`\
-![ImageJ complains if *Dendritic Spine Counter* is activated without an active image.](/documentation/images/01-03-b--Dendritic-Spine-Counter-complains-if-activated-without-an-image.jpg)
-1. If all goes according to plan, then *Dendrite Spine Counter* will display its wizard dialog, opened to the first tab, the `Set feature size` tab. It will also create a "working image", which is a grayscale, contrast-maximized copy of the active image. *Dendritic Spine Counter* will do all of its work on this "working image". We choose this approach because, under the hood, *Dendritic Spine Counter* only reads image brightness data and ignores color, so working with a grayscale copy allows the user to proverbially see the image through the plugin's metaphorical eyes, and thereby take advantage of (and compensate for) features that might appear differently in grayscale than they do in color.\
+![Dendritic Spine Counter resides in the Plugins dropdown.](/documentation/images/01-03.2-Plugins-menu.jpg)
+
+*Dendritic Spine Counter* expects ImageJ's user to start the plugin while an active image, or
+"dataset" in ImageJ parlance, has already been selected. If the user starts
+*Dendritic Spine Counter* without an active image, then the plugin will automatically
+launch a "File Open..." dialog and prompt the user to select an image file.
+
+If all goes according to plan, then *Dendrite Spine Counter* will display its wizard dialog, opened to the first tab, the `Set feature size` tab. It will also create a "working image", which is a grayscale, contrast-maximized copy of the active image. *Dendritic Spine Counter* will do all of its work on this "working image". We choose this approach because, under the hood, *Dendritic Spine Counter* only reads image brightness data and ignores color, so working with a grayscale copy allows the user to proverbially see the image through the plugin's metaphorical eyes, and thereby take advantage of (and compensate for) features that might appear differently in grayscale than they do in color.
+
 ![*Dendritic Spine Counter* opens a grayscale copy "working image".](/documentation/images/02-01--Scale-and-Color-Calibration.jpg)
 
 ### Tab 1: "Set feature size"
@@ -152,6 +148,14 @@ The button `Copy table data to clipboard` will automatically copy the contents o
 This plugin's save files are written in JSON format. Though bulkier than a binary format, JSON was chosen for the sake of an open-source, full-transparency approach. JSON has the advantage of being text-readable and self-documenting (and in fact even text-editable), allowing a researcher to examine or even modify the contents of the file directly if they wish to do so. Though *Dendritic Spine Counter* isn't intended to be used in this manner (i.e. manual editing of save files), we nonetheless provide the potential capability.
 
 ![Dendrite tracing information saved as JSON.](/documentation/images/06-03--JSON-format-viewable.jpgjpg)
+
+## Background
+
+This plugin was developed in order to fill a need in the neuroscience research community. At the time of its authorship, smaller labs lacked a way to conveniently assign and perform the relatively simple but tedious task of identifying, labeling, and counting dendritic spines. Automated tools for this task certainly existed, but were generally bundled within large software suites whose price-points and licensing restrictions often put out of reach of smaller labs with tighter budgets and fewer staff. With *Dendritic Spine Counter* now available, such labs can perform this research purely with free-to-use open-source tools.
+
+### Abstract
+
+In the central nervous system, most excitatory synapses are represented as small protrusions called dendritic spines. The number of excitatory synapses on a neuron impacts overall excitability, and, on a larger scale, network activity. In diseases such as Alzheimer's Disease, Autism Spectrum Disorder, and schizophrenia, spine density is abnormal, resulting in improper brain function. Therefore, computing spine density is an important data-gathering step for many avenues of research into these disorders. Here, we have created a free ImageJ plugin, Dendritic Spine Counter, that will allow researchers and students to count spines in 2D. This plugin allows a user to submit a 2D image of stained neuronal tissue, mark a dendrite on that image for analysis, and receive an automated visually interactive list of structural features along that dendrite that are likely to be spines. The plugin operates “semi-automatically”, requiring minimal input from the user outside of specifying the dendrite to analyze. It also offers manual override options, permitting the user to directly add or remove spines. The machine vision algorithms underlying Dendritic Spine Counter were implemented using a heuristic-driven “expert system” approach, primarily employing basic image transformation functions and statistical analyses of pixel areas.
 
 ## Methods
 
