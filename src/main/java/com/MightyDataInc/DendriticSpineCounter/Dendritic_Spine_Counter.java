@@ -11,6 +11,7 @@ import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.plugin.PlugIn;
 import net.imagej.ImageJ;
 import net.imagej.display.DefaultImageCanvas;
 import net.imagej.display.DefaultImageDisplay;
@@ -39,6 +40,7 @@ import org.scijava.tool.ToolService;
 import org.scijava.ui.UIService;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,47 +48,17 @@ import java.util.List;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
-public class Dendritic_Spine_Counter implements Command {
+//@Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
+public class Dendritic_Spine_Counter implements PlugIn {
 
 	private static final ImageJ ij = new ImageJ();
 
 	final static String WORKING_IMAGE_WINDOW_TITLE = "Dendritic Spine Counter Working Image";
 
-	@Parameter
-	private Dataset currentData;
-
-	@Parameter
-	private ConvertService convertService;
-
-	@Parameter
-	private UIService uiService;
-
-	@Parameter
-	private OpService opService;
-
-	@Parameter
-	private DisplayService displayService;
-
-	@Parameter
-	private OverlayService overlayService;
-
-	@Parameter
-	private ROIService roiService;
-
-	@Parameter
-	private ObjectService objectService;
-
-	@Parameter
-	private LegacyService legacyService;
-
-	@Parameter
-	private ToolService toolService;
-
+	public Dataset origDataset;
 	private DscControlPanelDialog controlPanelDlg;
 	private DefaultImageDisplay workingDisplay;
 	public Img<UnsignedByteType> workingImg;
-	private DefaultImageCanvas workingCanvas;
 	public ImagePlus workingImp;
 	private ij.gui.Overlay workingOverlay;
 
@@ -116,11 +88,41 @@ public class Dendritic_Spine_Counter implements Command {
 	private int nextPathId = 1;
 
 	@Override
-	public void run() {
+	public void run(String arg) {
+		/*
+		List<Dataset> currentDatasets = ij.dataset().getDatasets();
+		if (currentDatasets.isEmpty()) {
+			System.out.println("TODO: Open a file dialog");
+		} else {
+			// Get the last dataset.
+			this.origDataset = currentDatasets.get(currentDatasets.size() - 1);
+		}
+		*/
+		
+		this.origDataset = ij.imageDisplay().getActiveDataset();
+		if (this.origDataset == null) {
+			final File file = ij.ui().chooseFile(null, "open");
+			String filePathFromUserSelection = file.getPath();
+			try {
+				origDataset = ij.scifio().datasetIO().open(filePathFromUserSelection);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		if (origDataset == null) {
+			IJ.noImage();
+			return;
+		}
+		
+		// show the image
+		ij.ui().show(origDataset);					
+		
 		// Grab a reference to some tools, so that our control panel
 		// can make use of them.
-		polylineTool = toolService.getTool("Polyline");
-		pointTool = toolService.getTool("Point");
+		polylineTool = ij.tool().getTool("Polyline");
+		pointTool = ij.tool().getTool("Point");
 
 		// Create our control panel.
 		controlPanelDlg = new DscControlPanelDialog(this);
@@ -147,11 +149,9 @@ public class Dendritic_Spine_Counter implements Command {
 	}
 
 	public void createWorkingImage() {
-		workingImg = convertToGrayscale(currentData);
+		workingImg = convertToGrayscale(this.origDataset);
 
-		workingDisplay = (DefaultImageDisplay) displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
-
-		workingCanvas = (DefaultImageCanvas) (workingDisplay).getCanvas();
+		workingDisplay = (DefaultImageDisplay) ij.display().createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
 
 		maximizeContrast();
 		// maximizeContrastRollingWindow(50);
@@ -213,7 +213,7 @@ public class Dendritic_Spine_Counter implements Command {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = overlayService.getOverlays();
+			List<Overlay> overlays = ij.overlay().getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -385,7 +385,7 @@ public class Dendritic_Spine_Counter implements Command {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = overlayService.getOverlays();
+			List<Overlay> overlays = ij.overlay().getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -549,7 +549,7 @@ public class Dendritic_Spine_Counter implements Command {
 
 	public void activatePolylineTool() {
 		polylineTool.activate();
-		toolService.setActiveTool(polylineTool);
+		ij.tool().setActiveTool(polylineTool);
 		IJ.setTool("polyline");
 	}
 
@@ -585,9 +585,10 @@ public class Dendritic_Spine_Counter implements Command {
 		// create the ImageJ application context with all available services
 		ij.ui().showUI();
 
+		/*
 		Dataset dataset = null;
 		try {
-			//dataset = ij.scifio().datasetIO().open("C:\\\\Users\\mvol\\Desktop\\testpubz-MinIP.jpg");			
+			dataset = ij.scifio().datasetIO().open("C:\\\\Users\\mvol\\Desktop\\testpubz-MinIP.jpg");			
 		} catch(Exception ex) {			
 		}
 		
@@ -599,8 +600,12 @@ public class Dendritic_Spine_Counter implements Command {
 
 		// show the image
 		ij.ui().show(dataset);
+		*/
 
 		// invoke the plugin
-		ij.command().run(Dendritic_Spine_Counter.class, true);
+		//ij.command().run(Dendritic_Spine_Counter.class, true);
+		Dendritic_Spine_Counter thePlugin = new Dendritic_Spine_Counter();
+		thePlugin.run( null );
+		
 	}
 }
