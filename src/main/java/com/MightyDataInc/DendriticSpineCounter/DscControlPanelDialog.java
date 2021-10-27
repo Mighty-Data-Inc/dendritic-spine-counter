@@ -104,7 +104,7 @@ public class DscControlPanelDialog extends JDialog {
 
 	private JTextField textfieldFeatureDetectionWindowSize;
 
-	private JTextField textfieldResultTableSpineType;
+	private JTextField textfieldResultTableResearcher;
 	private JTextField textfieldResultTableImageDesignation;
 	private JTextField textfieldResultTableImageCustomLabel;
 
@@ -291,12 +291,12 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		{
-			JLabel label = new JLabel("<html>Optional column: Spine type</html>");
+			JLabel label = new JLabel("<html>Optional column: Researcher</html>");
 			panel.add(label, gridbagConstraints);
 			gridbagConstraints.gridx++;
 
-			textfieldResultTableSpineType = new JTextField();
-			panel.add(textfieldResultTableSpineType, gridbagConstraints);
+			textfieldResultTableResearcher = new JTextField();
+			panel.add(textfieldResultTableResearcher, gridbagConstraints);
 
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
@@ -425,7 +425,7 @@ public class DscControlPanelDialog extends JDialog {
 
 					JSONObject json = new JSONObject();
 					json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
-					json.put("spinetype", textfieldResultTableSpineType.getText().trim());
+					json.put("spinetype", textfieldResultTableResearcher.getText().trim());
 					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
 					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
 
@@ -503,7 +503,7 @@ public class DscControlPanelDialog extends JDialog {
 					self.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
 
 					v = jsonObj.get("spinetype");
-					self.textfieldResultTableSpineType.setText(String.format(v.toString()));
+					self.textfieldResultTableResearcher.setText(String.format(v.toString()));
 
 					v = jsonObj.get("imagedesignation");
 					self.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
@@ -639,6 +639,8 @@ public class DscControlPanelDialog extends JDialog {
 					
 					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
 					double sensitivity = (100.0 - (double)sensitivitySliderVal) / 50.0;
+					sensitivity *= 4;
+					// The "sensitivity" is actually kinda backwards.					
 					
 					List<Point2D> spines = new ArrayList<Point2D>();
 					
@@ -677,7 +679,7 @@ public class DscControlPanelDialog extends JDialog {
 		}
 		
 		{
-			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 75);
 			sliderDetectionSensitivity.setMajorTickSpacing(10);
 			sliderDetectionSensitivity.setMinorTickSpacing(1);
 			sliderDetectionSensitivity.setPaintTicks(true);
@@ -687,8 +689,7 @@ public class DscControlPanelDialog extends JDialog {
 			panel.add(sliderDetectionSensitivity, gridbagConstraints);
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
-		}
-		
+		}		
 		
 		{
 			String pathToImage = "images/icons/data-table-results-24.png";
@@ -787,7 +788,7 @@ public class DscControlPanelDialog extends JDialog {
 			btnTraceCurrentPolyline.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					DendriteSegment dendritePath = ownerPlugin.traceDendriteWithThicknessEstimation();
+					DendriteSegment dendritePath = ownerPlugin.traceDendriteWithThicknessEstimation(.8);
 					pathListModel.addElement(dendritePath);
 					ownerPlugin.AddPathToDrawOverlay(dendritePath);
 					ownerPlugin.workingImp.updateAndRepaintWindow();
@@ -1505,7 +1506,7 @@ public class DscControlPanelDialog extends JDialog {
 		String s = "";
 
 		String strImageDes = this.textfieldResultTableImageDesignation.getText().trim();
-		String strSpineType = this.textfieldResultTableSpineType.getText().trim();
+		String strResearcher = this.textfieldResultTableResearcher.getText().trim();
 		String strCustomLbl = this.textfieldResultTableImageCustomLabel.getText().trim();
 
 		if (this.chkIncludeHeadersInCopyPaste.isSelected()) {
@@ -1516,8 +1517,8 @@ public class DscControlPanelDialog extends JDialog {
 			if (!strImageDes.isEmpty()) {
 				s += "Image Designator\t";
 			}
-			if (!strSpineType.isEmpty()) {
-				s += "Spine Type\t";
+			if (!strResearcher.isEmpty()) {
+				s += "Researcher\t";
 			}
 			if (!strCustomLbl.isEmpty()) {
 				s += "Custom Label\t";
@@ -1536,8 +1537,8 @@ public class DscControlPanelDialog extends JDialog {
 			if (!strImageDes.isEmpty()) {
 				s += strImageDes + "\t";
 			}
-			if (!strSpineType.isEmpty()) {
-				s += strSpineType + "\t";
+			if (!strResearcher.isEmpty()) {
+				s += strResearcher + "\t";
 			}
 			if (!strCustomLbl.isEmpty()) {
 				s += strCustomLbl + "\t";

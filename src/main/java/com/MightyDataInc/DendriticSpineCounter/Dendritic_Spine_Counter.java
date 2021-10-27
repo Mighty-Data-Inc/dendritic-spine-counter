@@ -441,7 +441,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		return pathPoints;
 	}
 
-	public DendriteSegment traceDendriteWithThicknessEstimation() {
+	public DendriteSegment traceDendriteWithThicknessEstimation(double thicknessMultiplier) {
 		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints();
 		if (pathPoints == null) {
 			return null;
@@ -458,6 +458,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		polylineTracedPath.findSimilarityBoundaries(pixelWindowSize,
 				pixelWindowSize * MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES);
 
+		polylineTracedPath.multiplyThickness(thicknessMultiplier);
 		polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
 
 		return polylineTracedPath;

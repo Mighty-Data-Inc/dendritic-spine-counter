@@ -223,6 +223,17 @@ public class DendriteSegment {
 			pixel.y = (int) ((meanY * nudgeStrength) + ((double) (pixel.y) * (1.0 - nudgeStrength)));
 		}
 	}
+	
+	/**
+	 * Makes the entire segment thicker or thinner.
+	 * @param thicknessMultiplier The amount by which to multiply the thickness.
+	 */
+	public void multiplyThickness(double thicknessMultiplier) {
+		for (SearchPixel px : this.path) {
+			px.similarityBoundaryDistanceLeft *= thicknessMultiplier;
+			px.similarityBoundaryDistanceRight *= thicknessMultiplier;
+		}
+	}
 
 	/**
 	 * Iterate through the points in the path and assign them approximate orthogonal

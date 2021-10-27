@@ -13,8 +13,8 @@
 	</parent>
 
 	<groupId>com.MightyDataInc</groupId>
-	<artifactId>Dendritic_Spine_Counter_</artifactId>
-	<version>1.1.4</version>
+	<artifactId>Dendritic_Spine_Counter</artifactId>
+	<version>1.1.6</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
@@ -61,6 +61,10 @@
 	<contributors>
 		<contributor>
 			<name>Julie Parato</name>
+			<organization>SUNY Empire State</organization>
+			<roles>
+				<role>reviewer</role>
+			</roles>
 		</contributor>
 	</contributors>
 
