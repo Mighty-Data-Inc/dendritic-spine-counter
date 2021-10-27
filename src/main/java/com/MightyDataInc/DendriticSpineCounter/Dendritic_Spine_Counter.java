@@ -12,9 +12,11 @@ import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import io.scif.SCIFIO;
 import net.imagej.ImageJ;
 import net.imagej.display.DefaultImageCanvas;
 import net.imagej.display.DefaultImageDisplay;
+import net.imagej.display.ImageDisplayService;
 import net.imagej.display.OverlayService;
 import net.imagej.legacy.LegacyService;
 import net.imagej.ops.OpService;
@@ -49,13 +51,31 @@ import java.util.List;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-//@Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
+@Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
 public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
-	private static final ImageJ imageJ = new ImageJ();
+	private static final ImageJ imageJLegacy = new ImageJ();
 
 	final static String WORKING_IMAGE_WINDOW_TITLE = "Dendritic Spine Counter Working Image";
 
+	@Parameter
+	ImageDisplayService imageDisplayService;
+
+	@Parameter
+	UIService uiService;
+	
+	@Parameter
+	SCIFIO scifioService;
+	
+	@Parameter
+	ToolService toolService;
+
+	@Parameter
+	DisplayService displayService;
+	
+	@Parameter
+	OverlayService overlayService;
+	
 	public Dataset origDataset;
 	private DscControlPanelDialog controlPanelDlg;
 	private DefaultImageDisplay workingDisplay;
@@ -88,6 +108,29 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	// Incremented every time we add a path. Never decremented.
 	private int nextPathId = 1;
 
+	// The IDE environment injects services with a "legacy" model, whereas
+	// Fiji uses a "new" model. But it's inconsistent in both cases. It's maddening.
+	void makeServicesWorkWithBothIDEAndFiji() {
+		if (this.imageDisplayService == null) {
+			this.imageDisplayService = imageJLegacy.imageDisplay();
+		}
+		if (this.uiService == null) {
+			this.uiService = imageJLegacy.ui();
+		}		
+		if (this.scifioService == null) {
+			this.scifioService = imageJLegacy.scifio();
+		}
+		if (this.toolService == null) {
+			this.toolService = imageJLegacy.tool();
+		}
+		if (this.displayService == null) {
+			this.displayService = imageJLegacy.display();
+		}
+		if (this.overlayService == null) {
+			this.overlayService = imageJLegacy.overlay();
+		}		
+	}
+	
 	@Override
 	public void run(String arg) {
 		System.out.println(String.format("Method PlugIn.run was passed String argument: \"%s\". Argument was ignored.", arg));
@@ -96,26 +139,14 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	
 	@Override
 	public void run() {
-		// Need to activate legacy mode, I guess.
-		// https://imagej.net/libs/imagej-legacy
-		System.setProperty("imagej.legacy.sync", "true");
+		makeServicesWorkWithBothIDEAndFiji();
 		
-		/*
-		List<Dataset> currentDatasets = ij.dataset().getDatasets();
-		if (currentDatasets.isEmpty()) {
-			System.out.println("TODO: Open a file dialog");
-		} else {
-			// Get the last dataset.
-			this.origDataset = currentDatasets.get(currentDatasets.size() - 1);
-		}
-		*/
-		
-		this.origDataset = imageJ.imageDisplay().getActiveDataset();
+		this.origDataset = imageDisplayService.getActiveDataset();
 		if (this.origDataset == null) {
-			final File file = imageJ.ui().chooseFile(null, "open");
+			final File file = uiService.chooseFile(null, "open");
 			String filePathFromUserSelection = file.getPath();
 			try {
-				origDataset = imageJ.scifio().datasetIO().open(filePathFromUserSelection);
+				origDataset = scifioService.datasetIO().open(filePathFromUserSelection);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -128,12 +159,12 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		}
 		
 		// show the image
-		imageJ.ui().show(origDataset);					
+		this.uiService.show(origDataset);					
 		
 		// Grab a reference to some tools, so that our control panel
 		// can make use of them.
-		polylineTool = imageJ.tool().getTool("Polyline");
-		pointTool = imageJ.tool().getTool("Point");
+		polylineTool = this.toolService.getTool("Polyline");
+		pointTool = this.toolService.getTool("Point");
 
 		// Create our control panel.
 		controlPanelDlg = new DscControlPanelDialog(this);
@@ -162,7 +193,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	public void createWorkingImage() {
 		workingImg = convertToGrayscale(this.origDataset);
 
-		workingDisplay = (DefaultImageDisplay) imageJ.display().createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
+		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
 
 		maximizeContrast();
 		// maximizeContrastRollingWindow(50);
@@ -224,7 +255,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = imageJ.overlay().getOverlays();
+			List<Overlay> overlays = this.overlayService.getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -396,7 +427,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = imageJ.overlay().getOverlays();
+			List<Overlay> overlays = this.overlayService.getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -560,7 +591,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	public void activatePolylineTool() {
 		polylineTool.activate();
-		imageJ.tool().setActiveTool(polylineTool);
+		toolService.setActiveTool(polylineTool);
 		IJ.setTool("polyline");
 	}
 
@@ -594,7 +625,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	public static void main(final String... args) throws Exception {
 		// create the ImageJ application context with all available services
-		imageJ.ui().showUI();
+		imageJLegacy.ui().showUI();
 
 		/*
 		Dataset dataset = null;
