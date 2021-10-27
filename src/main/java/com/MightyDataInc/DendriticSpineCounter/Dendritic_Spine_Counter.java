@@ -35,6 +35,7 @@ import org.scijava.object.ObjectService;
 import org.scijava.event.EventHandler;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 import org.scijava.tool.Tool;
 import org.scijava.tool.ToolService;
 import org.scijava.ui.UIService;
@@ -49,9 +50,9 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 
 //@Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
-public class Dendritic_Spine_Counter implements PlugIn {
+public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
-	private static final ImageJ ij = new ImageJ();
+	private static final ImageJ imageJ = new ImageJ();
 
 	final static String WORKING_IMAGE_WINDOW_TITLE = "Dendritic Spine Counter Working Image";
 
@@ -89,6 +90,16 @@ public class Dendritic_Spine_Counter implements PlugIn {
 
 	@Override
 	public void run(String arg) {
+		System.out.println(String.format("Method PlugIn.run was passed String argument: \"%s\". Argument was ignored.", arg));
+		this.run();
+	}	
+	
+	@Override
+	public void run() {
+		// Need to activate legacy mode, I guess.
+		// https://imagej.net/libs/imagej-legacy
+		System.setProperty("imagej.legacy.sync", "true");
+		
 		/*
 		List<Dataset> currentDatasets = ij.dataset().getDatasets();
 		if (currentDatasets.isEmpty()) {
@@ -99,12 +110,12 @@ public class Dendritic_Spine_Counter implements PlugIn {
 		}
 		*/
 		
-		this.origDataset = ij.imageDisplay().getActiveDataset();
+		this.origDataset = imageJ.imageDisplay().getActiveDataset();
 		if (this.origDataset == null) {
-			final File file = ij.ui().chooseFile(null, "open");
+			final File file = imageJ.ui().chooseFile(null, "open");
 			String filePathFromUserSelection = file.getPath();
 			try {
-				origDataset = ij.scifio().datasetIO().open(filePathFromUserSelection);
+				origDataset = imageJ.scifio().datasetIO().open(filePathFromUserSelection);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -117,12 +128,12 @@ public class Dendritic_Spine_Counter implements PlugIn {
 		}
 		
 		// show the image
-		ij.ui().show(origDataset);					
+		imageJ.ui().show(origDataset);					
 		
 		// Grab a reference to some tools, so that our control panel
 		// can make use of them.
-		polylineTool = ij.tool().getTool("Polyline");
-		pointTool = ij.tool().getTool("Point");
+		polylineTool = imageJ.tool().getTool("Polyline");
+		pointTool = imageJ.tool().getTool("Point");
 
 		// Create our control panel.
 		controlPanelDlg = new DscControlPanelDialog(this);
@@ -151,7 +162,7 @@ public class Dendritic_Spine_Counter implements PlugIn {
 	public void createWorkingImage() {
 		workingImg = convertToGrayscale(this.origDataset);
 
-		workingDisplay = (DefaultImageDisplay) ij.display().createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
+		workingDisplay = (DefaultImageDisplay) imageJ.display().createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
 
 		maximizeContrast();
 		// maximizeContrastRollingWindow(50);
@@ -213,7 +224,7 @@ public class Dendritic_Spine_Counter implements PlugIn {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = ij.overlay().getOverlays();
+			List<Overlay> overlays = imageJ.overlay().getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -385,7 +396,7 @@ public class Dendritic_Spine_Counter implements PlugIn {
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
 		if (pathPoints == null) {
-			List<Overlay> overlays = ij.overlay().getOverlays();
+			List<Overlay> overlays = imageJ.overlay().getOverlays();
 			Collections.reverse(overlays);
 			for (Overlay overlay : overlays) {
 				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
@@ -549,7 +560,7 @@ public class Dendritic_Spine_Counter implements PlugIn {
 
 	public void activatePolylineTool() {
 		polylineTool.activate();
-		ij.tool().setActiveTool(polylineTool);
+		imageJ.tool().setActiveTool(polylineTool);
 		IJ.setTool("polyline");
 	}
 
@@ -583,7 +594,7 @@ public class Dendritic_Spine_Counter implements PlugIn {
 
 	public static void main(final String... args) throws Exception {
 		// create the ImageJ application context with all available services
-		ij.ui().showUI();
+		imageJ.ui().showUI();
 
 		/*
 		Dataset dataset = null;
@@ -604,8 +615,10 @@ public class Dendritic_Spine_Counter implements PlugIn {
 
 		// invoke the plugin
 		//ij.command().run(Dendritic_Spine_Counter.class, true);
-		Dendritic_Spine_Counter thePlugin = new Dendritic_Spine_Counter();
-		thePlugin.run( null );
+		//Dendritic_Spine_Counter thePlugin = new Dendritic_Spine_Counter();
+		//thePlugin.run( null );
 		
+		ij.IJ.runPlugIn("com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter", "unnecessaryArg");
 	}
+
 }
