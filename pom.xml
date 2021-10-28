@@ -12,9 +12,9 @@
 		<relativePath />
 	</parent>
 
-	<groupId>com.MightyDataInc</groupId>
+	<groupId>sc.fiji</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.1.8</version>
+	<version>1.2.1</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
@@ -113,7 +113,7 @@
 		<dependency>
     		<groupId>net.imglib2</groupId>
     		<artifactId>imglib2-script</artifactId>
-    		</dependency>
+   		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
 		<dependency>
 		    <groupId>net.imagej</groupId>
