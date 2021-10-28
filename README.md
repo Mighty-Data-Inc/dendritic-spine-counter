@@ -15,7 +15,6 @@ and is made available to the neuroscience community under the
 It was debuted to the neuroscience community online via a virtual poster
 presentation on Nov 11, 2021, at the [2021 annual meeting of the Society 
 for Neuroscience](https://www.sfn.org/meetings/neuroscience-2021/). 
-
 [**View the Neuroscience 2021 poster presentation**](http://todo-do-this)
 
 ## Downloading and Installing the Plugin
