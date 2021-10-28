@@ -14,14 +14,10 @@ import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import io.scif.SCIFIO;
 import net.imagej.ImageJ;
-import net.imagej.display.DefaultImageCanvas;
 import net.imagej.display.DefaultImageDisplay;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.display.OverlayService;
-import net.imagej.legacy.LegacyService;
-import net.imagej.ops.OpService;
 import net.imagej.overlay.Overlay;
-import net.imagej.roi.ROIService;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -30,10 +26,8 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.scijava.command.Command;
-import org.scijava.convert.ConvertService;
 import org.scijava.display.DisplayService;
 import org.scijava.display.event.input.InputEvent;
-import org.scijava.object.ObjectService;
 import org.scijava.event.EventHandler;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -80,8 +74,6 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	private DscControlPanelDialog controlPanelDlg;
 	private DefaultImageDisplay workingDisplay;
 	public Img<UnsignedByteType> workingImg;
-	public ImagePlus workingImp;
-	private ij.gui.Overlay workingOverlay;
 
 	public Tool polylineTool;
 	public Tool pointTool;
@@ -170,13 +162,21 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		controlPanelDlg = new DscControlPanelDialog(this);
 
 		createWorkingImage();
-
-		this.workingImp = WindowManager.getCurrentImage();
-		this.workingOverlay = this.workingImp.getOverlay();
-		if (workingOverlay == null) {
-			workingOverlay = new ij.gui.Overlay();
-			workingImp.setOverlay(workingOverlay);
+	}
+	
+	// We can't return an ImagePlus object because of introspection.
+	// We're just going to have to cast everywhere.
+	public Object getWorkingImagePlus() {
+		return WindowManager.getImage(WORKING_IMAGE_WINDOW_TITLE);		
+	}
+	
+	public ij.gui.Overlay getWorkingOverlay() {
+		ij.gui.Overlay overlay = ((ImagePlus)getWorkingImagePlus()).getOverlay();
+		if (overlay == null) {
+			overlay = new ij.gui.Overlay();
+			((ImagePlus)getWorkingImagePlus()).setOverlay(overlay);
 		}
+		return overlay;
 	}
 
 	public void plotSearchPixels(Collection<SearchPixel> pixels, int color) {
@@ -222,55 +222,6 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			return;
 		}
 		// TODO: Do something with this event. It has x, y, and modifier info.
-	}
-
-	public void listPathPoints() {
-		List<Point2D> pathPoints = null;
-
-		// We will extract points from an ROI. But the question is, which
-		// ROI will we use?
-
-		// If we're running via Fiji, then the ImageJ1.x infrastructure will
-		// provide us with a WindowManager, and the WindowManager will have a
-		// current image. If we can get an ROI from there, then that is what
-		// we will go with.
-
-		ImagePlus currentImage = WindowManager.getCurrentImage();
-		if (currentImage != null) {
-			Roi currentRoi = currentImage.getRoi();
-			if (currentRoi != null) {
-				List<Point2D> points = PointExtractor.getPointsFromLegacyRoi(currentRoi);
-				if (points.size() > 0) {
-					pathPoints = points;
-				}
-			}
-		}
-
-		// If we're running via a debugger or possibly the command line, then
-		// we might just have overlay information from the OverlayService.
-		// The overlays in the OverlayService might have ROIs that are not
-		// registered the ROIService. As such, we need to access them via
-		// the overlays, because we don't have access to them anywhere else.
-		// If this is the case, then we want the LAST overlay of the
-		// appropriate type (hence the reverse), because that's the one that
-		// the user added just before (or during) invoking this plugin.
-		if (pathPoints == null) {
-			List<Overlay> overlays = this.overlayService.getOverlays();
-			Collections.reverse(overlays);
-			for (Overlay overlay : overlays) {
-				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
-				if (points.size() > 0) {
-					pathPoints = points;
-					break;
-				}
-			}
-		}
-
-		if (pathPoints != null) {
-			for (Point2D point : pathPoints) {
-				System.out.println(point);
-			}
-		}
 	}
 
 	public void invertImage() {
@@ -407,7 +358,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		// current image. If we can get an ROI from there, then that is what
 		// we will go with.
 
-		ImagePlus currentImage = WindowManager.getCurrentImage();
+		ImagePlus currentImage = ((ImagePlus)getWorkingImagePlus());
 		if (currentImage != null) {
 			Roi currentRoi = currentImage.getRoi();
 			if (currentRoi != null) {
@@ -474,11 +425,11 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		dendriteVolumeRoi.setStrokeWidth(1.5);
 		dendriteVolumeRoi.setFillColor(new Color(.4f, .6f, 1f, .4f));
 
-		workingOverlay.add(dendriteVolumeRoi, dendriteVolumeRoi.toString());
+		getWorkingOverlay().add(dendriteVolumeRoi, dendriteVolumeRoi.toString());
 
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
-		workingImp.updateAndRepaintWindow();
+		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
 
 		path.id = this.nextPathId;
 		this.nextPathId++;
@@ -492,8 +443,8 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		if (path == null || path.roi == null) {
 			return;
 		}
-		workingOverlay.remove(path.roi);
-		workingImp.updateAndRepaintWindow();
+		getWorkingOverlay().remove(path.roi);
+		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
 	public void SelectPath(DendriteSegment path, boolean isSelected) {
@@ -506,12 +457,12 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		} else {
 			path.roi.setFillColor(new Color(.4f, .6f, 1f, .4f));
 		}
-		workingImp.updateAndRepaintWindow();
+		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
 	public void SetSelectedSegmentCursor(SearchPixel px) {
 		if (this.currentSelectedSegmentRoi != null) {
-			this.workingOverlay.remove(currentSelectedSegmentRoi);
+			this.getWorkingOverlay().remove(currentSelectedSegmentRoi);
 			this.currentSelectedSegmentRoi = null;
 		}
 
@@ -528,8 +479,8 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		this.currentSelectedSegmentRoi = new OvalRoi(px.x - halfSpan, px.y - halfSpan, totalSpan, totalSpan);
 		this.currentSelectedSegmentRoi.setFillColor(new Color(0f, 1f, .5f, .5f));
-		this.workingOverlay.add(currentSelectedSegmentRoi);
-		workingImp.updateAndRepaintWindow();
+		this.getWorkingOverlay().add(currentSelectedSegmentRoi);
+		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 	
 	
@@ -538,8 +489,8 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		for (Point2D spinePoint: spinePoints) {
 			spinesRoi.addPoint(spinePoint.getX(), spinePoint.getY());
 		}
-		workingImp.setRoi(spinesRoi, true);
-		workingImp.updateAndRepaintWindow();
+		((ImagePlus)getWorkingImagePlus()).setRoi(spinesRoi, true);
+		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
 
@@ -578,10 +529,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public List<Point2D> getPointsFromCurrentPolylineRoiSelection() {
-		if (workingImp == null) {
+		if (((ImagePlus)getWorkingImagePlus()) == null) {
 			return null;
 		}
-		Roi roi = workingImp.getRoi();
+		Roi roi = ((ImagePlus)getWorkingImagePlus()).getRoi();
 		if (roi == null) {
 			return null;
 		}
@@ -597,10 +548,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public void setWorkingImageWindowToForeground() {
-		if (this.workingImp == null) {
+		if (((ImagePlus)getWorkingImagePlus()) == null) {
 			return;
 		}
-		ImageWindow impwin = this.workingImp.getWindow();
+		ImageWindow impwin = ((ImagePlus)getWorkingImagePlus()).getWindow();
 		if (impwin == null) {
 			return;
 		}
@@ -608,10 +559,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public Calibration getWorkingImageDimensions() {
-		if (this.workingImp == null) {
+		if (((ImagePlus)getWorkingImagePlus()) == null) {
 			return null;
 		}
-		Calibration cal = this.workingImp.getCalibration();
+		Calibration cal = ((ImagePlus)getWorkingImagePlus()).getCalibration();
 		if (cal == null) {
 			return null;
 		}

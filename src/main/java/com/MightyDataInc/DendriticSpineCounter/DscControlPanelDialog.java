@@ -47,6 +47,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
 import ij.Executer;
+import ij.ImagePlus;
 import ij.IJ;
 import ij.gui.Roi;
 import ij.measure.Calibration;
@@ -521,10 +522,10 @@ public class DscControlPanelDialog extends JDialog {
 						ownerPlugin.AddPathToDrawOverlay(dendrite);
 					}
 
-					self.populateResultsTable();
+					populateResultsTable();
 
-					self.updateInputSpecificationButtonEnablements();
-					self.ownerPlugin.workingImp.updateAndRepaintWindow();
+					updateInputSpecificationButtonEnablements();
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 
@@ -766,13 +767,13 @@ public class DscControlPanelDialog extends JDialog {
 			btnActivatePolylineTool.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					ownerPlugin.workingImp.setRoi((Roi)null);
-					ownerPlugin.workingImp.updateAndRepaintWindow();
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).setRoi((Roi)null);
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 					
 					IJ.setTool("polyline");
 					updateInputSpecificationButtonEnablements();
 					ownerPlugin.setWorkingImageWindowToForeground();
-					ownerPlugin.workingImp.updateAndRepaintWindow();
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 			panel.add(btnActivatePolylineTool, gridbagConstraints);
@@ -791,7 +792,7 @@ public class DscControlPanelDialog extends JDialog {
 					DendriteSegment dendritePath = ownerPlugin.traceDendriteWithThicknessEstimation(.8);
 					pathListModel.addElement(dendritePath);
 					ownerPlugin.AddPathToDrawOverlay(dendritePath);
-					ownerPlugin.workingImp.updateAndRepaintWindow();
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 			panel.add(btnTraceCurrentPolyline, gridbagConstraints);
@@ -837,7 +838,7 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					updateInputSpecificationButtonEnablements();
-					ownerPlugin.workingImp.updateAndRepaintWindow();					
+					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();					
 				}
 			});
 
