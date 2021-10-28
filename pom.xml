@@ -14,7 +14,7 @@
 
 	<groupId>com.MightyDataInc</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.1.6</version>
+	<version>1.1.7</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
