@@ -103,7 +103,7 @@ public class DscControlPanelDialog extends JDialog {
 	private JRadioButton radioFeatureDetectionWindowInImageUnits;
 	private JCheckBox chkIncludeHeadersInCopyPaste;
 
-	private JTextField textfieldFeatureDetectionWindowSize;
+	public JTextField textfieldFeatureDetectionWindowSize;
 
 	private JTextField textfieldResultTableResearcher;
 	private JTextField textfieldResultTableImageDesignation;
@@ -124,11 +124,12 @@ public class DscControlPanelDialog extends JDialog {
 	// ----------------------------------------
 	// Data-bound UI-inputted properties.
 
-	enum FeatureDetectionWindowSizeUnitsEnum {
+	public enum FeatureDetectionWindowSizeUnitsEnum {
 		PIXELS, IMAGE_UNITS
 	};
 
-	private FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
+	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = 
+			FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
 	public DscControlPanelDialog(Dendritic_Spine_Counter plugin) {
 		super((Frame) null, "Dendritic Spine Counter", false);
@@ -426,7 +427,7 @@ public class DscControlPanelDialog extends JDialog {
 
 					JSONObject json = new JSONObject();
 					json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
-					json.put("spinetype", textfieldResultTableResearcher.getText().trim());
+					json.put("researcher", textfieldResultTableResearcher.getText().trim());
 					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
 					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
 
@@ -503,7 +504,7 @@ public class DscControlPanelDialog extends JDialog {
 					self.enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 					self.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
 
-					v = jsonObj.get("spinetype");
+					v = jsonObj.get("researcher");
 					self.textfieldResultTableResearcher.setText(String.format(v.toString()));
 
 					v = jsonObj.get("imagedesignation");
@@ -640,7 +641,9 @@ public class DscControlPanelDialog extends JDialog {
 					
 					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
 					double sensitivity = (100.0 - (double)sensitivitySliderVal) / 50.0;
-					sensitivity *= 4;
+					sensitivity *= sensitivity;
+					sensitivity *= sensitivity;
+					sensitivity *= 0.25;
 					// The "sensitivity" is actually kinda backwards.					
 					
 					List<Point2D> spines = new ArrayList<Point2D>();
@@ -680,7 +683,7 @@ public class DscControlPanelDialog extends JDialog {
 		}
 		
 		{
-			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 75);
+			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
 			sliderDetectionSensitivity.setMajorTickSpacing(10);
 			sliderDetectionSensitivity.setMinorTickSpacing(1);
 			sliderDetectionSensitivity.setPaintTicks(true);
@@ -1058,18 +1061,33 @@ public class DscControlPanelDialog extends JDialog {
 			JLabel label = new JLabel("<html>" + "Feature detection window size: " + "</html>", SwingConstants.RIGHT);
 			panel.add(label, gridbagConstraints);
 
-			textfieldFeatureDetectionWindowSize = new JTextField(5);
+			{
+				textfieldFeatureDetectionWindowSize = new JTextField(5);
+	
+				textfieldFeatureDetectionWindowSize.setText(String.format("%d", this.ownerPlugin.featureSizePixels));
+				textfieldFeatureDetectionWindowSize.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						ownerPlugin.featureSizePixels = getFeatureDetectionWindowSizeInPixels();
+					}
+				});
+				
+				JButton btnApply = new JButton("Apply");
+				btnApply.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						updateFeatureDetectionSizeInputPanel();						
+					}
+				});
+				
+				Box box = Box.createVerticalBox();
 
-			textfieldFeatureDetectionWindowSize.setText(String.format("%d", this.ownerPlugin.featureSizePixels));
-			textfieldFeatureDetectionWindowSize.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					ownerPlugin.featureSizePixels = getFeatureDetectionWindowSizeInPixels();
-				}
-			});
+				box.add(textfieldFeatureDetectionWindowSize);
+				box.add(btnApply);
 
-			gridbagConstraints.gridx++;
-			panel.add(textfieldFeatureDetectionWindowSize, gridbagConstraints);
+				gridbagConstraints.gridx++;
+				panel.add(box, gridbagConstraints);
+			}
 
 			{
 				radioFeatureDetectionWindowInPixels = new JRadioButton("pixels");
@@ -1120,7 +1138,12 @@ public class DscControlPanelDialog extends JDialog {
 			btnOpenSetScale.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					new Executer("Set Scale...", null);
+					new Executer("Set Scale...", 
+							((ImagePlus)(ownerPlugin.getWorkingImagePlus())));
+					
+					// NOTE: The executor spins off on a separate thread.
+					// So this update occurs right away, while the user is
+					// still entering values.
 					enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
 					updateFeatureDetectionSizeInputPanel();					
 				}
@@ -1336,7 +1359,7 @@ public class DscControlPanelDialog extends JDialog {
 
 	}
 
-	private void updateInputSpecificationButtonEnablements() {
+	public void updateInputSpecificationButtonEnablements() {
 		boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
 		btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
 
@@ -1372,7 +1395,7 @@ public class DscControlPanelDialog extends JDialog {
 	 * Update the states of the UI controls in the Feature Detection Size Input
 	 * Panel based on the values of our underlying member variables.
 	 */
-	private void updateFeatureDetectionSizeInputPanel() {
+	public void updateFeatureDetectionSizeInputPanel() {
 		radioFeatureDetectionWindowInPixels
 				.setSelected(enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.PIXELS);
 		radioFeatureDetectionWindowInImageUnits
@@ -1398,7 +1421,7 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	public int getFeatureDetectionWindowSizeInPixels() {
-		int pixelWindowSize = 7;
+		int pixelWindowSize = 5;
 		if (enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.PIXELS) {
 			try {
 				pixelWindowSize = Integer.valueOf(textfieldFeatureDetectionWindowSize.getText());
@@ -1415,11 +1438,11 @@ public class DscControlPanelDialog extends JDialog {
 			}
 		}
 
-		if (pixelWindowSize < 7) {
+		if (pixelWindowSize < 3) {
 			// If pixel window is too small, then the algo takes forever to run,
 			// and produces noisy garbage. As such, we will impose an internal
 			// minimum pixel window size.
-			pixelWindowSize = 7;
+			pixelWindowSize = 3;
 		}
 
 		return pixelWindowSize;
@@ -1487,7 +1510,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			double dendriteWidth = dendrite.MeanPixelWidth();
 			if (cal != null) {
-				dendriteWidth *= cal.getX(dendriteWidth);
+				dendriteWidth = cal.getX(dendriteWidth);
 			}
 
 			resultRow[1] = String.format("%.2f", dendriteLength);

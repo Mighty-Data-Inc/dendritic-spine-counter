@@ -14,6 +14,7 @@ import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import io.scif.SCIFIO;
 import net.imagej.ImageJ;
+import net.imagej.axis.CalibratedAxis;
 import net.imagej.display.DefaultImageDisplay;
 import net.imagej.display.ImageDisplayService;
 import net.imagej.display.OverlayService;
@@ -26,6 +27,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.scijava.command.Command;
+import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
 import org.scijava.display.event.input.InputEvent;
 import org.scijava.event.EventHandler;
@@ -36,12 +38,15 @@ import org.scijava.tool.Tool;
 import org.scijava.tool.ToolService;
 import org.scijava.ui.UIService;
 
+import com.MightyDataInc.DendriticSpineCounter.DscControlPanelDialog.FeatureDetectionWindowSizeUnitsEnum;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
@@ -92,13 +97,15 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	public double MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES = 5.0;
 
 	// How big the features to scan for are, in pixels.
-	public int featureSizePixels = 7;
+	public int featureSizePixels = 5;
 
 	private OvalRoi currentSelectedSegmentRoi;
 
 	// The ID value to assign to the next path that gets added to our overlay.
 	// Incremented every time we add a path. Never decremented.
 	private int nextPathId = 1;
+	
+	private Calibration cachedCalibration = null;
 
 	// The IDE environment injects services with a "legacy" model, whereas
 	// Fiji uses a "new" model. But it's inconsistent in both cases. It's maddening.
@@ -143,16 +150,15 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			if (origDataset == null) {
+				IJ.noImage();
+				return;
+			}			
+			// show the image
+			this.uiService.show(origDataset);
 		}
-		
-		if (origDataset == null) {
-			IJ.noImage();
-			return;
-		}
-		
-		// show the image
-		this.uiService.show(origDataset);					
-		
+				
 		// Grab a reference to some tools, so that our control panel
 		// can make use of them.
 		polylineTool = this.toolService.getTool("Polyline");
@@ -162,6 +168,11 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		controlPanelDlg = new DscControlPanelDialog(this);
 
 		createWorkingImage();
+	}
+	
+	public Display<?> getOriginalDatasetDisplay() {
+		List<Display<?>> origDatasetDisplays = this.displayService.getDisplays(this.origDataset);
+		return origDatasetDisplays.get(0);
 	}
 	
 	// We can't return an ImagePlus object because of introspection.
@@ -196,23 +207,24 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
 
 		maximizeContrast();
-		// maximizeContrastRollingWindow(50);
-	}
-
-	public void dimImage() {
-		long width = workingImg.dimension(0);
-		long height = workingImg.dimension(1);
-
-		final RandomAccess<UnsignedByteType> r = workingImg.randomAccess();
-
-		for (long y = 0; y < height; y++) {
-			for (long x = 0; x < width; x++) {
-				r.setPosition(new long[] { x, y });
-				UnsignedByteType t = r.get();
-				t.setReal(t.getRealFloat() / 2);
-			}
-		}
-		workingDisplay.update();
+				
+		// Grab the original dataset's dimensional calibrations.
+		CalibratedAxis[] axes = new CalibratedAxis[origDataset.numDimensions()];
+		origDataset.axes(axes);
+		double pixelsPerPhysicalUnit = axes[0].calibratedValue(1);
+		
+		String unitName = axes[0].unit();
+		cachedCalibration = new Calibration();
+		cachedCalibration.setUnit(unitName);
+		cachedCalibration.pixelWidth = pixelsPerPhysicalUnit;
+		cachedCalibration.pixelHeight = pixelsPerPhysicalUnit;
+		
+		this.controlPanelDlg.textfieldFeatureDetectionWindowSize.setText("0.5");
+		
+		this.controlPanelDlg.enumFeatureDetectionWindowSizeUnits = 
+				FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
+		
+		this.controlPanelDlg.updateInputSpecificationButtonEnablements();
 	}
 
 	@EventHandler
@@ -222,6 +234,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			return;
 		}
 		// TODO: Do something with this event. It has x, y, and modifier info.
+		this.controlPanelDlg.updateInputSpecificationButtonEnablements();
 	}
 
 	public void invertImage() {
@@ -285,33 +298,6 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		if (workingDisplay != null) {
 			workingDisplay.update();
-		}
-	}
-
-	public void maximizeContrastRollingWindow(int windowRadius) {
-		long width = workingImg.dimension(0);
-		long height = workingImg.dimension(1);
-
-		final RandomAccess<UnsignedByteType> r = workingImg.randomAccess();
-
-		for (int y = 0; y < height; y++) {
-			System.out.println("Y: " + y);
-			for (int x = 0; x < width; x++) {
-				r.setPosition(new long[] { x, y });
-				UnsignedByteType t = r.get();
-				double pixelBrightness = t.getRealDouble();
-
-				List<Double> brightnesses = this.getBrightnesses(x - windowRadius, y - windowRadius, x + windowRadius,
-						y + windowRadius);
-
-				double brightnessMin = Collections.min(brightnesses);
-				double brightnessMax = Collections.max(brightnesses);
-
-				double fracThisPixelBrightness = (pixelBrightness - brightnessMin) / (brightnessMax - brightnessMin);
-
-				double pixelBrightnessNew = fracThisPixelBrightness * t.getMaxValue();
-				t.setReal(pixelBrightnessNew);
-			}
 		}
 	}
 
@@ -559,18 +545,16 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public Calibration getWorkingImageDimensions() {
-		if (((ImagePlus)getWorkingImagePlus()) == null) {
+		ImagePlus workingImp = ((ImagePlus)getWorkingImagePlus());
+		if (workingImp == null) {
 			return null;
 		}
-		Calibration cal = ((ImagePlus)getWorkingImagePlus()).getCalibration();
-		if (cal == null) {
-			return null;
-		}
-		if (!cal.scaled()) {
-			return null;
-		}
-		if (cal.getUnits() == null) {
-			return null;
+		Calibration cal = workingImp.getCalibration();
+		if (cal == null ||
+				!cal.scaled() ||	
+				cal.getUnits() == null) {
+			cal = this.cachedCalibration;
+			workingImp.setCalibration(cal);
 		}
 		return cal;
 	}
