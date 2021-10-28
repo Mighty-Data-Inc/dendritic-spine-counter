@@ -13,7 +13,7 @@ so most "lagged representation" problems can be resolved in this manner. We hope
 too much of an inconvenience to most users, and we will seek ways to ameliorate this issue
 (elegantly, i.e. without the introduction of prohibitive computational overhead) in the future.
 
-### Preparation
+## Preparation
 *Dendritic Spine Counter* expects ImageJ's user to start the plugin while an active image, or
 "dataset" in ImageJ parlance, has already been selected. If the user starts
 *Dendritic Spine Counter* without an active image, then the plugin will automatically
@@ -23,7 +23,7 @@ If all goes according to plan, then *Dendrite Spine Counter* will display its wi
 
 ![Dendritic Spine Counter opens a grayscale copy "working image".](/documentation/images/02-01--Scale-and-Color-Calibration.jpg)
 
-### Tab 1: "Set feature size"
+## Tab 1: "Set feature size"
 *Dendritic Spine Counter* needs to know how big of a "feature window" to use when performing operations such as determining a dendrite's width or identifying a spine. (The concept of a "feature window" is a very old and well-established principle in computer vision. It is similar, but not identical, to a "kernel" or "convolution window", which is used more commonly in modern work in automated image processing. These topics are discussed in more detail in the **Methods** section below.)
 
 Setting the feature window too large will cause this plugin to miss smaller features (Type II errors). Setting this feature window too small will cause it to incorrectly identify noise as features (Type I errors), and will also increase computational time (which will be noticeable if you perform this operation on slower computers). It's worth remembering that this plugin allows the user full control to veto or augment the machine's inferences, so errors of any kind can be minimized with the help of human intervention.
@@ -39,7 +39,7 @@ The smallest permissible feature window size is seven (7) pixels. Because this p
 1. *Dendritic Spine Counter* assumes that you are working with images taken with bright field microscopy (BF), and that z-stacked slices are combined into a unified 2D image using MinIP. In short, this plugin assumes that features are represented as dark pixels upon a light background. If the opposite is true, then *Dendritic Spine Counter* provides a convenient button to invert the image. (Sample screenshot uses an image from ["High-throughput synapse-resolving two-photon fluorescence microendoscopy for deep-brain volumetric imaging in vivo", Meng et. al., University of California, _eLife_, Jan 3 2019.](https://elifesciences.org/articles/40805))\
 ![If using fluorescence or other dark-field techniques, click on "Invert image brightness levels".](/documentation/images/02-04--Invert-working-image-if-MaxIP.jpg)
 
-### Tab 2: Trace dendrites
+## Tab 2: Trace dendrites
 Users will probably spend most of their time in the `Trace dendrites` tab and the subsequent one, `Mark spines`. In `Trace dendrites`, users can employ the Polyline Tool to trace the approximate centerlines of dendritic segments. The plugin will detect the thicknesses of the dendrite segment at various regions described by the traced centerline, and users will be given the opportunity to refine the plugin's estimation of the dendrite's contours.
 
 1. Activate the Polyline Tool. *Dendritic Spine Counter* initially identifies dendrites through coarse Polyline Tool tracings. You can, of course, use ImageJ's tool menu to select the Polyline Tool, but the plugin provides a convenient button for doing so within the wizard dialog.\
@@ -57,7 +57,7 @@ Users will probably spend most of their time in the `Trace dendrites` tab and th
 1. You can modify the selected region of the selected branch. You can make it thicker or thinner, and shift it left or right (orthogonally relative to the flow of the dendrite branch.)\
 ![Modify the selected region.](/documentation/images/03-06--Make-circled-region-thicker-or-thinner-or-move-it-left-or-right.jpg)
 
-### Tab 3: Mark spines
+## Tab 3: Mark spines
 The user can activate the Mutli-point Tool, and click on places in the image that correspond to where the user sees that there are spines, with each point placed by the Multi-point Tool corresponding to one spine. The Multi-point Tool is of course accessible through the ImageJ toolbar, but the plug-in provides an additional button to activate this tool directly from the wizard dialog.
 ![Mark spines with Multi-point Tool.](/documentation/images/04-01--Mark-spines-with-Multi-point-tool.jpg)
 
@@ -65,16 +65,17 @@ Marked spines are considered "ephemeral" -- that is, they exist only as a curren
 
 The user will have the opportunity to tabulate marked spines in the next tab, `Report results`.
 
-#### Automatically detect spines
+### Automatically detect spines
 This plugin includes the option to use simple statistics-based image analysis techniques to find spines along the edges of the traced dendrite segments. This can be performed by simply clicking on the button marked `Automatically detect spines on traced dendrites`.
-
-The user can adjust the sensitivity of the automatic detection process. At full sensitivity, any outcropping from the edge of the dendrite that is even slightly darker than its surroundings is marked as a spine. At the lowest sensitivity level, an outcropping has to be much darker than adjacent features in order to be considered a spine. The sensitivity level is used at the time at which automatic detection takes place, so the user should set their desired sensitivity *first*, and *then* click the automatic detection button. The user may, of course, revise their sensitivity calibration through a trial-and-error process -- that is, move the slider, click the button, move the slider, click the button, etc. Every time the user clicks the button, the markings are erased and replaced, so the user is free to experiment until they find a calibration that works well with their image.
 
 This operation will clear any existing markings and replace them with the automated results. If the user wishes to perform automated detection, they should do so *first*, and then adjust the output manually if desired.
 
 When using the automatic detection feature, it's important to remember that the results of the automated process are simply points placed upon the image with the Multi-point Tool. The user is free to make any adjustments to the detected spines that they see fit, using the standard interface and control scheme that they would normally use when operating the Multi-point Tool in any other context. They can add more points to identify spines that the automation might have missed; remove points (through Alt-click) that the automation might have identified as spines erroneously; and move points that don't quite topologically correspond to the feature that the human recognizes as a spine.
 
-### Tab 4: Report results
+#### Adjusting the sensitivity of the automatic detector
+The user can adjust the sensitivity of the automatic detection process. At full sensitivity, any outcropping from the edge of the dendrite that is even slightly darker than its surroundings is marked as a spine. At the lowest sensitivity level, an outcropping has to be much darker than adjacent features in order to be considered a spine. The sensitivity level is used at the time at which automatic detection takes place, so the user should set their desired sensitivity *first*, and *then* click the automatic detection button. The user may, of course, revise their sensitivity calibration through a trial-and-error process -- that is, move the slider, click the button, move the slider, click the button, etc. Every time the user clicks the button, the markings are erased and replaced, so the user is free to experiment until they find a calibration that works well with their image.
+
+## Tab 4: Report results
 In the `Report results` tab, with points marked on the image using the Multi-point Tool to denote spines, the user can click on the button `Count spines near dendrite segments` to tabulate spine densities for every dendrite segment that they've marked. (NOTE: If this button is missing, then that means you have a newer version of *Dendritic Spine Counter* that simply populates the table automatically when you view this tab, making an explicit separate "Count" step unnecessary. If so, then the table you see on this tab already reflects the spine counts that you've marked.)
 
 The plugin will automatically associate each spine with its nearest dendrite segment by Euclidean distance. The plugin will then populate a table containing the following information (with distances provided in physical units if the user had set the image's scale, or pixels if not):
@@ -86,7 +87,7 @@ The plugin will automatically associate each spine with its nearest dendrite seg
 
 ![Count spines along each dendrite segment.](/documentation/images/05-01--Count-results.jpg)
 
-#### Copy results to your clipboard and paste to a spreadsheet
+### Copy results to your clipboard and paste to a spreadsheet
 The button `Copy table data to clipboard` will automatically copy the contents of the table to your computer's clipboard. It will preserve row and column information using tab and newline delimiters, which are recognized by all major spreadsheet applications such as 
 [Microsoft Excel](https://www.microsoft.com/en-us/microsoft-365/excel), 
 [Google Sheets](https://www.google.com/sheets/about/), or 
@@ -94,11 +95,12 @@ The button `Copy table data to clipboard` will automatically copy the contents o
 
 ![Copy results table, paste into Excel.](/documentation/images/05-02--Copy-results-table-paste-into-Excel.jpg)
 
-**Optional columns.** In order to help the researcher (or team of researchers) consolidate data from many different dendrites across many different images, *Dendritic Spine Counter* provides the ability to designate a handful of optional columns. If the user chooses to fill values into these optional column fields, then this value will be copied down across all rows in the table data when the `Copy table data to clipboard` button is clicked. This additional column *will not appear* in the table shown in the dialog, but it will be stored on the clipboard and subsequently pasted into a spreadsheet. Using this option, a team of researchers can easily use the same spreadsheet to perform multiple copy-paste operations, and keep track of metadata such as which researcher was operating the software, which file they were examining, and what specific kinds of spine features they were looking for.
+#### Optional columns.
+In order to help the researcher (or team of researchers) consolidate data from many different dendrites across many different images, *Dendritic Spine Counter* provides the ability to designate a handful of optional columns. If the user chooses to fill values into these optional column fields, then this value will be copied down across all rows in the table data when the `Copy table data to clipboard` button is clicked. This additional column *will not appear* in the table shown in the dialog, but it will be stored on the clipboard and subsequently pasted into a spreadsheet. Using this option, a team of researchers can easily use the same spreadsheet to perform multiple copy-paste operations, and keep track of metadata such as which researcher was operating the software, which file they were examining, and what specific kinds of spine features they were looking for.
 
 ![Optional columns.](/documentation/images/05-03--Optional-Columns.jpg)
 
-### Tab 5: Save/Load
+## Tab 5: Save/Load
 *Dendritic Spine Counter* is intended to typically be used in one sitting at a time, with a workflow consisting of loading an image, tracing the dendrites, marking the spines, copying to a spreadsheet, and closing the application. However, we recognize that this isn't always possible or even necessarily desirable. For example, we recognize that dendrite tracings might need to be saved for subsequent re-examination, such as in a case where the task of operating this software is delegated to a less-experienced researcher and a more senior staff member might want the opportunity to later review their work. This plugin therefore provides the ability to save and load the dendrite segment tracing information to/from a file.
 
 ![Save and load dendrite segment tracing.](/documentation/images/06-02--Save-Load-saves-to-JSON-file.jpg)
