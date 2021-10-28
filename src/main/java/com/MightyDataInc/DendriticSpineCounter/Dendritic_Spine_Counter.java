@@ -422,6 +422,15 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		path.roi = dendriteVolumeRoi;
 
+		Calibration cal = this.getWorkingImageDimensions();
+		if (cal != null && !cal.getUnits().isEmpty()) {
+			double pixelLength = path.pixelLength();
+			path.nameSuffix = String.format(", length: %.3f %s", 
+					cal.getX(pixelLength),
+					cal.getUnits()
+					);
+		}
+		
 		return path.id;
 	}
 

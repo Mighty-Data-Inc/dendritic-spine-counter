@@ -42,6 +42,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
@@ -170,7 +172,16 @@ public class DscControlPanelDialog extends JDialog {
 
 			JPanel panel4 = createReportPanel();
 			tabbedPane.addTab("Report results", panel4);
-
+		    tabbedPane.addChangeListener(new ChangeListener() {
+				@Override
+				public void stateChanged(ChangeEvent arg0) {
+					// TODO Auto-generated method stub
+					if (tabbedPane.getSelectedIndex() != 3) {
+						return;
+					}
+					countSpinesAndBuildTable();
+				}
+		    });
 			JPanel panel5 = createFileLoadSavePanel();
 			tabbedPane.addTab("Save/Load", panel5);
 		}
@@ -217,8 +228,8 @@ public class DscControlPanelDialog extends JDialog {
 		
 		{
 			JLabel label = new JLabel("<html>" 
-					+ "<p>At the click of the \"Count spines...\" button, this plug-in "
-					+ "will go through all of the spines you've currently selected with "
+					+ "<p>This plug-in automatically"
+					+ "goes through all of the spines you've currently selected with "
 					+ "the Multi-point Tool. It will associate each spine with its "
 					+ "nearest dendrite segment, and tabulate statistics about "
 					+ "the spine counts and densities for each dendrite segment.</p>" 
@@ -229,8 +240,9 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.bottom = 4;
-		}		
+		}
 		
+		/*
 		{
 			String pathToImage = "images/icons/dsc--find-spines-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -240,17 +252,14 @@ public class DscControlPanelDialog extends JDialog {
 			btnCountMarkedSpines.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					List<Point2D> points = ownerPlugin.getPointsFromCurrentPolylineRoiSelection();
-					clearSpineAssociations();
-					associateSpinesWithDendriteSegments(points);
-					populateResultsTable();
-					updateInputSpecificationButtonEnablements();
+					countSpinesAndBuildTable();
 				}
 			});
 			panel.add(btnCountMarkedSpines, gridbagConstraints);
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 		}
+		*/
 
 		{
 			this.resultsTableHolder = new JScrollPane();
@@ -644,7 +653,8 @@ public class DscControlPanelDialog extends JDialog {
 					sensitivity *= sensitivity;
 					sensitivity *= sensitivity;
 					sensitivity *= 0.25;
-					// The "sensitivity" is actually kinda backwards.					
+					// The "sensitivity" is actually kinda backwards.
+					// It needs an easing function to mean what the labeling says it means.
 					
 					List<Point2D> spines = new ArrayList<Point2D>();
 					
@@ -1214,6 +1224,14 @@ public class DscControlPanelDialog extends JDialog {
 		updateFeatureDetectionSizeInputPanel();
 		return panel;
 	}
+	
+	public void countSpinesAndBuildTable() {
+		List<Point2D> points = ownerPlugin.getPointsFromCurrentPolylineRoiSelection();
+		clearSpineAssociations();
+		associateSpinesWithDendriteSegments(points);
+		populateResultsTable();
+		updateInputSpecificationButtonEnablements();
+	}
 
 	public void updateSelectedSegment() {
 		DendriteSegment selectedBranch = this.pathListBox.getSelectedValue();
@@ -1382,7 +1400,7 @@ public class DscControlPanelDialog extends JDialog {
 		this.btnActivateMultiPointTool.setEnabled(!isCurrentToolMultiPoint);
 
 		boolean areThereAnyDendrites = !this.pathListModel.isEmpty();
-		btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
+		//btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
 		btnDetectSpines.setEnabled(areThereAnyDendrites);
 
 		boolean areThereResults = this.resultsTableData.length > 0;

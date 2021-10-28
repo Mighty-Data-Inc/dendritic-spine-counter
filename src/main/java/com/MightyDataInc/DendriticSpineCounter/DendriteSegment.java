@@ -31,6 +31,8 @@ public class DendriteSegment {
 
 	// The ID gets assigned at the time at which it's added to the overlay.
 	public int id = 0;
+	
+	public String nameSuffix;
 
 	// Spines associated with this search pixel path.
 	public List<Point2D> spines = new ArrayList<Point2D>();
@@ -761,6 +763,10 @@ public class DendriteSegment {
 		return rois;
 	}
 
+	public double pixelLength() {
+		return this.path.size() * this.minimumSeparation;
+	}
+	
 	public double MeanPixelWidth() {
 		double widthTotal = 0;
 		for (SearchPixel px : this.path) {
@@ -846,8 +852,10 @@ public class DendriteSegment {
 		SearchPixel pixelFirst = path.get(0);
 		SearchPixel pixelLast = path.get(path.size() - 1);
 
-		return "Path #" + this.id + " from : (" + pixelFirst.x + ", " + pixelFirst.y + ") to (" + pixelLast.x + ", "
-				+ pixelLast.y + ")";
+		String retval = "Path #" + this.id + " from : (" + pixelFirst.x + ", " + pixelFirst.y + ") to (" + pixelLast.x + ", "
+				+ pixelLast.y + ")" + this.nameSuffix;
+		
+		return retval;
 	}
 
 	@SuppressWarnings("unchecked")
