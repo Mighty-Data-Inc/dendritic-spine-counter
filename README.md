@@ -1,5 +1,5 @@
 # Dendritic Spine Counter
-This Maven project builds a plugin for [ImageJ](https://imagej.net/), 
+*Dendritic Spine Counter* is a plugin for [ImageJ](https://imagej.net/), 
 the public-domain software for processing and analyzing scientific images.
 This plugin creates a modular wizard dialog to assist neuroscientists
 with the task of counting dendritic spines in microscope images. It 
@@ -18,25 +18,55 @@ for Neuroscience](https://www.sfn.org/meetings/neuroscience-2021/).
 
 [**View the Neuroscience 2021 poster presentation**](http://todo-do-this)
 
-## Build (via Maven)
+## Downloading and Installing the Plugin
+Users of ImageJ can acquire and install *Dendritic Spine Counter* in a number of ways.
+
+### Using the ImageJ Update System
+The most straightforward and "official" way to get *Dendritic Spine Counter* is to 
+use ImageJ's existing update system. This approach will keep *Dendritic Spine Counter*
+automatically up-to-date whenever you run ImageJ (assuming you are running the updater).
+
+From within a running instance of ImageJ (sample screenshots show Fiji):
+1. Click on "Help"
+1. Click on "Update..."
+1. Click on "Manage update sites"
+1. Find the update site "Mighty Data, Inc.", and check the checkbox to the left of it. It *should* show up in your list automatically. If it's not present in your list of update sites, you may need to add it. You can do so by clicking "Add update site", and entering the following information:
+    * Name: `Mighty Data, Inc.`
+    * URL: `https://sites.imagej.net/mightydatainc/`
+1.  Click on "Close", and follow the prompts. You should see ImageJ downloading several JAR files. Afterwards, *Dendritic Spine Counter* should appear in your list of plugins.
+
+![Dendritic Spine Counter installation via ImageJ Update.](/documentation/images/installation-from-imagej-updater.jpg)
+
+### From GitHub Releases
+You can download the latest stable release from the GitHub repository. The process for doing so is pretty simple, but you'll have to actively rememeber to download new releases yourself if you care about staying up-to-date should *Dendritic Spine Counter* get new features or bug fixes.
+
+1. Find the latest release on [the project's release page](https://github.com/Mighty-Data-Inc/dendritic-spine-counter/releases).
+1. Download the JAR file.
+1. Move the JAR file to the `plugins` subdirectory of the directory where ImageJ is installed on your computer.
+
+![Copying the JAR file to your plugins folder.](/documentation/images/installation-copy-to-plugins.jpg)
+
+
+### How you know it worked
+After you perform any of the above download and installation sequences, you'll need to relaunch ImageJ. Upon relaunch, *Dendritic Spine Counter* can be found in the `Plugins` menu.
+
+![Dendritic Spine Counter resides in the Plugins dropdown.](/documentation/images/01-03.2-Plugins-menu.jpg)
+
+
+## Building from Source Code
 This project is built from a 
 [boilerplate example ImageJ command implementation](https://github.com/imagej/example-imagej2-command). 
 Users should refer to that example project
 to answer any questions about how to configure and build
 this software in your IDE of choice.
 
-The specification for the build process can be found in `pom.xml` at the root of the project, and can be modified to suit your needs.
+The developers of this project used [Eclipse](https://www.eclipse.org/ide/).
+We found [ImageJ's documentation for developing ImageJ in Eclipse](https://imagej.net/imagej-wiki-static/Developing_ImageJ_in_Eclipse)
+to be extremely helpful. In particular, the [section about how to get Eclipse to copy the output JAR directly to 
+ImageJ's plugin directory](https://imagej.net/imagej-wiki-static/Developing_ImageJ_in_Eclipse#Option_2:_Install_dependencies)
+saved us a lot of hassle.
 
-## Installation
-The output of the Maven build is a JAR file called `dendritic-spine-counter-jar-with-dependencies.jar`. Because it's intended to be fully self-contained and deployable, it might be rather large (approximately 130 MB). 
 
-Copy this file into your ImageJ `plugins` folder. For example, on a Windows 10 computer, if you
-installed ImageJ through the [Fiji](https://imagej.net/software/fiji/) package, then your
-plugins folder is probably at `C:\"Program Files"\Fiji.app\plugins`.
-
-After you copy (or drag-and-drop) this file into your ImageJ plugins folder, ImageJ will detect
-this plugin automatically the next time you run ImageJ. You should see this plugin appear as
-`Dendritic Spine Counter` under the `Plugins` menu.
 
 ## Usage
 Dendritic Spine Counter is designed to be intuitive, self-documenting, and naturally interoperative
@@ -54,10 +84,6 @@ too much of an inconvenience to most users, and we will seek ways to ameliorate 
 (elegantly, i.e. without the introduction of prohibitive computational overhead) in the future.
 
 ### Preparation
-After being installed (and ImageJ relaunched), *Dendritic Spine Counter* can be found in the `Plugins` menu.
-
-![Dendritic Spine Counter resides in the Plugins dropdown.](/documentation/images/01-03.2-Plugins-menu.jpg)
-
 *Dendritic Spine Counter* expects ImageJ's user to start the plugin while an active image, or
 "dataset" in ImageJ parlance, has already been selected. If the user starts
 *Dendritic Spine Counter* without an active image, then the plugin will automatically
@@ -65,7 +91,7 @@ launch a "File Open..." dialog and prompt the user to select an image file.
 
 If all goes according to plan, then *Dendrite Spine Counter* will display its wizard dialog, opened to the first tab, the `Set feature size` tab. It will also create a "working image", which is a grayscale, contrast-maximized copy of the active image. *Dendritic Spine Counter* will do all of its work on this "working image". We choose this approach because, under the hood, *Dendritic Spine Counter* only reads image brightness data and ignores color, so working with a grayscale copy allows the user to proverbially see the image through the plugin's metaphorical eyes, and thereby take advantage of (and compensate for) features that might appear differently in grayscale than they do in color.
 
-![*Dendritic Spine Counter* opens a grayscale copy "working image".](/documentation/images/02-01--Scale-and-Color-Calibration.jpg)
+![Dendritic Spine Counter opens a grayscale copy "working image".](/documentation/images/02-01--Scale-and-Color-Calibration.jpg)
 
 ### Tab 1: "Set feature size"
 *Dendritic Spine Counter* needs to know how big of a "feature window" to use when performing operations such as determining a dendrite's width or identifying a spine. (The concept of a "feature window" is a very old and well-established principle in computer vision. It is similar, but not identical, to a "kernel" or "convolution window", which is used more commonly in modern work in automated image processing. These topics are discussed in more detail in the **Methods** section below.)
@@ -147,7 +173,7 @@ The button `Copy table data to clipboard` will automatically copy the contents o
 
 This plugin's save files are written in JSON format. Though bulkier than a binary format, JSON was chosen for the sake of an open-source, full-transparency approach. JSON has the advantage of being text-readable and self-documenting (and in fact even text-editable), allowing a researcher to examine or even modify the contents of the file directly if they wish to do so. Though *Dendritic Spine Counter* isn't intended to be used in this manner (i.e. manual editing of save files), we nonetheless provide the potential capability.
 
-![Dendrite tracing information saved as JSON.](/documentation/images/06-03--JSON-format-viewable.jpgjpg)
+![Dendrite tracing information saved as JSON.](/documentation/images/06-03--JSON-format-viewable.jpg)
 
 ## Background
 
