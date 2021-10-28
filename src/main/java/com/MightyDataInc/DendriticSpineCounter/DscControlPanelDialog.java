@@ -1120,6 +1120,8 @@ public class DscControlPanelDialog extends JDialog {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					new Executer("Set Scale...", null);
+					enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
+					updateFeatureDetectionSizeInputPanel();					
 				}
 			});
 			panel.add(btnOpenSetScale, gridbagConstraints);
