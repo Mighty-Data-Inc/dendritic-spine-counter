@@ -73,7 +73,7 @@ Please read the usage guide for a detailed walkthrough of how to use the softwar
 [***Dendritic Spine Counter* Usage Guide**](/documentation/Usage.md)
 
 ### Whitepaper 
-If you wish to use *Dendritic Spine Counter* in research that you intend to formally present
+If you wish to use *Dendritic Spine Counter* in research that you intend to formally submit
 in a paper or presentation, you'll probably need to know how it works. Fortunately,
 *Dendritic Spine Counter* was intentionally built with very straightforward methodologies
 and operating principles. We've eschewed artificial neural networks and other machine learning techniques
