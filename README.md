@@ -34,22 +34,22 @@ From within a running instance of ImageJ (sample screenshots show Fiji):
     * URL: `https://sites.imagej.net/mightydatainc/`
 1.  Click on "Close", and follow the prompts. You should see ImageJ downloading several JAR files. Afterwards, *Dendritic Spine Counter* should appear in your list of plugins.
 
-![Dendritic Spine Counter installation via ImageJ Update.](/documentation/images/installation-from-imagej-updater.jpg)
+![Dendritic Spine Counter installation via ImageJ Update.](https://raw.githubusercontent.com/Mighty-Data-Inc/dendritic-spine-counter/main/documentation/images/installation-from-imagej-updater.jpg)
 
 ### From GitHub Releases
 You can download the latest stable release from the GitHub repository. The process for doing so is pretty simple, but you'll have to actively rememeber to download new releases yourself if you care about staying up-to-date should *Dendritic Spine Counter* get new features or bug fixes.
 
-1. Find the latest release on [the project's release page](https://github.com/Mighty-Data-Inc/dendritic-spine-counter/releases).
+1. Find the latest release on [the project's release page](https://raw.githubusercontent.com/Mighty-Data-Inc/dendritic-spine-counter/releases).
 1. Download the JAR file.
 1. Move the JAR file to the `plugins` subdirectory of the directory where ImageJ is installed on your computer.
 
-![Copying the JAR file to your plugins folder.](/documentation/images/installation-copy-to-plugins.jpg)
+![Copying the JAR file to your plugins folder.](https://raw.githubusercontent.com/Mighty-Data-Inc/dendritic-spine-counter/main/documentation/images/installation-copy-to-plugins.jpg)
 
 
 ### How you know it worked
 After you perform any of the above download and installation sequences, you'll need to relaunch ImageJ. Upon relaunch, *Dendritic Spine Counter* can be found in the `Plugins` menu.
 
-![Dendritic Spine Counter resides in the Plugins dropdown.](/documentation/images/01-03.2-Plugins-menu.jpg)
+![Dendritic Spine Counter resides in the Plugins dropdown.](https://raw.githubusercontent.com/Mighty-Data-Inc/dendritic-spine-counter/main/documentation/images/01-03.2-Plugins-menu.jpg)
 
 
 ## Building from Source Code
@@ -70,7 +70,7 @@ saved us a lot of hassle.
 ### User Manual
 Please read the usage guide for a detailed walkthrough of how to use the software's features and capabilities.
 
-[***Dendritic Spine Counter* Usage Guide**](/documentation/Usage.md)
+[***Dendritic Spine Counter* Usage Guide**](https://github.com/Mighty-Data-Inc/dendritic-spine-counter/blob/main/documentation/Usage.md)
 
 ### Whitepaper 
 If you wish to use *Dendritic Spine Counter* in research that you intend to formally submit
@@ -80,7 +80,12 @@ and operating principles. We've eschewed artificial neural networks and other ma
 in favor of heuristic and statistical approaches, so as to permit neuroscientists to use the
 software with a confident understanding of what it's doing and how it's doing it. 
 
-[***Dendritic Spine Counter* Whitepaper**](/documentation/Paper.md)
+[***Dendritic Spine Counter* Whitepaper**](https://github.com/Mighty-Data-Inc/dendritic-spine-counter/blob/main/documentation/Paper.md)
+
+### GitHub Project Page
+This project is hosted on GitHub. 
+
+[***Dendritic Spine Counter* GitHub project page**](https://imagej.net/plugins/dendritic-spine-counter)
 
 ### ImageJ Plugin
 This project is primarily released through ImageJ as a plugin. We maintain a plugin page
@@ -96,18 +101,4 @@ on the ImageJ extension list.
 [**Read the abstract**](https://www.abstractsonline.com/pp8/#!/10485/presentation/19804)
 
 [**View the virtual poster presentation**](https://www.abstractsonline.com/pp8/#!/10485/presentation/19804)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
