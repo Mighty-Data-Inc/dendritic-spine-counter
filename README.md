@@ -85,7 +85,7 @@ software with a confident understanding of what it's doing and how it's doing it
 ### GitHub Project Page
 This project is hosted on GitHub. 
 
-[***Dendritic Spine Counter* GitHub project page**](https://imagej.net/plugins/dendritic-spine-counter)
+[***Dendritic Spine Counter* GitHub project page**](https://github.com/Mighty-Data-Inc/dendritic-spine-counter)
 
 ### ImageJ Plugin
 This project is primarily released through ImageJ as a plugin. We maintain a plugin page
