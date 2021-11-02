@@ -9,7 +9,7 @@ of user interfaces to provide a quick and convenient way for users to enter,
 consolidate, tabulate, and save their data.
 
 It is intended to be used by neuroscience researchers,
-and is made available to the neuroscience community under the 
+and is made available to the public under the 
 [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.txt).
 
 It was debuted to the neuroscience community online via a virtual poster
