@@ -185,10 +185,6 @@ public class DscControlPanelDialog extends JDialog {
 			JPanel panel5 = createFileLoadSavePanel();
 			tabbedPane.addTab("Save/Load", panel5);
 		}
-		/*
-		 * 
-		 * controlPanel.add(this.createSpineFinderPanel(), gridbagConstraints);
-		 */
 
 		// Make the dialog pretty by setting its icon.
 		{
@@ -1045,9 +1041,9 @@ public class DscControlPanelDialog extends JDialog {
 				+ "when scanning this image for visually discernible features. This window's "
 				+ "size should be set to the approximate size of an observable dendritic spine, "
 				+ "which may depend on factors such as stain quality and image sharpness.</p><br/>"
-				+ "<p>Setting this value too high will cause the Finder to fail to find smaller "
+				+ "<p>Setting this value too high will cause the plugin to fail to find smaller "
 				+ "or blurrier spines (Type II errors). Setting it too low will cause the "
-				+ "Finder to incorrectly identify spines where none exist (Type I errors). "
+				+ "plugin to incorrectly identify spines where none exist (Type I errors). "
 				+ "(A low setting may also increase the running time of the feature identification process.)</p>"
 				+ "</div></html>";
 
@@ -1169,14 +1165,10 @@ public class DscControlPanelDialog extends JDialog {
 		{
 			JLabel label = new JLabel("<html>" 
 					+ "<hr/><br/>"
-					+ "<p>This plug-in assumes that the images being examined were "
-					+ "captured with bright-field (BF) microscopy, with stacking "
-					+ "presumably performed using minimum intensity projection (MinIP). "
-					+ "I.e. it assumes that this image's noteworthy "
-					+ "features appear dark upon a light background. If your "
-					+ "image was taken with another technique or processed such "
-					+ "that the opposite is true, then the working image "
-					+ "will need to be inverted."
+					+ "This plugin uses 2D images with a light background. "
+					+ "If you wish to analyze 3D stacks, please first convert them "
+					+ "to a 2D image (using MinIP, MaxIP, etc.). "
+					+ "If your background is dark, you may use the button below to invert the image."
 					+ "</html>");
 			gridbagConstraints.insets.top = 20;
 			gridbagConstraints.insets.bottom = 8;

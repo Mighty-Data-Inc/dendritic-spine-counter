@@ -14,7 +14,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
@@ -31,7 +31,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<developers>
 		<!-- See https://imagej.net/Team -->
 		<developer>
@@ -47,7 +47,7 @@
 				<role>support</role>
 				<role>maintainer</role>
 			</roles>
-		</developer>		
+		</developer>
 		<developer>
 			<id>pcromero</id>
 			<name>Peter Romero</name>
@@ -108,24 +108,24 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/net.imglib2/imglib2-script -->
 		<dependency>
-    		<groupId>net.imglib2</groupId>
-    		<artifactId>imglib2-script</artifactId>
-   		</dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-script</artifactId>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
 		<dependency>
-		    <groupId>net.imagej</groupId>
-		    <artifactId>imagej-legacy</artifactId>
-	    </dependency>
-	    <!-- https://crunchify.com/how-to-write-json-object-to-file-in-java/ -->
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+		</dependency>
+		<!-- https://crunchify.com/how-to-write-json-object-to-file-in-java/ -->
 
-	    <dependency>
-	    	<groupId>com.googlecode.json-simple</groupId>
-	    	<artifactId>json-simple</artifactId>
-	    	<version>1.1.1</version>
-	    </dependency>
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1.1</version>
+		</dependency>
 	</dependencies>
 
 </project>
