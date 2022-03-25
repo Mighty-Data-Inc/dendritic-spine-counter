@@ -74,7 +74,6 @@ public class SearchPixel implements Comparable<SearchPixel> {
 		final RandomAccess<T> r = img.randomAccess();
 
 		r.setPosition(new long[] { x, y });
-		T t = r.get();
 
 		SearchPixel searchPix = new SearchPixel(img, x, y);
 		return searchPix;

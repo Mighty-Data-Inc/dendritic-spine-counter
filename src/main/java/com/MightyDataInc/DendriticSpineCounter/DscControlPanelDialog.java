@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +86,6 @@ public class DscControlPanelDialog extends JDialog {
 	private JButton btnActivatePolylineTool;
 	private JButton btnTraceCurrentPolyline;
 	private JButton btnActivateMultiPointTool;
-	private JButton btnCountMarkedSpines;
 	private JButton btnDetectSpines;
 	
 	private JSlider sliderDetectionSensitivity;
@@ -450,7 +451,6 @@ public class DscControlPanelDialog extends JDialog {
 			DscControlPanelDialog self = this;
 
 			btnLoadDataFromFile.addActionListener(new ActionListener() {			
-				@SuppressWarnings("unchecked")
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					JFileChooser fileChooser = new JFileChooser();
@@ -464,9 +464,22 @@ public class DscControlPanelDialog extends JDialog {
 					String filecontents = "";
 					try {
 						filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
+					} catch (InvalidPathException e1) {
+						JOptionPane.showMessageDialog(null,
+							    "Couldn't read this string as a file path: " + filename,
+							    "Invalid path",
+							    JOptionPane.ERROR_MESSAGE);
+						return;						
+					} catch (NoSuchFileException e1) {
+						JOptionPane.showMessageDialog(null,
+							    "The system could not find any such file: " + filename,
+							    "No such file",
+							    JOptionPane.ERROR_MESSAGE);
+						return;
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
+						return;
 					}
 
 					JSONParser parser = new JSONParser();
@@ -497,6 +510,7 @@ public class DscControlPanelDialog extends JDialog {
 					self.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
 
 					JSONArray jsonDends = (JSONArray) jsonObj.get("dendrites");
+					List<Point2D> allspines = new ArrayList<Point2D>();
 					for (int iDend = 0; iDend < jsonDends.size(); iDend++) {
 						JSONObject jsonDend = (JSONObject) jsonDends.get(iDend);
 						DendriteSegment dendrite = new DendriteSegment();
@@ -504,8 +518,13 @@ public class DscControlPanelDialog extends JDialog {
 
 						self.pathListModel.addElement(dendrite);
 						ownerPlugin.AddPathToDrawOverlay(dendrite);
+						
+						allspines.addAll(dendrite.spines);
 					}
 
+					// Add all the spines as visible ROI points in one big blast.
+					ownerPlugin.AddPointRoisAsSpineMarkers(allspines);
+					
 					populateResultsTable();
 
 					updateInputSpecificationButtonEnablements();
@@ -1507,7 +1526,6 @@ public class DscControlPanelDialog extends JDialog {
 			resultRow[3] = String.format("%d", dendrite.spines.size());
 
 			double spinesPerUnit = ((double) dendrite.spines.size()) / dendriteLength;
-			double unitsPerSpine = 1.0 / spinesPerUnit;
 			resultRow[4] = String.format("%.5f", spinesPerUnit);
 		}
 
