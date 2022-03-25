@@ -196,12 +196,9 @@ public class DscControlPanelDialog extends JDialog {
 
 		// Clean up dialog's organization/layout and set its size.
 		pack();
-		// setPreferredSize(new Dimension(600, getHeight()));
-		// setMinimumSize(new Dimension(600, 800));
 		setPreferredSize(new Dimension(600, 768));
 		pack();
 		setVisible(true);
-		// setResizable(false);
 	}
 
 	/**
@@ -238,25 +235,6 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.insets.bottom = 4;
 		}
 		
-		/*
-		{
-			String pathToImage = "images/icons/dsc--find-spines-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnCountMarkedSpines = new JButton("Count spines near dendrite segments", myIcon);
-
-			btnCountMarkedSpines.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					countSpinesAndBuildTable();
-				}
-			});
-			panel.add(btnCountMarkedSpines, gridbagConstraints);
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-		*/
-
 		{
 			this.resultsTableHolder = new JScrollPane();
 
