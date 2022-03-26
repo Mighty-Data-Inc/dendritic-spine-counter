@@ -91,6 +91,7 @@ public class DscControlPanelDialog extends JDialog {
 	private JSlider sliderDetectionSensitivity;
 
 	private JButton btnDeleteBranch;
+	private JButton btnRenameBranch;
 	private JButton btnNextSegment;
 	private JButton btnPrevSegment;
 	private JButton btnMakeSegmentWider;
@@ -852,6 +853,9 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridy++;
 		}
 		{
+			
+			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.gridx = 0;			
 			{
 				String pathToImage = "images/icons/dsc--delete-dendrite-path-24.png";
 				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -869,13 +873,36 @@ public class DscControlPanelDialog extends JDialog {
 						pathSegmentIndexSelected = 0;
 						updateSelectedSegment();
 						updateInputSpecificationButtonEnablements();
+						// TODO: DELETE SPINES TOO
 					}
 				});
 
 				panel.add(btnDeleteBranch, gridbagConstraints);
-				gridbagConstraints.gridy++;
+				gridbagConstraints.gridx++;
 			}
+			
+			{
+				String pathToImage = "images/icons/rename-24.png";
+				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
 
+				btnRenameBranch = new JButton("Rename Branch", myIcon);
+				btnRenameBranch.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						DendriteSegment selectedPath = pathListBox.getSelectedValue();
+						if (selectedPath == null) {
+							return;
+						}
+						// TODO: Implement Rename
+					}
+				});
+
+				panel.add(btnRenameBranch, gridbagConstraints);
+				gridbagConstraints.gridy++;
+			}			
+
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.gridx = 0;			
 			{
 				JLabel label = new JLabel("<html>" + "To edit the width of the selected dendrite segment at any point, "
 						+ "use the controls below to move the highlighted region forward and "
@@ -1377,6 +1404,7 @@ public class DscControlPanelDialog extends JDialog {
 		DendriteSegment selectedBranch = this.pathListBox.getSelectedValue();
 		boolean isThereACurrentSelectedBranch = selectedBranch != null;
 		this.btnDeleteBranch.setEnabled(isThereACurrentSelectedBranch);
+		this.btnRenameBranch.setEnabled(isThereACurrentSelectedBranch);
 		this.btnPrevSegment.setEnabled(isThereACurrentSelectedBranch && this.pathSegmentIndexSelected > 0);
 		this.btnNextSegment.setEnabled(
 				isThereACurrentSelectedBranch && this.pathSegmentIndexSelected < selectedBranch.path.size() - 1);

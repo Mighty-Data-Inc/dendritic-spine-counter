@@ -524,11 +524,11 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	public List<Point2D> getPointsFromCurrentPolylineRoiSelection() {
 		if (((ImagePlus)getWorkingImagePlus()) == null) {
-			return null;
+			return new ArrayList<Point2D>();
 		}
 		Roi roi = ((ImagePlus)getWorkingImagePlus()).getRoi();
 		if (roi == null) {
-			return null;
+			return new ArrayList<Point2D>();
 		}
 
 		List<Point2D> points = PointExtractor.getPointsFromLegacyRoi(roi);
