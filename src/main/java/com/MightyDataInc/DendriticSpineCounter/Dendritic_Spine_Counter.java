@@ -42,10 +42,15 @@ import com.MightyDataInc.DendriticSpineCounter.DscControlPanelDialog.FeatureDete
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.swing.JOptionPane;
+
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
@@ -61,19 +66,19 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	@Parameter
 	UIService uiService;
-	
+
 	@Parameter
 	SCIFIO scifioService;
-	
+
 	@Parameter
 	ToolService toolService;
 
 	@Parameter
 	DisplayService displayService;
-	
+
 	@Parameter
 	OverlayService overlayService;
-	
+
 	public Dataset origDataset;
 	private DscControlPanelDialog controlPanelDlg;
 	private DefaultImageDisplay workingDisplay;
@@ -103,7 +108,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	// The ID value to assign to the next path that gets added to our overlay.
 	// Incremented every time we add a path. Never decremented.
 	private int nextPathId = 1;
-	
+
 	private Calibration cachedCalibration = null;
 
 	// The IDE environment injects services with a "legacy" model, whereas
@@ -114,7 +119,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		}
 		if (this.uiService == null) {
 			this.uiService = imageJLegacy.ui();
-		}		
+		}
 		if (this.scifioService == null) {
 			this.scifioService = imageJLegacy.scifio();
 		}
@@ -126,38 +131,47 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		}
 		if (this.overlayService == null) {
 			this.overlayService = imageJLegacy.overlay();
-		}		
+		}
 	}
-	
+
 	@Override
 	public void run(String arg) {
-		System.out.println(String.format("Method PlugIn.run was passed String argument: \"%s\". Argument was ignored.", arg));
+		System.out.println(
+				String.format("Method PlugIn.run was passed String argument: \"%s\". Argument was ignored.", arg));
 		this.run();
-	}	
-	
+	}
+
 	@Override
 	public void run() {
 		makeServicesWorkWithBothIDEAndFiji();
-		
+
 		this.origDataset = imageDisplayService.getActiveDataset();
 		if (this.origDataset == null) {
 			final File file = uiService.chooseFile(null, "open");
 			String filePathFromUserSelection = file.getPath();
 			try {
 				origDataset = scifioService.datasetIO().open(filePathFromUserSelection);
+			} catch (InvalidPathException e1) {
+				JOptionPane.showMessageDialog(null,
+						"Couldn't read this string as a file path: " + filePathFromUserSelection, "Invalid path",
+						JOptionPane.ERROR_MESSAGE);
+			} catch (NoSuchFileException e1) {
+				JOptionPane.showMessageDialog(null,
+						"The system could not find any such file: " + filePathFromUserSelection, "No such file",
+						JOptionPane.ERROR_MESSAGE);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			if (origDataset == null) {
 				IJ.noImage();
 				return;
-			}			
+			}
 			// show the image
 			this.uiService.show(origDataset);
 		}
-				
+
 		// Grab a reference to some tools, so that our control panel
 		// can make use of them.
 		polylineTool = this.toolService.getTool("Polyline");
@@ -168,23 +182,23 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		createWorkingImage();
 	}
-	
+
 	public Display<?> getOriginalDatasetDisplay() {
 		List<Display<?>> origDatasetDisplays = this.displayService.getDisplays(this.origDataset);
 		return origDatasetDisplays.get(0);
 	}
-	
+
 	// We can't return an ImagePlus object because of introspection.
 	// We're just going to have to cast everywhere.
 	public Object getWorkingImagePlus() {
-		return WindowManager.getImage(WORKING_IMAGE_WINDOW_TITLE);		
+		return WindowManager.getImage(WORKING_IMAGE_WINDOW_TITLE);
 	}
-	
+
 	public ij.gui.Overlay getWorkingOverlay() {
-		ij.gui.Overlay overlay = ((ImagePlus)getWorkingImagePlus()).getOverlay();
+		ij.gui.Overlay overlay = ((ImagePlus) getWorkingImagePlus()).getOverlay();
 		if (overlay == null) {
 			overlay = new ij.gui.Overlay();
-			((ImagePlus)getWorkingImagePlus()).setOverlay(overlay);
+			((ImagePlus) getWorkingImagePlus()).setOverlay(overlay);
 		}
 		return overlay;
 	}
@@ -203,26 +217,26 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	public void createWorkingImage() {
 		workingImg = convertToGrayscale(this.origDataset);
 
-		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE, workingImg);
+		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE,
+				workingImg);
 
 		maximizeContrast();
-				
+
 		// Grab the original dataset's dimensional calibrations.
 		CalibratedAxis[] axes = new CalibratedAxis[origDataset.numDimensions()];
 		origDataset.axes(axes);
 		double pixelsPerPhysicalUnit = axes[0].calibratedValue(1);
-		
+
 		String unitName = axes[0].unit();
 		cachedCalibration = new Calibration();
 		cachedCalibration.setUnit(unitName);
 		cachedCalibration.pixelWidth = pixelsPerPhysicalUnit;
 		cachedCalibration.pixelHeight = pixelsPerPhysicalUnit;
-		
+
 		this.controlPanelDlg.textfieldFeatureDetectionWindowSize.setText("0.5");
-		
-		this.controlPanelDlg.enumFeatureDetectionWindowSizeUnits = 
-				FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
-		
+
+		this.controlPanelDlg.enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
+
 		this.controlPanelDlg.updateInputSpecificationButtonEnablements();
 	}
 
@@ -343,7 +357,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		// current image. If we can get an ROI from there, then that is what
 		// we will go with.
 
-		ImagePlus currentImage = ((ImagePlus)getWorkingImagePlus());
+		ImagePlus currentImage = ((ImagePlus) getWorkingImagePlus());
 		if (currentImage != null) {
 			Roi currentRoi = currentImage.getRoi();
 			if (currentRoi != null) {
@@ -384,7 +398,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		}
 
 		DendriteSegment polylineTracedPath = DendriteSegment.searchPolyline(pathPoints, workingImg, null);
-		
+
 		int pixelWindowSize = this.controlPanelDlg.getFeatureDetectionWindowSizeInPixels();
 		polylineTracedPath.setMinimumSeparation(pixelWindowSize);
 		polylineTracedPath.smoothify(0.5);
@@ -414,7 +428,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
-		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
+		((ImagePlus) getWorkingImagePlus()).updateAndRepaintWindow();
 
 		path.id = this.nextPathId;
 		this.nextPathId++;
@@ -424,12 +438,9 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		Calibration cal = this.getWorkingImageDimensions();
 		if (cal != null && !cal.getUnits().isEmpty()) {
 			double pixelLength = path.pixelLength();
-			path.nameSuffix = String.format(", length: %.3f %s", 
-					cal.getX(pixelLength),
-					cal.getUnits()
-					);
+			path.nameSuffix = String.format(", length: %.3f %s", cal.getX(pixelLength), cal.getUnits());
 		}
-		
+
 		return path.id;
 	}
 
@@ -438,7 +449,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			return;
 		}
 		getWorkingOverlay().remove(path.roi);
-		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
+		((ImagePlus) getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
 	public void SelectPath(DendriteSegment path, boolean isSelected) {
@@ -451,7 +462,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		} else {
 			path.roi.setFillColor(new Color(.4f, .6f, 1f, .4f));
 		}
-		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
+		((ImagePlus) getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
 	public void SetSelectedSegmentCursor(SearchPixel px) {
@@ -464,9 +475,8 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			return;
 		}
 
-		double totalSpan = 
-				px.getPixelSidepathDistance(SearchPixel.PathSide.LEFT) + 
-				px.getPixelSidepathDistance(SearchPixel.PathSide.RIGHT);
+		double totalSpan = px.getPixelSidepathDistance(SearchPixel.PathSide.LEFT)
+				+ px.getPixelSidepathDistance(SearchPixel.PathSide.RIGHT);
 
 		totalSpan += 2 * this.featureSizePixels;
 		double halfSpan = totalSpan / 2.0;
@@ -474,19 +484,17 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		this.currentSelectedSegmentRoi = new OvalRoi(px.x - halfSpan, px.y - halfSpan, totalSpan, totalSpan);
 		this.currentSelectedSegmentRoi.setFillColor(new Color(0f, 1f, .5f, .5f));
 		this.getWorkingOverlay().add(currentSelectedSegmentRoi);
-		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
-	}
-	
-	
-	public void AddPointRoisAsSpineMarkers(List<Point2D> spinePoints) {		
-		PointRoi spinesRoi = new PointRoi();
-		for (Point2D spinePoint: spinePoints) {
-			spinesRoi.addPoint(spinePoint.getX(), spinePoint.getY());
-		}
-		((ImagePlus)getWorkingImagePlus()).setRoi(spinesRoi, true);
-		((ImagePlus)getWorkingImagePlus()).updateAndRepaintWindow();
+		((ImagePlus) getWorkingImagePlus()).updateAndRepaintWindow();
 	}
 
+	public void AddPointRoisAsSpineMarkers(List<Point2D> spinePoints) {
+		PointRoi spinesRoi = new PointRoi();
+		for (Point2D spinePoint : spinePoints) {
+			spinesRoi.addPoint(spinePoint.getX(), spinePoint.getY());
+		}
+		((ImagePlus) getWorkingImagePlus()).setRoi(spinesRoi, true);
+		((ImagePlus) getWorkingImagePlus()).updateAndRepaintWindow();
+	}
 
 	public List<Double> getBrightnesses(int xStart, int yStart, int xEnd, int yEnd) {
 		List<Double> brightnesses = new ArrayList<Double>();
@@ -523,10 +531,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public List<Point2D> getPointsFromCurrentPolylineRoiSelection() {
-		if (((ImagePlus)getWorkingImagePlus()) == null) {
+		if (((ImagePlus) getWorkingImagePlus()) == null) {
 			return new ArrayList<Point2D>();
 		}
-		Roi roi = ((ImagePlus)getWorkingImagePlus()).getRoi();
+		Roi roi = ((ImagePlus) getWorkingImagePlus()).getRoi();
 		if (roi == null) {
 			return new ArrayList<Point2D>();
 		}
@@ -542,10 +550,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public void setWorkingImageWindowToForeground() {
-		if (((ImagePlus)getWorkingImagePlus()) == null) {
+		if (((ImagePlus) getWorkingImagePlus()) == null) {
 			return;
 		}
-		ImageWindow impwin = ((ImagePlus)getWorkingImagePlus()).getWindow();
+		ImageWindow impwin = ((ImagePlus) getWorkingImagePlus()).getWindow();
 		if (impwin == null) {
 			return;
 		}
@@ -553,14 +561,12 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	}
 
 	public Calibration getWorkingImageDimensions() {
-		ImagePlus workingImp = ((ImagePlus)getWorkingImagePlus());
+		ImagePlus workingImp = ((ImagePlus) getWorkingImagePlus());
 		if (workingImp == null) {
 			return null;
 		}
 		Calibration cal = workingImp.getCalibration();
-		if (cal == null ||
-				!cal.scaled() ||	
-				cal.getUnits() == null) {
+		if (cal == null || !cal.scaled() || cal.getUnits() == null) {
 			cal = this.cachedCalibration;
 			workingImp.setCalibration(cal);
 		}
@@ -572,27 +578,22 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		imageJLegacy.ui().showUI();
 
 		/*
-		Dataset dataset = null;
-		try {
-			dataset = ij.scifio().datasetIO().open("C:\\\\Users\\mvol\\Desktop\\testpubz-MinIP.jpg");			
-		} catch(Exception ex) {			
-		}
-		
-		if (dataset == null) {
-			final File file = ij.ui().chooseFile(null, "open");
-			String filePathFromUserSelection = file.getPath();
-			dataset = ij.scifio().datasetIO().open(filePathFromUserSelection);			
-		}
-
-		// show the image
-		ij.ui().show(dataset);
-		*/
+		 * Dataset dataset = null; try { dataset =
+		 * ij.scifio().datasetIO().open("C:\\\\Users\\mvol\\Desktop\\testpubz-MinIP.jpg"
+		 * ); } catch(Exception ex) { }
+		 * 
+		 * if (dataset == null) { final File file = ij.ui().chooseFile(null, "open");
+		 * String filePathFromUserSelection = file.getPath(); dataset =
+		 * ij.scifio().datasetIO().open(filePathFromUserSelection); }
+		 * 
+		 * // show the image ij.ui().show(dataset);
+		 */
 
 		// invoke the plugin
-		//ij.command().run(Dendritic_Spine_Counter.class, true);
-		//Dendritic_Spine_Counter thePlugin = new Dendritic_Spine_Counter();
-		//thePlugin.run( null );
-		
+		// ij.command().run(Dendritic_Spine_Counter.class, true);
+		// Dendritic_Spine_Counter thePlugin = new Dendritic_Spine_Counter();
+		// thePlugin.run( null );
+
 		ij.IJ.runPlugIn("com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter", "unnecessaryArg");
 	}
 

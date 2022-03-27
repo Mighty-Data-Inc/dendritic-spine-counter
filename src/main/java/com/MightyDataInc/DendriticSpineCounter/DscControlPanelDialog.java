@@ -1,5 +1,6 @@
 package com.MightyDataInc.DendriticSpineCounter;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -87,7 +88,7 @@ public class DscControlPanelDialog extends JDialog {
 	private JButton btnTraceCurrentPolyline;
 	private JButton btnActivateMultiPointTool;
 	private JButton btnDetectSpines;
-	
+
 	private JSlider sliderDetectionSensitivity;
 
 	private JButton btnDeleteBranch;
@@ -132,8 +133,7 @@ public class DscControlPanelDialog extends JDialog {
 		PIXELS, IMAGE_UNITS
 	};
 
-	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = 
-			FeatureDetectionWindowSizeUnitsEnum.PIXELS;
+	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
 	public DscControlPanelDialog(Dendritic_Spine_Counter plugin) {
 		super((Frame) null, "Dendritic Spine Counter", false);
@@ -174,7 +174,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			JPanel panel4 = createReportPanel();
 			tabbedPane.addTab("Report results", panel4);
-		    tabbedPane.addChangeListener(new ChangeListener() {
+			tabbedPane.addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent arg0) {
 					// TODO Auto-generated method stub
@@ -183,7 +183,7 @@ public class DscControlPanelDialog extends JDialog {
 					}
 					countSpinesAndBuildTable();
 				}
-		    });
+			});
 			JPanel panel5 = createFileLoadSavePanel();
 			tabbedPane.addTab("Save/Load", panel5);
 		}
@@ -220,15 +220,13 @@ public class DscControlPanelDialog extends JDialog {
 		gridbagConstraints.insets.right = 16;
 
 		gridbagConstraints.gridwidth = 2;
-		
+
 		{
-			JLabel label = new JLabel("<html>" 
-					+ "<p>This plug-in automatically "
+			JLabel label = new JLabel("<html>" + "<p>This plug-in automatically "
 					+ "goes through all of the spines you've currently selected with "
 					+ "the Multi-point Tool. It will associate each spine with its "
 					+ "nearest dendrite segment, and tabulate statistics about "
-					+ "the spine counts and densities for each dendrite segment.</p>" 
-					+ "</html>");
+					+ "the spine counts and densities for each dendrite segment.</p>" + "</html>");
 			gridbagConstraints.insets.bottom = 8;
 			panel.add(label, gridbagConstraints);
 
@@ -236,7 +234,7 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.bottom = 4;
 		}
-		
+
 		{
 			this.resultsTableHolder = new JScrollPane();
 
@@ -327,7 +325,7 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		addEmptySpaceFillerLabel(panel, gridbagConstraints);
-		
+
 		return panel;
 	}
 
@@ -411,6 +409,13 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					JSONObject json = new JSONObject();
+					json.put("version", "1.3.3");
+
+					try {
+						json.put("originalimagefile", ownerPlugin.origDataset.getImgPlus().getSource());
+					} catch (Exception e1) {
+					}
+
 					json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
 					json.put("researcher", textfieldResultTableResearcher.getText().trim());
 					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
@@ -451,7 +456,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			DscControlPanelDialog self = this;
 
-			btnLoadDataFromFile.addActionListener(new ActionListener() {			
+			btnLoadDataFromFile.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					JFileChooser fileChooser = new JFileChooser();
@@ -466,16 +471,12 @@ public class DscControlPanelDialog extends JDialog {
 					try {
 						filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
 					} catch (InvalidPathException e1) {
-						JOptionPane.showMessageDialog(null,
-							    "Couldn't read this string as a file path: " + filename,
-							    "Invalid path",
-							    JOptionPane.ERROR_MESSAGE);
-						return;						
+						JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + filename,
+								"Invalid path", JOptionPane.ERROR_MESSAGE);
+						return;
 					} catch (NoSuchFileException e1) {
-						JOptionPane.showMessageDialog(null,
-							    "The system could not find any such file: " + filename,
-							    "No such file",
-							    JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(null, "The system could not find any such file: " + filename,
+								"No such file", JOptionPane.ERROR_MESSAGE);
 						return;
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
@@ -519,25 +520,25 @@ public class DscControlPanelDialog extends JDialog {
 
 						self.pathListModel.addElement(dendrite);
 						ownerPlugin.AddPathToDrawOverlay(dendrite);
-						
+
 						allspines.addAll(dendrite.spines);
 					}
 
 					// Add all the spines as visible ROI points in one big blast.
 					ownerPlugin.AddPointRoisAsSpineMarkers(allspines);
-					
+
 					populateResultsTable();
 
 					updateInputSpecificationButtonEnablements();
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 
 			gridbagConstraints.gridy++;
 		}
 
-		addEmptySpaceFillerLabel(panel, gridbagConstraints);		
-		
+		addEmptySpaceFillerLabel(panel, gridbagConstraints);
+
 		return panel;
 	}
 
@@ -561,20 +562,16 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridwidth = 2;
 			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
-			JLabel label = new JLabel("<html>" + "Use the Multi-point Tool to mark spines. "
-					+ "Dendritic Spine Counter "
-					+ "will automatically associate each spine with whichever dendrite segment "  
-					+ "is closest to it."
-					+ "<ul>"
-					+ "<li>Click within the image to mark a spine.</li>"
-					+ "<li>Click and hold a marked spine (drag it) to relocate it.</li>"
-					+ "<li>Alt-Click a marked spine to remove it.</li>"
-					+ "</ul>"
-					+ "<p>Spines marked with this tool are \"tentative\", i.e. they are "
-					+ "considered a Multi-point selection, and can be added, moved, or deleted "
-					+ "as you see fit. You will have the chance to tabulate them in the "
-					+ "\"Report results\" tab."
-					+ "</html>");
+			JLabel label = new JLabel(
+					"<html>" + "Use the Multi-point Tool to mark spines. " + "Dendritic Spine Counter "
+							+ "will automatically associate each spine with whichever dendrite segment "
+							+ "is closest to it." + "<ul>" + "<li>Click within the image to mark a spine.</li>"
+							+ "<li>Click and hold a marked spine (drag it) to relocate it.</li>"
+							+ "<li>Alt-Click a marked spine to remove it.</li>" + "</ul>"
+							+ "<p>Spines marked with this tool are \"tentative\", i.e. they are "
+							+ "considered a Multi-point selection, and can be added, moved, or deleted "
+							+ "as you see fit. You will have the chance to tabulate them in the "
+							+ "\"Report results\" tab." + "</html>");
 			panel.add(label, gridbagConstraints);
 
 			// Because we're using the same gridbagConstraints object for subsequent
@@ -611,19 +608,18 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		{
-			JLabel label = new JLabel("<html>" 
-					+ "This plug-in can auto-detect spines that project outward from the edges of " 
-					+ "your dendrite segments. You can adjust the contrast sensitivity that this plug-in "
-					+ "uses for this task. Low contrast sensitivity means that a spine needs to be "
-					+ "significantly darker than its background in order to be recognized, " 
-					+ "while high contrast sensitivity may try to mark a feature as a spine even if "
-					+ "it is only slightly darker than its background.<br/<br/>"
-					+ "After spines are automatically detected, you will then have the ability to move, "
-					+ "add, or delete them as you see fit.<br/<br/>"
-					+ "NOTE: Using this function will clear your current selection and replace it with "
-					+ "the auto-detected features. If you're going to use this feature, you should "
-					+ "use it <i>first</i>, and <i>then</i> add more spines manually if needed."
-					+ "</html>");
+			JLabel label = new JLabel(
+					"<html>" + "This plug-in can auto-detect spines that project outward from the edges of "
+							+ "your dendrite segments. You can adjust the contrast sensitivity that this plug-in "
+							+ "uses for this task. Low contrast sensitivity means that a spine needs to be "
+							+ "significantly darker than its background in order to be recognized, "
+							+ "while high contrast sensitivity may try to mark a feature as a spine even if "
+							+ "it is only slightly darker than its background.<br/<br/>"
+							+ "After spines are automatically detected, you will then have the ability to move, "
+							+ "add, or delete them as you see fit.<br/<br/>"
+							+ "NOTE: Using this function will clear your current selection and replace it with "
+							+ "the auto-detected features. If you're going to use this feature, you should "
+							+ "use it <i>first</i>, and <i>then</i> add more spines manually if needed." + "</html>");
 			// We want extra space at the bottom of this label.
 			panel.add(label, gridbagConstraints);
 
@@ -641,28 +637,28 @@ public class DscControlPanelDialog extends JDialog {
 				public void actionPerformed(ActionEvent e) {
 					int pixelWindowSize = getFeatureDetectionWindowSizeInPixels();
 					int SCANSPAN = 2;
-					
+
 					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
-					double sensitivity = (100.0 - (double)sensitivitySliderVal) / 50.0;
+					double sensitivity = (100.0 - (double) sensitivitySliderVal) / 50.0;
 					sensitivity *= sensitivity;
 					sensitivity *= sensitivity;
 					sensitivity *= 0.25;
 					// The "sensitivity" is actually kinda backwards.
 					// It needs an easing function to mean what the labeling says it means.
-					
+
 					List<Point2D> spines = new ArrayList<Point2D>();
-					
+
 					Object[] paths = pathListModel.toArray();
 					for (Object path : paths) {
-						DendriteSegment dendriteSegment  = (DendriteSegment)path;
-						
+						DendriteSegment dendriteSegment = (DendriteSegment) path;
+
 						for (PathSide side : PathSide.values()) {
-							DendriteSegment sidepath = dendriteSegment.createSidePath(
-									side, pixelWindowSize, pixelWindowSize / 2);
-							
-							List<Point2D> spinesHere =
-									sidepath.findSpinesAlongSidepath(pixelWindowSize, SCANSPAN, sensitivity);
-							
+							DendriteSegment sidepath = dendriteSegment.createSidePath(side, pixelWindowSize,
+									pixelWindowSize / 2);
+
+							List<Point2D> spinesHere = sidepath.findSpinesAlongSidepath(pixelWindowSize, SCANSPAN,
+									sensitivity);
+
 							spines.addAll(spinesHere);
 						}
 					}
@@ -673,11 +669,9 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 		}
-		
+
 		{
-			JLabel label = new JLabel("<html>"
-					+ "Contrast sensitivity (% brightness difference)"
-					+ "</html>");
+			JLabel label = new JLabel("<html>" + "Contrast sensitivity (% brightness difference)" + "</html>");
 			// We want extra space at the bottom of this label.
 			gridbagConstraints.insets.top = 16;
 			panel.add(label, gridbagConstraints);
@@ -685,7 +679,7 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 		}
-		
+
 		{
 			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
 			sliderDetectionSensitivity.setMajorTickSpacing(10);
@@ -697,8 +691,8 @@ public class DscControlPanelDialog extends JDialog {
 			panel.add(sliderDetectionSensitivity, gridbagConstraints);
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
-		}		
-		
+		}
+
 		{
 			String pathToImage = "images/icons/data-table-results-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -712,7 +706,7 @@ public class DscControlPanelDialog extends JDialog {
 				}
 			});
 			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;			
+			gridbagConstraints.insets.bottom = 8;
 			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
 			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
 			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
@@ -745,10 +739,9 @@ public class DscControlPanelDialog extends JDialog {
 		gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
 		{
-			JLabel label = new JLabel(
-					"<html>" + "Use the Polyline tool to trace a dendrite segment. "
-							+ "Your trace doesn't need to follow the dendrite precisely at first. "
-							+ "You'll have the chance to refine the trace later." + "</html>");
+			JLabel label = new JLabel("<html>" + "Use the Polyline tool to trace a dendrite segment. "
+					+ "Your trace doesn't need to follow the dendrite precisely at first. "
+					+ "You'll have the chance to refine the trace later." + "</html>");
 			// We want extra space at the bottom of this label.
 			panel.add(label, gridbagConstraints);
 
@@ -774,13 +767,13 @@ public class DscControlPanelDialog extends JDialog {
 			btnActivatePolylineTool.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).setRoi((Roi)null);
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
-					
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).setRoi((Roi) null);
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+
 					IJ.setTool("polyline");
 					updateInputSpecificationButtonEnablements();
 					ownerPlugin.setWorkingImageWindowToForeground();
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 			panel.add(btnActivatePolylineTool, gridbagConstraints);
@@ -799,7 +792,7 @@ public class DscControlPanelDialog extends JDialog {
 					DendriteSegment dendritePath = ownerPlugin.traceDendriteWithThicknessEstimation(.8);
 					pathListModel.addElement(dendritePath);
 					ownerPlugin.AddPathToDrawOverlay(dendritePath);
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 			panel.add(btnTraceCurrentPolyline, gridbagConstraints);
@@ -845,7 +838,7 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					updateInputSpecificationButtonEnablements();
-					((ImagePlus)(ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();					
+					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 				}
 			});
 
@@ -853,9 +846,9 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridy++;
 		}
 		{
-			
+
 			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;			
+			gridbagConstraints.gridx = 0;
 			{
 				String pathToImage = "images/icons/dsc--delete-dendrite-path-24.png";
 				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -885,7 +878,7 @@ public class DscControlPanelDialog extends JDialog {
 						}
 						ownerPlugin.AddPointRoisAsSpineMarkers(spinesRemaining);
 						associateSpinesWithDendriteSegments(spinesRemaining);
-						
+
 						updateInputSpecificationButtonEnablements();
 					}
 				});
@@ -893,7 +886,7 @@ public class DscControlPanelDialog extends JDialog {
 				panel.add(btnDeleteBranch, gridbagConstraints);
 				gridbagConstraints.gridx++;
 			}
-			
+
 			{
 				String pathToImage = "images/icons/rename-24.png";
 				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -912,10 +905,10 @@ public class DscControlPanelDialog extends JDialog {
 
 				panel.add(btnRenameBranch, gridbagConstraints);
 				gridbagConstraints.gridy++;
-			}			
+			}
 
 			gridbagConstraints.gridwidth = 2;
-			gridbagConstraints.gridx = 0;			
+			gridbagConstraints.gridx = 0;
 			{
 				JLabel label = new JLabel("<html>" + "To edit the width of the selected dendrite segment at any point, "
 						+ "use the controls below to move the highlighted region forward and "
@@ -1106,7 +1099,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			{
 				textfieldFeatureDetectionWindowSize = new JTextField(5);
-	
+
 				textfieldFeatureDetectionWindowSize.setText(String.format("%d", this.ownerPlugin.featureSizePixels));
 				textfieldFeatureDetectionWindowSize.addActionListener(new ActionListener() {
 					@Override
@@ -1114,15 +1107,15 @@ public class DscControlPanelDialog extends JDialog {
 						ownerPlugin.featureSizePixels = getFeatureDetectionWindowSizeInPixels();
 					}
 				});
-				
+
 				JButton btnApply = new JButton("Apply");
 				btnApply.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						updateFeatureDetectionSizeInputPanel();						
+						updateFeatureDetectionSizeInputPanel();
 					}
 				});
-				
+
 				Box box = Box.createVerticalBox();
 
 				box.add(textfieldFeatureDetectionWindowSize);
@@ -1181,14 +1174,13 @@ public class DscControlPanelDialog extends JDialog {
 			btnOpenSetScale.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					new Executer("Set Scale...", 
-							((ImagePlus)(ownerPlugin.getWorkingImagePlus())));
-					
+					new Executer("Set Scale...", ((ImagePlus) (ownerPlugin.getWorkingImagePlus())));
+
 					// NOTE: The executor spins off on a separate thread.
 					// So this update occurs right away, while the user is
 					// still entering values.
 					enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
-					updateFeatureDetectionSizeInputPanel();					
+					updateFeatureDetectionSizeInputPanel();
 				}
 			});
 			panel.add(btnOpenSetScale, gridbagConstraints);
@@ -1197,24 +1189,21 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridy++;
 			gridbagConstraints.gridx = 0;
 		}
-		
+
 		gridbagConstraints.gridwidth = 3;
 		{
-			JLabel label = new JLabel("<html>" 
-					+ "<hr/><br/>"
-					+ "This plugin uses 2D images with a light background. "
+			JLabel label = new JLabel("<html>" + "<hr/><br/>" + "This plugin uses 2D images with a light background. "
 					+ "If you wish to analyze 3D stacks, please first convert them "
 					+ "to a 2D image (using MinIP, MaxIP, etc.). "
-					+ "If your background is dark, you may use the button below to invert the image."
-					+ "</html>");
+					+ "If your background is dark, you may use the button below to invert the image." + "</html>");
 			gridbagConstraints.insets.top = 20;
 			gridbagConstraints.insets.bottom = 8;
 			panel.add(label, gridbagConstraints);
 
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
-		}		
-		
+		}
+
 		{
 			gridbagConstraints.insets.top = 4;
 			JButton btnInvertImage = new JButton("Invert image brightness levels");
@@ -1253,7 +1242,7 @@ public class DscControlPanelDialog extends JDialog {
 		updateFeatureDetectionSizeInputPanel();
 		return panel;
 	}
-	
+
 	public void countSpinesAndBuildTable() {
 		List<Point2D> points = ownerPlugin.getPointsFromCurrentPolylineRoiSelection();
 		clearSpineAssociations();
@@ -1430,7 +1419,7 @@ public class DscControlPanelDialog extends JDialog {
 		this.btnActivateMultiPointTool.setEnabled(!isCurrentToolMultiPoint);
 
 		boolean areThereAnyDendrites = !this.pathListModel.isEmpty();
-		//btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
+		// btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
 		btnDetectSpines.setEnabled(areThereAnyDendrites);
 
 		boolean areThereResults = this.resultsTableData.length > 0;
@@ -1506,6 +1495,7 @@ public class DscControlPanelDialog extends JDialog {
 
 	public void associateSpinesWithDendriteSegments(List<Point2D> spineMarks) {
 		Object[] segments = this.pathListModel.toArray();
+		this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
 		for (Point2D spineMark : spineMarks) {
 			DendriteSegment closestPath = null;
@@ -1525,6 +1515,7 @@ public class DscControlPanelDialog extends JDialog {
 			}
 			closestPath.spines.add(spineMark);
 		}
+		this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	}
 
 	public void populateResultsTable() {
@@ -1626,15 +1617,15 @@ public class DscControlPanelDialog extends JDialog {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		clipboard.setContents(stringSelection, null);
 	}
-	
+
 	private void addEmptySpaceFillerLabel(JPanel panel, GridBagConstraints gridbagConstraints) {
 		JLabel emptyLabel = new JLabel(" ");
 		gridbagConstraints.insets.top = 20;
-		gridbagConstraints.insets.bottom = 8;		
+		gridbagConstraints.insets.bottom = 8;
 		gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
 		gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
 		gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
 		gridbagConstraints.weighty = 1.0;
 		panel.add(emptyLabel, gridbagConstraints);
-	}	
+	}
 }
