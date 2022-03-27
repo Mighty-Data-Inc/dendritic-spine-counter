@@ -57,6 +57,7 @@ import ij.IJ;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import org.scijava.InstantiableException;
+import org.scijava.app.App;
 import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.SearchPixel.PathSide;
@@ -135,9 +136,41 @@ public class DscControlPanelDialog extends JDialog {
 
 	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
+	private String getApplicationVersion(Dendritic_Spine_Counter plugin) {
+		if (plugin == null || plugin.maven == null) {
+			return "";
+		}
+		String versionStr = plugin.maven.getVersion();
+		if (versionStr == null) {
+			return "";
+		}
+		return versionStr;
+	}
+
+	private String getApplicationVersion() {
+		if (this.ownerPlugin == null) {
+			return "";
+		}
+		return getApplicationVersion(this.ownerPlugin);
+	}
+
+	private String generateDialogBoxTitle(Dendritic_Spine_Counter plugin) {
+		String title = "Dendritic Spine Counter";
+		String versionStr = this.getApplicationVersion(plugin);
+		if (!versionStr.isEmpty()) {
+			title += " " + versionStr;
+		}
+		return title;
+	}
+
+	private String generateDialogBoxTitle() {
+		return this.generateDialogBoxTitle(ownerPlugin);
+	}
+
 	public DscControlPanelDialog(Dendritic_Spine_Counter plugin) {
 		super((Frame) null, "Dendritic Spine Counter", false);
 		ownerPlugin = plugin;
+		this.setTitle(this.generateDialogBoxTitle());
 
 		this.pathListModel = new DefaultListModel<DendriteSegment>();
 
@@ -409,7 +442,7 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					JSONObject json = new JSONObject();
-					json.put("version", "1.3.3");
+					json.put("version", getApplicationVersion());
 
 					try {
 						json.put("originalimagefile", ownerPlugin.origDataset.getImgPlus().getSource());

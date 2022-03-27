@@ -26,6 +26,9 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.scijava.command.Command;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
@@ -41,6 +44,7 @@ import org.scijava.ui.UIService;
 import com.MightyDataInc.DendriticSpineCounter.DscControlPanelDialog.FeatureDetectionWindowSizeUnitsEnum;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
@@ -56,10 +60,12 @@ import java.awt.geom.Point2D;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
 public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
+	// Provide package version introspection capabilities by setting the Maven model
+	// object.
+	// https://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
+	public Model maven;
 
 	private static final ImageJ imageJLegacy = new ImageJ();
-
-	final static String WORKING_IMAGE_WINDOW_TITLE = "Dendritic Spine Counter Working Image";
 
 	@Parameter
 	ImageDisplayService imageDisplayService;
@@ -134,6 +140,18 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		}
 	}
 
+	private String getWorkingImageWindowTitle() {
+		String title = "Dendritic Spine Counter Working Image";
+		try {
+			String origDataName = this.origDataset.getName();
+			if (origDataName != null && !origDataName.isEmpty()) {
+				title += ": " + origDataName;
+			}
+		} catch (Exception e1) {
+		}
+		return title;
+	}
+
 	@Override
 	public void run(String arg) {
 		System.out.println(
@@ -143,6 +161,14 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	@Override
 	public void run() {
+		// First set up Maven introspection.
+		try {
+			MavenXpp3Reader reader = new MavenXpp3Reader();
+			this.maven = reader.read(new FileReader("pom.xml"));
+		} catch (XmlPullParserException e1) {
+		} catch (IOException e1) {
+		}
+
 		makeServicesWorkWithBothIDEAndFiji();
 
 		this.origDataset = imageDisplayService.getActiveDataset();
@@ -191,7 +217,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	// We can't return an ImagePlus object because of introspection.
 	// We're just going to have to cast everywhere.
 	public Object getWorkingImagePlus() {
-		return WindowManager.getImage(WORKING_IMAGE_WINDOW_TITLE);
+		return WindowManager.getImage(getWorkingImageWindowTitle());
 	}
 
 	public ij.gui.Overlay getWorkingOverlay() {
@@ -217,7 +243,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	public void createWorkingImage() {
 		workingImg = convertToGrayscale(this.origDataset);
 
-		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(WORKING_IMAGE_WINDOW_TITLE,
+		workingDisplay = (DefaultImageDisplay) this.displayService.createDisplay(getWorkingImageWindowTitle(),
 				workingImg);
 
 		maximizeContrast();

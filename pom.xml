@@ -126,6 +126,15 @@
 			<artifactId>json-simple</artifactId>
 			<version>1.1.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-model</artifactId>
+			<version>3.3.9</version>
+		</dependency>
+		<!-- To allow the application to know its own version number -->
+		<!-- https://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code -->
+
 	</dependencies>
 
 </project>
