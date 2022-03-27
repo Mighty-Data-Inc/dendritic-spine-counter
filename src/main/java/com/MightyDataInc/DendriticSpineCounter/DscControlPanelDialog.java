@@ -223,7 +223,7 @@ public class DscControlPanelDialog extends JDialog {
 		
 		{
 			JLabel label = new JLabel("<html>" 
-					+ "<p>This plug-in automatically"
+					+ "<p>This plug-in automatically "
 					+ "goes through all of the spines you've currently selected with "
 					+ "the Multi-point Tool. It will associate each spine with its "
 					+ "nearest dendrite segment, and tabulate statistics about "
@@ -872,8 +872,21 @@ public class DscControlPanelDialog extends JDialog {
 						ownerPlugin.RemovePathFromDrawOverlay(selectedPath);
 						pathSegmentIndexSelected = 0;
 						updateSelectedSegment();
+
+						// Now we delete the spines that were on the deleted segment.
+						// Unfortunately, setting the spine selection is kinda an
+						// all-or-nothing operation, so we need to gather all
+						// spines from all OTHER paths and create a new ROI from them.
+						// pathListModel isn't iterable so we'll do this the old fashioned way.
+						List<Point2D> spinesRemaining = new ArrayList<Point2D>();
+						for (int iDend = 0; iDend < pathListModel.getSize(); iDend++) {
+							DendriteSegment dendSegment = pathListModel.get(iDend);
+							spinesRemaining.addAll(dendSegment.spines);
+						}
+						ownerPlugin.AddPointRoisAsSpineMarkers(spinesRemaining);
+						associateSpinesWithDendriteSegments(spinesRemaining);
+						
 						updateInputSpecificationButtonEnablements();
-						// TODO: DELETE SPINES TOO
 					}
 				});
 
