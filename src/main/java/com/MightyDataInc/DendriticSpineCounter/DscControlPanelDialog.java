@@ -913,6 +913,7 @@ public class DscControlPanelDialog extends JDialog {
 						associateSpinesWithDendriteSegments(spinesRemaining);
 
 						updateInputSpecificationButtonEnablements();
+						((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 					}
 				});
 
@@ -932,7 +933,11 @@ public class DscControlPanelDialog extends JDialog {
 						if (selectedPath == null) {
 							return;
 						}
-						// TODO: Implement Rename
+						String m = JOptionPane.showInputDialog("Please enter a name for this dendrite branch",
+								selectedPath.name);
+						selectedPath.name = m;
+
+						pathListBox.updateUI();
 					}
 				});
 
@@ -1573,7 +1578,7 @@ public class DscControlPanelDialog extends JDialog {
 			DendriteSegment dendrite = (DendriteSegment) (segments[iSegment]);
 
 			Object[] resultRow = resultsTableData[iSegment];
-			resultRow[0] = dendrite.toString();
+			resultRow[0] = dendrite.getName();
 
 			double dendriteLength = dendrite.minimumSeparation * dendrite.path.size();
 			if (cal != null) {

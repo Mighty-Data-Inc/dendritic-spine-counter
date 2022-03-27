@@ -31,7 +31,14 @@ public class DendriteSegment {
 
 	// The ID gets assigned at the time at which it's added to the overlay.
 	public int id = 0;
-	
+
+	// The branch's user-provided name. Overrides the default name, if supplied.
+	public String name = "";
+
+	// Additional info provided by the system, which appears in the dendrite
+	// branch's
+	// displayed name. At the time of this writing, this is just the length of the
+	// path.
 	public String nameSuffix;
 
 	// Spines associated with this search pixel path.
@@ -225,9 +232,10 @@ public class DendriteSegment {
 			pixel.y = (int) ((meanY * nudgeStrength) + ((double) (pixel.y) * (1.0 - nudgeStrength)));
 		}
 	}
-	
+
 	/**
 	 * Makes the entire segment thicker or thinner.
+	 * 
 	 * @param thicknessMultiplier The amount by which to multiply the thickness.
 	 */
 	public void multiplyThickness(double thicknessMultiplier) {
@@ -766,7 +774,7 @@ public class DendriteSegment {
 	public double pixelLength() {
 		return this.path.size() * this.minimumSeparation;
 	}
-	
+
 	public double MeanPixelWidth() {
 		double widthTotal = 0;
 		for (SearchPixel px : this.path) {
@@ -775,59 +783,64 @@ public class DendriteSegment {
 		widthTotal /= path.size();
 		return widthTotal;
 	}
-	
+
 	/**
 	 * Intended to be run on a DendriteSegment that is a sidepath. Looks for dark
 	 * convolution windows, where "dark" is defined relative to adjacent convolution
-	 * windows -- a sort of meta-convolution, if you will. 
-	 * @param pixelWindowSize The size, expressed as a pixel radius, of the convolution window.
-	 * @param scanspan How many convolution windows on each side to compare at a time.
-	 * A sort of meta convolution window size.
-	 * @param contrastSensitivity How much contrast there needs to be between the convolution
-	 * window and its neighbors. A value of 0 means that no contrast is required; a window
-	 * merely needs to be darker than its neighbors by any amount. A value of 1.0 means that
-	 * it needs to be as much darker from its darkest neighbor as its darkest neighbor is
-	 * from its lightest neighbor. Note that this value can be greater than 1.0.
+	 * windows -- a sort of meta-convolution, if you will.
+	 * 
+	 * @param pixelWindowSize     The size, expressed as a pixel radius, of the
+	 *                            convolution window.
+	 * @param scanspan            How many convolution windows on each side to
+	 *                            compare at a time. A sort of meta convolution
+	 *                            window size.
+	 * @param contrastSensitivity How much contrast there needs to be between the
+	 *                            convolution window and its neighbors. A value of 0
+	 *                            means that no contrast is required; a window
+	 *                            merely needs to be darker than its neighbors by
+	 *                            any amount. A value of 1.0 means that it needs to
+	 *                            be as much darker from its darkest neighbor as its
+	 *                            darkest neighbor is from its lightest neighbor.
+	 *                            Note that this value can be greater than 1.0.
 	 */
 	public List<Point2D> findSpinesAlongSidepath(int pixelWindowSize, int scanspan, double contrastSensitivity) {
-		for (SearchPixel px: this.path) {
+		for (SearchPixel px : this.path) {
 			px.vicinityStats = px.computePixelVicinityStats(pixelWindowSize);
 		}
-		
+
 		List<Point2D> spinePoints = new ArrayList<Point2D>();
-		
-		for (int iPixel = scanspan; 
-				iPixel < this.path.size() - scanspan; 
-				iPixel++) {
+
+		for (int iPixel = scanspan; iPixel < this.path.size() - scanspan; iPixel++) {
 			SearchPixel px = this.path.get(iPixel);
-			
+
 			int xCenter = px.x;
 			int yCenter = px.y;
-			
+
 			List<SearchPixel> pxsBothIncluding = this.path.subList(iPixel - scanspan, iPixel + scanspan + 1);
 			double myVicinityBrightness = px.vicinityStats.getMean();
 			double darkestNearbyVicinity = SearchPixel.getDarkestVicinityBrightness(pxsBothIncluding);
 			if (myVicinityBrightness > darkestNearbyVicinity) {
 				// I can't be a spine. Spines are the darkest things around.
 				continue;
-			}				
-			
+			}
+
 			// It's not enough for a pixel vicinity to merely be the darkest vicinity in the
-			// area; after all, by definition, *every* set of vicinities has *some* darkest member.
-			// No, it also has to be "unusually" dark in order to be considered a distinct feature.
+			// area; after all, by definition, *every* set of vicinities has *some* darkest
+			// member.
+			// No, it also has to be "unusually" dark in order to be considered a distinct
+			// feature.
 			List<SearchPixel> pxsBefore = this.path.subList(iPixel - scanspan, iPixel);
 			List<SearchPixel> pxsAfter = this.path.subList(iPixel + 1, iPixel + scanspan + 1);
-			
+
 			double brtBefore = SearchPixel.getMeanVicinityBrightness(pxsBefore);
 			double brtAfter = SearchPixel.getMeanVicinityBrightness(pxsAfter);
 			double brtAdjacentBright = Math.max(brtBefore, brtAfter);
 			double brtAdjacentDark = Math.max(brtBefore, brtAfter);
 
 			double brtAdjacentBrightnessRatio = brtAdjacentDark / brtAdjacentBright;
-			
-			double brtUnusualDarknessThreshold =  
-					brtAdjacentBrightnessRatio / (1.0 + contrastSensitivity);
-			
+
+			double brtUnusualDarknessThreshold = brtAdjacentBrightnessRatio / (1.0 + contrastSensitivity);
+
 			if (myVicinityBrightness > brtUnusualDarknessThreshold) {
 				// I'm dark, but I'm not "unusually" dark, so I don't count.
 				continue;
@@ -836,26 +849,36 @@ public class DendriteSegment {
 			// If we've made it down here, then we're a spine.
 			spinePoints.add(new Point2D.Double(xCenter, yCenter));
 		}
-		
+
 		return spinePoints;
 	}
-	
-	
-	
+
+	public String getName() {
+		String s = this.name;
+		if (s == null) {
+			s = "";
+		}
+		s = s.trim();
+
+		if (s.isEmpty()) {
+			if (path == null || path.size() < 2) {
+				s = "Path with no points specified";
+			}
+
+			SearchPixel pixelFirst = path.get(0);
+			SearchPixel pixelLast = path.get(path.size() - 1);
+
+			s = "Path #" + this.id + " from : (" + pixelFirst.x + ", " + pixelFirst.y + ") to (" + pixelLast.x + ", "
+					+ pixelLast.y + ")";
+		}
+		return s;
+	}
 
 	@Override
 	public String toString() {
-		if (path == null || path.size() < 2) {
-			return "Path with no points specified.";
-		}
-
-		SearchPixel pixelFirst = path.get(0);
-		SearchPixel pixelLast = path.get(path.size() - 1);
-
-		String retval = "Path #" + this.id + " from : (" + pixelFirst.x + ", " + pixelFirst.y + ") to (" + pixelLast.x + ", "
-				+ pixelLast.y + ")" + this.nameSuffix;
-		
-		return retval;
+		String s = this.getName();
+		s += this.nameSuffix;
+		return s;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -863,6 +886,10 @@ public class DendriteSegment {
 		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("id", this.id);
 		jsonObj.put("minimumseparation", this.minimumSeparation);
+
+		if (this.name != null && !this.name.trim().isEmpty()) {
+			jsonObj.put("name", this.name.trim());
+		}
 
 		JSONArray jsonPixels = new JSONArray();
 		for (SearchPixel pixel : this.path) {
@@ -892,6 +919,10 @@ public class DendriteSegment {
 	public <T extends RealType<?>> void fromJSON(JSONObject jsonObj, Img<T> img) {
 		this.id = Integer.parseInt(jsonObj.get("id").toString());
 		this.minimumSeparation = Double.parseDouble(jsonObj.get("minimumseparation").toString());
+
+		if (jsonObj.containsKey("name")) {
+			this.name = jsonObj.get("name").toString().trim();
+		}
 
 		JSONArray jsonSpines = (JSONArray) jsonObj.get("spines");
 		for (int iSpine = 0; iSpine < jsonSpines.size(); iSpine++) {
