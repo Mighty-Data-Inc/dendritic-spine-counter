@@ -29,6 +29,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.json.simple.JSONObject;
 import org.scijava.command.Command;
 import org.scijava.display.Display;
 import org.scijava.display.DisplayService;
@@ -171,20 +172,39 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		makeServicesWorkWithBothIDEAndFiji();
 
+		JSONObject jsonObj = null;
+
 		this.origDataset = imageDisplayService.getActiveDataset();
 		if (this.origDataset == null) {
 			final File file = uiService.chooseFile(null, "open");
 			String filePathFromUserSelection = file.getPath();
+
+			String datasetFilePath = filePathFromUserSelection;
+			if (filePathFromUserSelection.toLowerCase().endsWith(".json")) {
+				String fileJsonPath = filePathFromUserSelection;
+				jsonObj = DscControlPanelDialog.getJsonObjectFromFile(fileJsonPath);
+
+				datasetFilePath = "";
+				if (jsonObj.containsKey("originalimagefile")) {
+					datasetFilePath = jsonObj.get("originalimagefile").toString().trim();
+				}
+				if (datasetFilePath == null || datasetFilePath.isEmpty()) {
+					JOptionPane.showMessageDialog(null,
+							"This JSON file doesn't contain a record of which image file it corresponds to.",
+							"Missing original file image record", JOptionPane.ERROR_MESSAGE);
+					IJ.noImage();
+					return;
+				}
+			}
+
 			try {
-				origDataset = scifioService.datasetIO().open(filePathFromUserSelection);
+				origDataset = scifioService.datasetIO().open(datasetFilePath);
 			} catch (InvalidPathException e1) {
-				JOptionPane.showMessageDialog(null,
-						"Couldn't read this string as a file path: " + filePathFromUserSelection, "Invalid path",
-						JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + datasetFilePath,
+						"Invalid path", JOptionPane.ERROR_MESSAGE);
 			} catch (NoSuchFileException e1) {
-				JOptionPane.showMessageDialog(null,
-						"The system could not find any such file: " + filePathFromUserSelection, "No such file",
-						JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "The system could not find any such file: " + datasetFilePath,
+						"No such file", JOptionPane.ERROR_MESSAGE);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -207,6 +227,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		controlPanelDlg = new DscControlPanelDialog(this);
 
 		createWorkingImage();
+
+		if (jsonObj != null) {
+			controlPanelDlg.loadFromJsonObject(jsonObj);
+		}
 	}
 
 	public Display<?> getOriginalDatasetDisplay() {

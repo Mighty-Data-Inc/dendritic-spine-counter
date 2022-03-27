@@ -487,8 +487,6 @@ public class DscControlPanelDialog extends JDialog {
 			btnLoadDataFromFile = new JButton("Load data from file", myIcon);
 			panel.add(btnLoadDataFromFile, gridbagConstraints);
 
-			DscControlPanelDialog self = this;
-
 			btnLoadDataFromFile.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -500,70 +498,11 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					String filename = fileChooser.getSelectedFile().getAbsolutePath();
-					String filecontents = "";
-					try {
-						filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
-					} catch (InvalidPathException e1) {
-						JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + filename,
-								"Invalid path", JOptionPane.ERROR_MESSAGE);
-						return;
-					} catch (NoSuchFileException e1) {
-						JOptionPane.showMessageDialog(null, "The system could not find any such file: " + filename,
-								"No such file", JOptionPane.ERROR_MESSAGE);
-						return;
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-						return;
-					}
-
-					JSONParser parser = new JSONParser();
-					JSONObject jsonObj = null;
-					try {
-						jsonObj = (JSONObject) parser.parse(filecontents);
-					} catch (Exception e1) {
-						JOptionPane.showMessageDialog(null, e1.toString());
-						return;
-					}
-
+					JSONObject jsonObj = getJsonObjectFromFile(filename);
 					if (jsonObj == null) {
 						return;
 					}
-
-					Object v = jsonObj.get("featuresizepixels");
-
-					self.enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
-					self.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
-
-					v = jsonObj.get("researcher");
-					self.textfieldResultTableResearcher.setText(String.format(v.toString()));
-
-					v = jsonObj.get("imagedesignation");
-					self.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
-
-					v = jsonObj.get("customlabel");
-					self.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
-
-					JSONArray jsonDends = (JSONArray) jsonObj.get("dendrites");
-					List<Point2D> allspines = new ArrayList<Point2D>();
-					for (int iDend = 0; iDend < jsonDends.size(); iDend++) {
-						JSONObject jsonDend = (JSONObject) jsonDends.get(iDend);
-						DendriteSegment dendrite = new DendriteSegment();
-						dendrite.fromJSON(jsonDend, ownerPlugin.workingImg);
-
-						self.pathListModel.addElement(dendrite);
-						ownerPlugin.AddPathToDrawOverlay(dendrite);
-
-						allspines.addAll(dendrite.spines);
-					}
-
-					// Add all the spines as visible ROI points in one big blast.
-					ownerPlugin.AddPointRoisAsSpineMarkers(allspines);
-
-					populateResultsTable();
-
-					updateInputSpecificationButtonEnablements();
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					loadFromJsonObject(jsonObj);
 				}
 			});
 
@@ -1665,5 +1604,71 @@ public class DscControlPanelDialog extends JDialog {
 		gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
 		gridbagConstraints.weighty = 1.0;
 		panel.add(emptyLabel, gridbagConstraints);
+	}
+
+	public static JSONObject getJsonObjectFromFile(String filename) {
+		String filecontents = "";
+		try {
+			filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
+		} catch (InvalidPathException e1) {
+			JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + filename, "Invalid path",
+					JOptionPane.ERROR_MESSAGE);
+			return new JSONObject();
+		} catch (NoSuchFileException e1) {
+			JOptionPane.showMessageDialog(null, "The system could not find any such file: " + filename, "No such file",
+					JOptionPane.ERROR_MESSAGE);
+			return new JSONObject();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return new JSONObject();
+		}
+
+		JSONParser parser = new JSONParser();
+		JSONObject jsonObj = null;
+		try {
+			jsonObj = (JSONObject) parser.parse(filecontents);
+		} catch (Exception e1) {
+			JOptionPane.showMessageDialog(null, e1.toString());
+			return new JSONObject();
+		}
+		return jsonObj;
+	}
+
+	public void loadFromJsonObject(JSONObject jsonObj) {
+		Object v = jsonObj.get("featuresizepixels");
+
+		this.enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
+		this.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
+
+		v = jsonObj.get("researcher");
+		this.textfieldResultTableResearcher.setText(String.format(v.toString()));
+
+		v = jsonObj.get("imagedesignation");
+		this.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
+
+		v = jsonObj.get("customlabel");
+		this.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
+
+		JSONArray jsonDends = (JSONArray) jsonObj.get("dendrites");
+		List<Point2D> allspines = new ArrayList<Point2D>();
+		for (int iDend = 0; iDend < jsonDends.size(); iDend++) {
+			JSONObject jsonDend = (JSONObject) jsonDends.get(iDend);
+			DendriteSegment dendrite = new DendriteSegment();
+			dendrite.fromJSON(jsonDend, ownerPlugin.workingImg);
+
+			this.pathListModel.addElement(dendrite);
+			ownerPlugin.AddPathToDrawOverlay(dendrite);
+
+			allspines.addAll(dendrite.spines);
+		}
+
+		// Add all the spines as visible ROI points in one big blast.
+		ownerPlugin.AddPointRoisAsSpineMarkers(allspines);
+
+		populateResultsTable();
+
+		updateInputSpecificationButtonEnablements();
+		((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
 	}
 }

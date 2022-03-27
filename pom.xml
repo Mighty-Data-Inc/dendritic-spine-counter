@@ -14,7 +14,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.3.4</version>
+	<version>1.3.6</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
