@@ -137,10 +137,10 @@ public class DscControlPanelDialog extends JDialog {
 	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
 	private String getApplicationVersion(Dendritic_Spine_Counter plugin) {
-		if (plugin == null || plugin.maven == null) {
+		if (plugin == null || plugin.pomProjectVersion == null) {
 			return "";
 		}
-		String versionStr = plugin.maven.getVersion();
+		String versionStr = plugin.pomProjectVersion;
 		if (versionStr == null) {
 			return "";
 		}

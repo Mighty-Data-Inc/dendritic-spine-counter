@@ -26,9 +26,6 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.json.simple.JSONObject;
 import org.scijava.command.Command;
 import org.scijava.display.Display;
@@ -47,12 +44,14 @@ import com.MightyDataInc.DendriticSpineCounter.DscControlPanelDialog.FeatureDete
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import javax.swing.JOptionPane;
 
@@ -61,10 +60,7 @@ import java.awt.geom.Point2D;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Dendritic Spine Counter")
 public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
-	// Provide package version introspection capabilities by setting the Maven model
-	// object.
-	// https://stackoverflow.com/questions/3697449/retrieve-version-from-maven-pom-xml-in-code
-	public Model maven;
+	public String pomProjectVersion = "";
 
 	private static final ImageJ imageJLegacy = new ImageJ();
 
@@ -162,12 +158,12 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	@Override
 	public void run() {
-		// First set up Maven introspection.
 		try {
-			MavenXpp3Reader reader = new MavenXpp3Reader();
-			this.maven = reader.read(new FileReader("pom.xml"));
-		} catch (XmlPullParserException e1) {
-		} catch (IOException e1) {
+			final Properties properties = new Properties();
+			InputStream propertiesStream = this.getClass().getClassLoader().getResourceAsStream("project.properties"); 
+			properties.load(propertiesStream);
+			this.pomProjectVersion = properties.getProperty("version");
+		} catch (Exception e1) {
 		}
 
 		makeServicesWorkWithBothIDEAndFiji();
