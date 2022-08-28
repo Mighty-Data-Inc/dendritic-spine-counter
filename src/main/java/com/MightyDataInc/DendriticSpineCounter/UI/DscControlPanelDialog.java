@@ -1,4 +1,4 @@
-package com.MightyDataInc.DendriticSpineCounter;
+package com.MightyDataInc.DendriticSpineCounter.UI;
 
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -57,10 +57,12 @@ import ij.IJ;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import org.scijava.InstantiableException;
-import org.scijava.app.App;
 import org.scijava.plugin.PluginInfo;
 
-import com.MightyDataInc.DendriticSpineCounter.SearchPixel.PathSide;
+import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
+import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
+import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel.PathSide;
 
 import java.awt.datatransfer.StringSelection;
 import java.awt.Toolkit;
@@ -197,28 +199,36 @@ public class DscControlPanelDialog extends JDialog {
 			controlPanel.add(tabbedPane, gbc);
 
 			JPanel panel1 = createFeatureDetectionSizeInputPanel();
-			tabbedPane.addTab("Set feature size", panel1);
+			tabbedPane.addTab("Calibrate size", panel1);
 
 			JPanel panel2 = createPathInputSpecificationPanel();
 			tabbedPane.addTab("Trace dendrites", panel2);
 
 			JPanel panel3 = createSpineSelectionPanel();
-			tabbedPane.addTab("Mark spines", panel3);
+			tabbedPane.addTab("Find spines", panel3);
 
-			JPanel panel4 = createReportPanel();
-			tabbedPane.addTab("Report results", panel4);
+			JPanel panel4 = createSpineClassificationPanel();
+			tabbedPane.addTab("Classify spines", panel4);
+			
+			JPanel panel5 = createReportPanel();
+			tabbedPane.addTab("Report results", panel5);
+			
+			JPanel panel6 = createFileLoadSavePanel();
+			tabbedPane.addTab("Save/Load", panel6);
+			
+			// Add a listener to tell when the active pane has been changed.
+			// Quickly do whatever work is necessary before the pane appears.
 			tabbedPane.addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent arg0) {
-					// TODO Auto-generated method stub
-					if (tabbedPane.getSelectedIndex() != 3) {
-						return;
+					// If we're about to view the "Report results" pane,
+					// quickly generate the results!
+					if (tabbedPane.getSelectedIndex() == 4) {
+						countSpinesAndBuildTable();
 					}
-					countSpinesAndBuildTable();
 				}
 			});
-			JPanel panel5 = createFileLoadSavePanel();
-			tabbedPane.addTab("Save/Load", panel5);
+			
 		}
 
 		// Make the dialog pretty by setting its icon.
@@ -231,7 +241,7 @@ public class DscControlPanelDialog extends JDialog {
 
 		// Clean up dialog's organization/layout and set its size.
 		pack();
-		setPreferredSize(new Dimension(600, 768));
+		setPreferredSize(new Dimension(800, 768));
 		pack();
 		setVisible(true);
 	}
@@ -515,7 +525,7 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	/**
-	 * This last panel lets users place points to mark spines, and generates a
+	 * This panel lets users place points to mark spines, and generates a
 	 * report table.
 	 * 
 	 * @return The panel that it created. Add this to whatever master outer panel
@@ -666,10 +676,10 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		{
-			String pathToImage = "images/icons/data-table-results-24.png";
+			String pathToImage = "images/icons/dsc--classify-spines-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
 
-			JButton btnNext = new JButton("Next: Report results", myIcon);
+			JButton btnNext = new JButton("Next: Classify Spines", myIcon);
 
 			btnNext.addActionListener(new ActionListener() {
 				@Override
@@ -689,6 +699,72 @@ public class DscControlPanelDialog extends JDialog {
 		return panel;
 	}
 
+	
+	/**
+	 * This panel lets users place points to mark spines, and generates a
+	 * report table.
+	 * 
+	 * @return The panel that it created. Add this to whatever master outer panel
+	 *         you're building.
+	 */
+	private JPanel createSpineClassificationPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
+
+		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
+		gridbagConstraints.insets.top = 8;
+		gridbagConstraints.insets.left = 16;
+		gridbagConstraints.insets.right = 16;
+
+		{
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
+
+			JLabel label = new JLabel(
+					"<html>" + 
+					"In this panel you will categorize spines into classes based on their morphologies. " + 
+					"In the previous step, we created a Multi-point Tool selection to locate spines on the image. " +
+					"We will now go through the selected spines you one by one, and will tabulate " +
+					"their features and decide the best class to fit each one into. " +
+					"</html>");
+			panel.add(label, gridbagConstraints);
+
+			gridbagConstraints.insets.bottom = 4;
+			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridy++;
+		}
+		
+		{
+			String pathToImage = "images/icons/data-table-results-24.png";
+			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+
+			JButton btnNext = new JButton("Next: Report Results", myIcon);
+
+			btnNext.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					tabbedPane.setSelectedIndex(4);
+				}
+			});
+			gridbagConstraints.insets.top = 20;
+			gridbagConstraints.insets.bottom = 8;
+			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
+			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
+			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
+			gridbagConstraints.weighty = 1.0;
+			panel.add(btnNext, gridbagConstraints);
+		}
+
+		return panel;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * When the dialog first pops up, the user is given the chance to specify how
 	 * they will input the path that will eventually be followed to trace the
@@ -780,8 +856,8 @@ public class DscControlPanelDialog extends JDialog {
 			pathListBox.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
 			JScrollPane listScroller = new JScrollPane(pathListBox);
-			listScroller.setPreferredSize(new Dimension(250, 160));
-			listScroller.setMinimumSize(new Dimension(250, 160));
+			listScroller.setPreferredSize(new Dimension(250, 140));
+			listScroller.setMinimumSize(new Dimension(250, 140));
 
 			// https://stackoverflow.com/questions/13800775/find-selected-item-of-a-jlist-and-display-it-in-real-time
 			pathListBox.addListSelectionListener(new ListSelectionListener() {
@@ -1004,7 +1080,7 @@ public class DscControlPanelDialog extends JDialog {
 			String pathToImage = "images/icons/dsc--find-spines-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
 
-			JButton btnNext = new JButton("Next: Mark spines", myIcon);
+			JButton btnNext = new JButton("Next: Find spines", myIcon);
 
 			btnNext.addActionListener(new ActionListener() {
 				@Override

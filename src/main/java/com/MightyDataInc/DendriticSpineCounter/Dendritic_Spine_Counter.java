@@ -39,7 +39,11 @@ import org.scijava.tool.Tool;
 import org.scijava.tool.ToolService;
 import org.scijava.ui.UIService;
 
-import com.MightyDataInc.DendriticSpineCounter.DscControlPanelDialog.FeatureDetectionWindowSizeUnitsEnum;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog.FeatureDetectionWindowSizeUnitsEnum;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
+import com.MightyDataInc.DendriticSpineCounter.model.PointExtractor;
+import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
 
 import java.io.File;
 import java.io.FileReader;
@@ -160,7 +164,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	public void run() {
 		try {
 			final Properties properties = new Properties();
-			InputStream propertiesStream = this.getClass().getClassLoader().getResourceAsStream("project.properties"); 
+			InputStream propertiesStream = this.getClass().getClassLoader().getResourceAsStream("project.properties");
 			properties.load(propertiesStream);
 			this.pomProjectVersion = properties.getProperty("version");
 		} catch (Exception e1) {

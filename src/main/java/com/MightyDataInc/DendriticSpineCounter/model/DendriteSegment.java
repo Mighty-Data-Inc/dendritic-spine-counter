@@ -1,4 +1,4 @@
-package com.MightyDataInc.DendriticSpineCounter;
+package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;

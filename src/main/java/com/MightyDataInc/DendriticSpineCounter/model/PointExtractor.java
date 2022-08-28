@@ -1,4 +1,4 @@
-package com.MightyDataInc.DendriticSpineCounter;
+package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Polygon;
 import java.awt.geom.GeneralPath;
@@ -47,7 +47,7 @@ public class PointExtractor {
 	 * @return The points from the overlay. If the overlay is null or has an
 	 *         unrecognized type, it will return an empty list.
 	 */
-	protected static ArrayList<Point2D> getPointsFromROI(RegionOfInterest roi) {
+	public static ArrayList<Point2D> getPointsFromROI(RegionOfInterest roi) {
 		if (roi instanceof GeneralPathRegionOfInterest) {
 			return getPointsFromROI((GeneralPathRegionOfInterest) roi);
 		}
@@ -63,7 +63,7 @@ public class PointExtractor {
 	 * @return The points from the overlay. If the overlay is null or has an
 	 *         unrecognized type, it will return an empty list.
 	 */
-	protected static ArrayList<Point2D> getPointsFromLegacyRoi(Roi roi) {
+	public static ArrayList<Point2D> getPointsFromLegacyRoi(Roi roi) {
 		ArrayList<Point2D> pathPoints = new ArrayList<Point2D>();
 		if (roi == null) {
 			return pathPoints;
@@ -89,7 +89,7 @@ public class PointExtractor {
 	 * @return The points from the overlay. If the overlay is null or has an
 	 *         unrecognized type, it will return an empty list.
 	 */
-	protected static ArrayList<Point2D> getPointsFromROI(GeneralPathRegionOfInterest roi) {
+	public static ArrayList<Point2D> getPointsFromROI(GeneralPathRegionOfInterest roi) {
 		ArrayList<Point2D> pathPoints = new ArrayList<Point2D>();
 		if (roi == null) {
 			return new ArrayList<Point2D>();
