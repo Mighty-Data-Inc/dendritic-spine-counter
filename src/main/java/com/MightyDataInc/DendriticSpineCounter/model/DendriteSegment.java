@@ -747,8 +747,6 @@ public class DendriteSegment {
 
 			String chainName = String.format("Spine of size %.2f at (%d, %d)", spineSize, centerEstX, centerEstY);
 
-			// plotSearchPixels(chain, 254);
-
 			EllipseRoi spineRoi = new EllipseRoi(centerEstX - (spineSize / 2), centerEstY - (spineSize / 2),
 					centerEstX + (spineSize / 2), centerEstY + (spineSize / 2), 1.0);
 

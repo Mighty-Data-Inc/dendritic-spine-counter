@@ -56,11 +56,15 @@ import ij.ImagePlus;
 import ij.IJ;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import net.imagej.display.OverlayService;
+
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
+import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel.PathSide;
 
@@ -81,6 +85,8 @@ public class DscControlPanelDialog extends JDialog {
 	private static final long serialVersionUID = -3504591526118191273L;
 
 	public Dendritic_Spine_Counter ownerPlugin;
+
+	private CalibrationPanel panelCalibration;
 
 	// --------------------------------------
 	// Data-bound UI components
@@ -107,11 +113,7 @@ public class DscControlPanelDialog extends JDialog {
 	private JButton btnSaveDataToFile;
 	private JButton btnLoadDataFromFile;
 
-	private JRadioButton radioFeatureDetectionWindowInPixels;
-	private JRadioButton radioFeatureDetectionWindowInImageUnits;
 	private JCheckBox chkIncludeHeadersInCopyPaste;
-
-	public JTextField textfieldFeatureDetectionWindowSize;
 
 	private JTextField textfieldResultTableResearcher;
 	private JTextField textfieldResultTableImageDesignation;
@@ -128,15 +130,6 @@ public class DscControlPanelDialog extends JDialog {
 	private Object[][] resultsTableData = new Object[0][4];
 	private String[] resultsTableColumns = { "Dendrite Segment", "Length", "Avg Width", "Spine Count",
 			"Spine Density" };
-
-	// ----------------------------------------
-	// Data-bound UI-inputted properties.
-
-	public enum FeatureDetectionWindowSizeUnitsEnum {
-		PIXELS, IMAGE_UNITS
-	};
-
-	public FeatureDetectionWindowSizeUnitsEnum enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 
 	private String getApplicationVersion(Dendritic_Spine_Counter plugin) {
 		if (plugin == null || plugin.pomProjectVersion == null) {
@@ -169,9 +162,12 @@ public class DscControlPanelDialog extends JDialog {
 		return this.generateDialogBoxTitle(ownerPlugin);
 	}
 
-	public DscControlPanelDialog(Dendritic_Spine_Counter plugin) {
+	public DscControlPanelDialog(Dendritic_Spine_Counter plugin, DscModel model) {
 		super((Frame) null, "Dendritic Spine Counter", false);
 		ownerPlugin = plugin;
+
+		model.dialog = this;
+
 		this.setTitle(this.generateDialogBoxTitle());
 
 		this.pathListModel = new DefaultListModel<DendriteSegment>();
@@ -198,8 +194,8 @@ public class DscControlPanelDialog extends JDialog {
 			gbc.fill = GridBagConstraints.BOTH;
 			controlPanel.add(tabbedPane, gbc);
 
-			JPanel panel1 = createFeatureDetectionSizeInputPanel();
-			tabbedPane.addTab("Calibrate size", panel1);
+			panelCalibration = new CalibrationPanel(tabbedPane, ownerPlugin, model);
+			tabbedPane.addTab("Calibrate size", panelCalibration);
 
 			JPanel panel2 = createPathInputSpecificationPanel();
 			tabbedPane.addTab("Trace dendrites", panel2);
@@ -209,13 +205,13 @@ public class DscControlPanelDialog extends JDialog {
 
 			JPanel panel4 = createSpineClassificationPanel();
 			tabbedPane.addTab("Classify spines", panel4);
-			
+
 			JPanel panel5 = createReportPanel();
 			tabbedPane.addTab("Report results", panel5);
-			
+
 			JPanel panel6 = createFileLoadSavePanel();
 			tabbedPane.addTab("Save/Load", panel6);
-			
+
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
 			tabbedPane.addChangeListener(new ChangeListener() {
@@ -228,7 +224,6 @@ public class DscControlPanelDialog extends JDialog {
 					}
 				}
 			});
-			
 		}
 
 		// Make the dialog pretty by setting its icon.
@@ -525,8 +520,8 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	/**
-	 * This panel lets users place points to mark spines, and generates a
-	 * report table.
+	 * This panel lets users place points to mark spines, and generates a report
+	 * table.
 	 * 
 	 * @return The panel that it created. Add this to whatever master outer panel
 	 *         you're building.
@@ -580,8 +575,8 @@ public class DscControlPanelDialog extends JDialog {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					IJ.setTool("multi-point");
-					updateInputSpecificationButtonEnablements();
-					ownerPlugin.setWorkingImageWindowToForeground();
+					update();
+					ownerPlugin.imageProcessor.moveToForeground();
 				}
 			});
 			panel.add(btnActivateMultiPointTool, gridbagConstraints);
@@ -644,7 +639,7 @@ public class DscControlPanelDialog extends JDialog {
 							spines.addAll(spinesHere);
 						}
 					}
-					ownerPlugin.AddPointRoisAsSpineMarkers(spines);
+					ownerPlugin.imageProcessor.AddPointRoisAsSpineMarkers(spines);
 				}
 			});
 			panel.add(btnDetectSpines, gridbagConstraints);
@@ -699,10 +694,9 @@ public class DscControlPanelDialog extends JDialog {
 		return panel;
 	}
 
-	
 	/**
-	 * This panel lets users place points to mark spines, and generates a
-	 * report table.
+	 * This panel lets users place points to mark spines, and generates a report
+	 * table.
 	 * 
 	 * @return The panel that it created. Add this to whatever master outer panel
 	 *         you're building.
@@ -720,20 +714,18 @@ public class DscControlPanelDialog extends JDialog {
 			gridbagConstraints.gridwidth = 2;
 			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
-			JLabel label = new JLabel(
-					"<html>" + 
-					"In this panel you will categorize spines into classes based on their morphologies. " + 
-					"In the previous step, we created a Multi-point Tool selection to locate spines on the image. " +
-					"We will now go through the selected spines you one by one, and will tabulate " +
-					"their features and decide the best class to fit each one into. " +
-					"</html>");
+			JLabel label = new JLabel("<html>"
+					+ "In this panel you will categorize spines into classes based on their morphologies. "
+					+ "In the previous step, you created a Multi-point Tool selection to locate spines on the image. "
+					+ "This tool will now help you go through the selected spines one by one, measure "
+					+ "their features, and decide the best class to fit each one into. " + "</html>");
 			panel.add(label, gridbagConstraints);
 
 			gridbagConstraints.insets.bottom = 4;
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 		}
-		
+
 		{
 			String pathToImage = "images/icons/data-table-results-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
@@ -757,14 +749,7 @@ public class DscControlPanelDialog extends JDialog {
 
 		return panel;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
+
 	/**
 	 * When the dialog first pops up, the user is given the chance to specify how
 	 * they will input the path that will eventually be followed to trace the
@@ -815,13 +800,12 @@ public class DscControlPanelDialog extends JDialog {
 			btnActivatePolylineTool.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).setRoi((Roi) null);
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					ownerPlugin.imageProcessor.getImagePlus().setRoi((Roi) null);
+					ownerPlugin.imageProcessor.update();
 
 					IJ.setTool("polyline");
-					updateInputSpecificationButtonEnablements();
-					ownerPlugin.setWorkingImageWindowToForeground();
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					update();
+					ownerPlugin.imageProcessor.update();
 				}
 			});
 			panel.add(btnActivatePolylineTool, gridbagConstraints);
@@ -837,10 +821,11 @@ public class DscControlPanelDialog extends JDialog {
 			btnTraceCurrentPolyline.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					DendriteSegment dendritePath = ownerPlugin.traceDendriteWithThicknessEstimation(.8);
+					DendriteSegment dendritePath = ownerPlugin.imageProcessor.traceDendriteWithThicknessEstimation(.8,
+							ownerPlugin.MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES, null);
 					pathListModel.addElement(dendritePath);
-					ownerPlugin.AddPathToDrawOverlay(dendritePath);
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					ownerPlugin.imageProcessor.AddPathToDrawOverlay(dendritePath);
+					ownerPlugin.imageProcessor.update();
 				}
 			});
 			panel.add(btnTraceCurrentPolyline, gridbagConstraints);
@@ -872,21 +857,22 @@ public class DscControlPanelDialog extends JDialog {
 					// Unselect all items first.
 					Object[] paths = pathListModel.toArray();
 					for (Object path : paths) {
-						ownerPlugin.SelectPath((DendriteSegment) path, false);
+						ownerPlugin.imageProcessor.SelectPath((DendriteSegment) path, false);
 					}
 
 					// Now select the one path that's actually selected.
 					DendriteSegment path = pathListBox.getSelectedValue();
-					ownerPlugin.SelectPath(path, true);
+					ownerPlugin.imageProcessor.SelectPath(path, true);
 					pathSegmentIndexSelected = 0;
 					if (path != null && path.path != null && path.path.size() > 0) {
-						ownerPlugin.SetSelectedSegmentCursor(path.path.get(0));
+						ownerPlugin.imageProcessor.SetSelectedSegmentCursor(path.path.get(0),
+								ownerPlugin.featureSizePixels);
 					} else {
-						ownerPlugin.SetSelectedSegmentCursor(null);
+						ownerPlugin.imageProcessor.SetSelectedSegmentCursor(null, 0);
 					}
 
-					updateInputSpecificationButtonEnablements();
-					((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+					update();
+					ownerPlugin.imageProcessor.update();
 				}
 			});
 
@@ -910,7 +896,7 @@ public class DscControlPanelDialog extends JDialog {
 							return;
 						}
 						pathListModel.removeElement(selectedPath);
-						ownerPlugin.RemovePathFromDrawOverlay(selectedPath);
+						ownerPlugin.imageProcessor.RemovePathFromDrawOverlay(selectedPath);
 						pathSegmentIndexSelected = 0;
 						updateSelectedSegment();
 
@@ -924,11 +910,11 @@ public class DscControlPanelDialog extends JDialog {
 							DendriteSegment dendSegment = pathListModel.get(iDend);
 							spinesRemaining.addAll(dendSegment.spines);
 						}
-						ownerPlugin.AddPointRoisAsSpineMarkers(spinesRemaining);
+						ownerPlugin.imageProcessor.AddPointRoisAsSpineMarkers(spinesRemaining);
 						associateSpinesWithDendriteSegments(spinesRemaining);
 
-						updateInputSpecificationButtonEnablements();
-						((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+						update();
+						ownerPlugin.imageProcessor.update();
 					}
 				});
 
@@ -1100,215 +1086,19 @@ public class DscControlPanelDialog extends JDialog {
 		return panel;
 	}
 
-	/**
-	 * The user needs to tell us how big a visual feature is. Ultimately we need
-	 * this info in pixels, but the user needs to be able to specify it in microns
-	 * as well.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createFeatureDetectionSizeInputPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-		// panel.setBorder(BorderFactory.createLineBorder(getForeground()));
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-		gridbagConstraints.weighty = 0.0;
-
-		String infoMsg = "<html><div style=\"padding-left: 4em;\">"
-				+ "<p>Dendritic Spine Counter needs to know how big of a window to use "
-				+ "when scanning this image for visually discernible features. This window's "
-				+ "size should be set to the approximate size of an observable dendritic spine, "
-				+ "which may depend on factors such as stain quality and image sharpness.</p><br/>"
-				+ "<p>Setting this value too high will cause the plugin to fail to find smaller "
-				+ "or blurrier spines (Type II errors). Setting it too low will cause the "
-				+ "plugin to incorrectly identify spines where none exist (Type I errors). "
-				+ "(A low setting may also increase the running time of the feature identification process.)</p>"
-				+ "</div></html>";
-
-		{
-			// Icon icon = UIManager.getIcon("OptionPane.informationIcon");
-			JLabel label = new JLabel("<html>" + infoMsg + "</html>", SwingConstants.RIGHT);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridwidth = 3;
-			panel.add(label, gridbagConstraints);
-
-			// Next row!
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			// First (real) row: Ask them to give us a number.
-			// If this number is in pixels, then that's all we need from them at this point.
-			JLabel label = new JLabel("<html>" + "Feature detection window size: " + "</html>", SwingConstants.RIGHT);
-			panel.add(label, gridbagConstraints);
-
-			{
-				textfieldFeatureDetectionWindowSize = new JTextField(5);
-
-				textfieldFeatureDetectionWindowSize.setText(String.format("%d", this.ownerPlugin.featureSizePixels));
-				textfieldFeatureDetectionWindowSize.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						ownerPlugin.featureSizePixels = getFeatureDetectionWindowSizeInPixels();
-					}
-				});
-
-				JButton btnApply = new JButton("Apply");
-				btnApply.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						updateFeatureDetectionSizeInputPanel();
-					}
-				});
-
-				Box box = Box.createVerticalBox();
-
-				box.add(textfieldFeatureDetectionWindowSize);
-				box.add(btnApply);
-
-				gridbagConstraints.gridx++;
-				panel.add(box, gridbagConstraints);
-			}
-
-			{
-				radioFeatureDetectionWindowInPixels = new JRadioButton("pixels");
-				radioFeatureDetectionWindowInPixels.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
-						updateFeatureDetectionSizeInputPanel();
-					}
-				});
-
-				radioFeatureDetectionWindowInImageUnits = new JRadioButton("(image units)");
-				radioFeatureDetectionWindowInImageUnits.setEnabled(false);
-				radioFeatureDetectionWindowInImageUnits.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
-						updateFeatureDetectionSizeInputPanel();
-					}
-				});
-
-				ButtonGroup pixelOrMicron = new ButtonGroup();
-				pixelOrMicron.add(radioFeatureDetectionWindowInPixels);
-				pixelOrMicron.add(radioFeatureDetectionWindowInImageUnits);
-
-				Box box = Box.createVerticalBox();
-
-				box.add(radioFeatureDetectionWindowInPixels);
-				box.add(radioFeatureDetectionWindowInImageUnits);
-
-				gridbagConstraints.gridx++;
-				panel.add(box, gridbagConstraints);
-			}
-
-			// Next row!
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		{
-			gridbagConstraints.gridwidth = 2;
-			this.lblImageResolution = new JLabel();
-			panel.add(lblImageResolution, gridbagConstraints);
-
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 2;
-			JButton btnOpenSetScale = new JButton("Set Scale...");
-			btnOpenSetScale.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					new Executer("Set Scale...", ((ImagePlus) (ownerPlugin.getWorkingImagePlus())));
-
-					// NOTE: The executor spins off on a separate thread.
-					// So this update occurs right away, while the user is
-					// still entering values.
-					enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS;
-					updateFeatureDetectionSizeInputPanel();
-				}
-			});
-			panel.add(btnOpenSetScale, gridbagConstraints);
-
-			// Next row!
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		gridbagConstraints.gridwidth = 3;
-		{
-			JLabel label = new JLabel("<html>" + "<hr/><br/>" + "This plugin uses 2D images with a light background. "
-					+ "If you wish to analyze 3D stacks, please first convert them "
-					+ "to a 2D image (using MinIP, MaxIP, etc.). "
-					+ "If your background is dark, you may use the button below to invert the image." + "</html>");
-			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			gridbagConstraints.insets.top = 4;
-			JButton btnInvertImage = new JButton("Invert image brightness levels");
-			btnInvertImage.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					ownerPlugin.invertImage();
-				}
-			});
-			panel.add(btnInvertImage, gridbagConstraints);
-
-			// Next row!
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		{
-			String pathToImage = "images/icons/dsc--trace-dendrite-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			JButton btnNext = new JButton("Next: Trace dendrites", myIcon);
-
-			btnNext.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					tabbedPane.setSelectedIndex(1);
-				}
-			});
-			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
-			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
-			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
-			gridbagConstraints.weighty = 1.0;
-			panel.add(btnNext, gridbagConstraints);
-		}
-
-		updateFeatureDetectionSizeInputPanel();
-		return panel;
-	}
-
 	public void countSpinesAndBuildTable() {
-		List<Point2D> points = ownerPlugin.getPointsFromCurrentPolylineRoiSelection();
+		List<Point2D> points = ownerPlugin.imageProcessor.getPointsFromCurrentPolylineRoiSelection();
 		clearSpineAssociations();
 		associateSpinesWithDendriteSegments(points);
 		populateResultsTable();
-		updateInputSpecificationButtonEnablements();
+		update();
 	}
 
 	public void updateSelectedSegment() {
 		DendriteSegment selectedBranch = this.pathListBox.getSelectedValue();
 		if (selectedBranch == null) {
 			this.pathSegmentIndexSelected = 0;
-			ownerPlugin.SetSelectedSegmentCursor(null);
+			ownerPlugin.imageProcessor.SetSelectedSegmentCursor(null, 0);
 			return;
 		}
 
@@ -1320,8 +1110,8 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		SearchPixel pix = selectedBranch.path.get(pathSegmentIndexSelected);
-		ownerPlugin.SetSelectedSegmentCursor(pix);
-		this.updateInputSpecificationButtonEnablements();
+		ownerPlugin.imageProcessor.SetSelectedSegmentCursor(pix, ownerPlugin.featureSizePixels);
+		this.update();
 	}
 
 	public void changeSelectedSegmentThickness(double changeAmt) {
@@ -1348,14 +1138,14 @@ public class DscControlPanelDialog extends JDialog {
 
 		int oldBranchId = selectedBranch.id;
 
-		ownerPlugin.RemovePathFromDrawOverlay(selectedBranch);
+		ownerPlugin.imageProcessor.RemovePathFromDrawOverlay(selectedBranch);
 		selectedBranch.roi = selectedBranch.getSimilarityVolume();
 
-		ownerPlugin.AddPathToDrawOverlay(selectedBranch);
+		ownerPlugin.imageProcessor.AddPathToDrawOverlay(selectedBranch);
 		selectedBranch.id = oldBranchId;
 
-		ownerPlugin.SelectPath(selectedBranch, true);
-		ownerPlugin.SetSelectedSegmentCursor(pix);
+		ownerPlugin.imageProcessor.SelectPath(selectedBranch, true);
+		ownerPlugin.imageProcessor.SetSelectedSegmentCursor(pix, ownerPlugin.featureSizePixels);
 	}
 
 	public void shiftSelectedSegmentPosition(double changeAmt) {
@@ -1388,23 +1178,23 @@ public class DscControlPanelDialog extends JDialog {
 
 		int oldBranchId = selectedBranch.id;
 
-		ownerPlugin.RemovePathFromDrawOverlay(selectedBranch);
+		ownerPlugin.imageProcessor.RemovePathFromDrawOverlay(selectedBranch);
 		selectedBranch.roi = selectedBranch.getSimilarityVolume();
 
-		ownerPlugin.AddPathToDrawOverlay(selectedBranch);
+		ownerPlugin.imageProcessor.AddPathToDrawOverlay(selectedBranch);
 		selectedBranch.id = oldBranchId;
 
-		ownerPlugin.SelectPath(selectedBranch, true);
+		ownerPlugin.imageProcessor.SelectPath(selectedBranch, true);
 
 		SearchPixel pix = selectedBranch.path.get(pathSegmentIndexSelected);
-		ownerPlugin.SetSelectedSegmentCursor(pix);
+		ownerPlugin.imageProcessor.SetSelectedSegmentCursor(pix, ownerPlugin.featureSizePixels);
 	}
 
 	private void setupWindowEventHandlers() {
 		addWindowFocusListener(new WindowFocusListener() {
 			@Override
 			public void windowGainedFocus(WindowEvent e) {
-				updateInputSpecificationButtonEnablements();
+				update();
 			}
 
 			@Override
@@ -1430,7 +1220,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			@Override
 			public void mouseEntered(MouseEvent arg0) {
-				updateInputSpecificationButtonEnablements();
+				update();
 			}
 
 			@Override
@@ -1448,11 +1238,11 @@ public class DscControlPanelDialog extends JDialog {
 
 	}
 
-	public void updateInputSpecificationButtonEnablements() {
+	public void update() {
 		boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
 		btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
 
-		List<Point2D> pathPoints = ownerPlugin.getCurrentImagePolylinePathPoints();
+		List<Point2D> pathPoints = ownerPlugin.imageProcessor.getCurrentImagePolylinePathPoints(null);
 		boolean isThereACurrentPath = pathPoints != null;
 		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
 
@@ -1478,7 +1268,7 @@ public class DscControlPanelDialog extends JDialog {
 		boolean areThereResults = this.resultsTableData.length > 0;
 		btnCopyTableDataToClipboard.setEnabled(areThereResults);
 
-		updateFeatureDetectionSizeInputPanel();
+		this.panelCalibration.update();
 	}
 
 	/**
@@ -1486,56 +1276,51 @@ public class DscControlPanelDialog extends JDialog {
 	 * Panel based on the values of our underlying member variables.
 	 */
 	public void updateFeatureDetectionSizeInputPanel() {
-		radioFeatureDetectionWindowInPixels
-				.setSelected(enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.PIXELS);
-		radioFeatureDetectionWindowInImageUnits
-				.setSelected(enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS);
-
-		Calibration cal = ownerPlugin.getWorkingImageDimensions();
-		boolean isCalibrated = cal != null;
-		if (!isCalibrated) {
-			radioFeatureDetectionWindowInImageUnits.setText("(image units)");
-			radioFeatureDetectionWindowInImageUnits.setEnabled(false);
-			lblImageResolution.setText(String.format(
-					"<html>" + "Feature window size set to %d pixels<br/>" + "(image scale not set)." + "</html>",
-					this.getFeatureDetectionWindowSizeInPixels()));
-		} else {
-			radioFeatureDetectionWindowInImageUnits.setText(cal.getUnits());
-			radioFeatureDetectionWindowInImageUnits.setEnabled(true);
-
-			lblImageResolution.setText(String.format(
-					"<html>" + "Feature window size set to %d pixels<br/>" + "(image scale set to %.3f pixels per %s)."
-							+ "</html>",
-					this.getFeatureDetectionWindowSizeInPixels(), cal.getRawX(1.0), cal.getUnit()));
-		}
+		/*
+		 * radioFeatureDetectionWindowInPixels
+		 * .setSelected(enumFeatureDetectionWindowSizeUnits ==
+		 * FeatureDetectionWindowSizeUnitsEnum.PIXELS);
+		 * radioFeatureDetectionWindowInImageUnits
+		 * .setSelected(enumFeatureDetectionWindowSizeUnits ==
+		 * FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS);
+		 * 
+		 * Calibration cal = (ownerPlugin.imageProcessor != null) ?
+		 * ownerPlugin.imageProcessor.getDimensions() : null; boolean isCalibrated = cal
+		 * != null; if (!isCalibrated) {
+		 * radioFeatureDetectionWindowInImageUnits.setText("(image units)");
+		 * radioFeatureDetectionWindowInImageUnits.setEnabled(false);
+		 * lblImageResolution.setText(String.format( "<html>" +
+		 * "Feature window size set to %d pixels<br/>" + "(image scale not set)." +
+		 * "</html>", this.getFeatureDetectionWindowSizeInPixels())); } else {
+		 * radioFeatureDetectionWindowInImageUnits.setText(cal.getUnits());
+		 * radioFeatureDetectionWindowInImageUnits.setEnabled(true);
+		 * 
+		 * lblImageResolution.setText(String.format( "<html>" +
+		 * "Feature window size set to %d pixels<br/>" +
+		 * "(image scale set to %.3f pixels per %s)." + "</html>",
+		 * this.getFeatureDetectionWindowSizeInPixels(), cal.getRawX(1.0),
+		 * cal.getUnit())); }
+		 */
 	}
 
 	public int getFeatureDetectionWindowSizeInPixels() {
-		int pixelWindowSize = 5;
-		if (enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.PIXELS) {
-			try {
-				pixelWindowSize = Integer.valueOf(textfieldFeatureDetectionWindowSize.getText());
-			} catch (NumberFormatException ex) {
-			}
-		} else if (enumFeatureDetectionWindowSizeUnits == FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS) {
-			try {
-				double numUnits = Double.valueOf(textfieldFeatureDetectionWindowSize.getText());
-				Calibration cal = ownerPlugin.getWorkingImageDimensions();
-				if (cal != null) {
-					pixelWindowSize = (int) Math.floor(cal.getRawX(numUnits));
-				}
-			} catch (NumberFormatException ex) {
-			}
-		}
+		/*
+		 * int pixelWindowSize = 5; if (enumFeatureDetectionWindowSizeUnits ==
+		 * FeatureDetectionWindowSizeUnitsEnum.PIXELS) { try { pixelWindowSize =
+		 * Integer.valueOf(textfieldFeatureDetectionWindowSize.getText()); } catch
+		 * (NumberFormatException ex) { } } else if (enumFeatureDetectionWindowSizeUnits
+		 * == FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS) { try { double numUnits =
+		 * Double.valueOf(textfieldFeatureDetectionWindowSize.getText()); Calibration
+		 * cal = ownerPlugin.imageProcessor.getDimensions(); if (cal != null) {
+		 * pixelWindowSize = (int) Math.floor(cal.getRawX(numUnits)); } } catch
+		 * (NumberFormatException ex) { } }
+		 * 
+		 * if (pixelWindowSize < 3) { // If pixel window is too small, then the algo
+		 * takes forever to run, // and produces noisy garbage. As such, we will impose
+		 * an internal // minimum pixel window size. pixelWindowSize = 3; }
+		 */
 
-		if (pixelWindowSize < 3) {
-			// If pixel window is too small, then the algo takes forever to run,
-			// and produces noisy garbage. As such, we will impose an internal
-			// minimum pixel window size.
-			pixelWindowSize = 3;
-		}
-
-		return pixelWindowSize;
+		return 0;
 	}
 
 	public void clearSpineAssociations() {
@@ -1576,7 +1361,7 @@ public class DscControlPanelDialog extends JDialog {
 		resultsTableColumns[0] = "Dendrite Segment";
 		resultsTableColumns[3] = "Spine Count";
 
-		Calibration cal = ownerPlugin.getWorkingImageDimensions();
+		Calibration cal = null; //ownerPlugin.imageProcessor.getDimensions();
 		if (cal == null) {
 			resultsTableColumns[1] = "Length (pixels)";
 			resultsTableColumns[2] = "Avg. Width (pixels)";
@@ -1714,8 +1499,9 @@ public class DscControlPanelDialog extends JDialog {
 	public void loadFromJsonObject(JSONObject jsonObj) {
 		Object v = jsonObj.get("featuresizepixels");
 
-		this.enumFeatureDetectionWindowSizeUnits = FeatureDetectionWindowSizeUnitsEnum.PIXELS;
-		this.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
+		// this.enumFeatureDetectionWindowSizeUnits =
+		// FeatureDetectionWindowSizeUnitsEnum.PIXELS;
+		// this.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
 
 		v = jsonObj.get("researcher");
 		this.textfieldResultTableResearcher.setText(String.format(v.toString()));
@@ -1731,20 +1517,20 @@ public class DscControlPanelDialog extends JDialog {
 		for (int iDend = 0; iDend < jsonDends.size(); iDend++) {
 			JSONObject jsonDend = (JSONObject) jsonDends.get(iDend);
 			DendriteSegment dendrite = new DendriteSegment();
-			dendrite.fromJSON(jsonDend, ownerPlugin.workingImg);
+			dendrite.fromJSON(jsonDend, ownerPlugin.imageProcessor.workingImg);
 
 			this.pathListModel.addElement(dendrite);
-			ownerPlugin.AddPathToDrawOverlay(dendrite);
+			ownerPlugin.imageProcessor.AddPathToDrawOverlay(dendrite);
 
 			allspines.addAll(dendrite.spines);
 		}
 
 		// Add all the spines as visible ROI points in one big blast.
-		ownerPlugin.AddPointRoisAsSpineMarkers(allspines);
+		ownerPlugin.imageProcessor.AddPointRoisAsSpineMarkers(allspines);
 
 		populateResultsTable();
 
-		updateInputSpecificationButtonEnablements();
-		((ImagePlus) (ownerPlugin.getWorkingImagePlus())).updateAndRepaintWindow();
+		update();
+		ownerPlugin.imageProcessor.update();
 	}
 }
