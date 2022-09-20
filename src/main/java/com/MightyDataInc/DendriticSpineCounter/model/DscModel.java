@@ -6,35 +6,35 @@ import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import ij.measure.Calibration;
 
 public class DscModel {
-	public Dendritic_Spine_Counter plugin;
-	public DscControlPanelDialog dialog;
+	// region Feature window size and unit scale
 
-	// ------------------------------------------------
-	// Feature window size and unit scale
-
-	private double featureWindowSizeInPixels = 5;
+	private double featureWindowSizeInPixels = 25;
 	private String imageScalePhysicalUnitName;
 	private double imageScalePhysicalUnitsPerPixel;
 
-	public double getFeatureWindowPixelSize() {
+	public double getFeatureWindowSizeInPixels() {
 		return this.featureWindowSizeInPixels;
 	}
 
-	public void setFeatureWindowPixelSize(double pixels) {
+	public boolean setFeatureWindowSizeInPixels(double pixels) {
+		if (this.featureWindowSizeInPixels == pixels) {
+			return false;
+		}
 		if (pixels < 5) {
 			pixels = 5;
 		}
 		this.featureWindowSizeInPixels = pixels;
+		return true;
 	}
 
-	public double getFeatureWindowPhysicalUnitSize() {
-		double v = this.convertImageScalePixelsToPhysicalUnits(featureWindowSizeInPixels);
+	public double getFeatureWindowSizeInPhysicalUnits() {
+		double v = this.convertImageScaleFromPixelsToPhysicalUnits(featureWindowSizeInPixels);
 		return v;
 	}
 
-	public void setFeatureWindowPhysicalUnitSize(double units) {
-		double pixels = this.convertImageScalePhysicalUnitsToPixels(units);
-		this.setFeatureWindowPixelSize(pixels);
+	public void setFeatureWindowSizeInPhysicalUnits(double units) {
+		double pixels = this.convertImageScaleFromPhysicalUnitsToPixels(units);
+		this.setFeatureWindowSizeInPixels(pixels);
 	}
 
 	public String getImageScalePhysicalUnitName() {
@@ -56,9 +56,9 @@ public class DscModel {
 		}
 
 		// Through the transformation, keep the size of the feature window the same.
-		double featureSizePhysicalUnits = getFeatureWindowPhysicalUnitSize();
+		double featureSizePhysicalUnits = getFeatureWindowSizeInPhysicalUnits();
 		this.imageScalePhysicalUnitsPerPixel = unitsperpixel;
-		this.setFeatureWindowPhysicalUnitSize(featureSizePhysicalUnits);
+		this.setFeatureWindowSizeInPhysicalUnits(featureSizePhysicalUnits);
 	}
 
 	public boolean imageHasValidPhysicalUnitScale() {
@@ -69,14 +69,14 @@ public class DscModel {
 		return true;
 	}
 
-	public double convertImageScalePixelsToPhysicalUnits(double pixels) {
+	public double convertImageScaleFromPixelsToPhysicalUnits(double pixels) {
 		if (imageScalePhysicalUnitsPerPixel == 0) {
 			return pixels;
 		}
 		return pixels * imageScalePhysicalUnitsPerPixel;
 	}
 
-	public double convertImageScalePhysicalUnitsToPixels(double units) {
+	public double convertImageScaleFromPhysicalUnitsToPixels(double units) {
 		if (imageScalePhysicalUnitsPerPixel == 0) {
 			return units;
 		}
@@ -93,4 +93,9 @@ public class DscModel {
 		this.setImageScalePhysicalUnitsPerPixel(cal.pixelWidth);
 	}
 
+	// endregion
+
+	// region Manage dendrite segments
+
+	// endregion
 }

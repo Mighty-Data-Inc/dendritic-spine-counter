@@ -9,6 +9,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -17,6 +18,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 import ij.Executer;
@@ -32,10 +35,9 @@ public class CalibrationPanel extends DscBasePanel {
 	private JTextField textfieldFeatureWindowPhysicalUnits;
 
 	private JLabel lblImageUnits;
-	private JLabel lblImageResolution;
 
-	public CalibrationPanel(JTabbedPane tabbedPane, Dendritic_Spine_Counter dscplugin, DscModel model) {
-		super(tabbedPane, dscplugin, model);
+	public CalibrationPanel(DscControlPanelDialog controlPanel) {
+		super(controlPanel);
 	}
 
 	/**
@@ -57,14 +59,17 @@ public class CalibrationPanel extends DscBasePanel {
 		gridbagConstraints.weighty = 0.0;
 
 		String infoMsg = "<html><div style=\"padding-left: 4em;\">"
-				+ "<p>Dendritic Spine Counter needs to know how big of a window to use "
-				+ "when scanning this image for visually discernible features. This window's "
-				+ "size should be set to the approximate size of an observable dendritic spine, "
-				+ "which may depend on factors such as stain quality and image sharpness.</p><br/>"
-				+ "<p>Setting this value too high will cause the plugin to fail to find smaller "
-				+ "or blurrier spines (Type II errors). Setting it too low will cause the "
-				+ "plugin to incorrectly identify spines where none exist (Type I errors). "
-				+ "(A low setting may also make the plugin run more slowly.)</p>" + "</div></html>";
+				+ "<p><strong>Dendritic Spine Counter needs to know how big your spines are on this image.</strong></p><br/>"
+				+ "<p>In the center of your Working Image window, you should see a <b>small blue selection circle</b>, "
+				+ "with little square control points around it indicating that you can move it around "
+				+ "and resize it. " + "(If you don't see this circle or you can't move it around, click "
+				+ "\"Re-center calibration circle\" to put it in the center of your Working Image window.)</p>"
+				+ "<ul><li>Pick a roughly average-sized dendritic spine anywhere on your image.</li>"
+				+ "<li>Pan and zoom so that this spine is prominent in your window.</li>"
+				+ "<li>Move the calibration circle onto this spine. (You can use the \"Re-center\" button to "
+				+ "easily move it to your pan-zoomed viewport.)</li>"
+				+ "<li>Resize the calibration circle to match the size of the spine. Try to keep the circle circular. (Pro tip: Use the SHIFT key.)</li>"
+				+ "<li>When done, click \"Next\" at the bottom of this panel.</li></ul>";
 
 		{
 			JLabel label = new JLabel("<html>" + infoMsg + "</html>", SwingConstants.RIGHT);
@@ -75,19 +80,54 @@ public class CalibrationPanel extends DscBasePanel {
 		}
 
 		{
-			gridbagConstraints.insets.top = 16;
+			gridbagConstraints.gridy++;
+			int gridy = gridbagConstraints.gridy;
+
+			gridbagConstraints.insets.top = 8;
+			gridbagConstraints.insets.bottom = 2;
 			gridbagConstraints.gridwidth = 1;
 			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridheight = 8;
+
+			String pathToImage = "images/guides/ring-around-a-dendritic-spine.jpg";
+			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+			JLabel label = new JLabel(myIcon);
+			this.add(label, gridbagConstraints);
+
+			gridbagConstraints.gridy += 4;
+			gridbagConstraints.gridheight = 1;
+			label = new JLabel("<html><i>Example of how to place the calibration circle</i></html>",
+					SwingConstants.CENTER);
+			this.add(label, gridbagConstraints);
+
 			gridbagConstraints.gridy++;
+			JButton btnRecenterCalib = new JButton("Re-center calibration circle");
+			btnRecenterCalib.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					controlPanel.getPlugin().getImageProcessor().showHideFeatureSizeSelectorRoi(true);
+				}
+			});
+			this.add(btnRecenterCalib, gridbagConstraints);
+
+			gridbagConstraints.gridy = gridy;
+		}
+
+		{
+			gridbagConstraints.insets.top = 2;
+			gridbagConstraints.insets.bottom = 2;
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.gridheight = 1;
+			gridbagConstraints.gridx = 1;
 
 			// First (real) row: Ask them to give us a number.
 			// If this number is in pixels, then that's all we need from them at this point.
-			JLabel label = new JLabel(
-					"<html>" + "Feature detection window size: <br/><i>(minimum 5 pixels)</i>" + "</html>",
-					SwingConstants.RIGHT);
+			JLabel label = new JLabel("<html>Feature detection window size <i>(minimum 5 pixels)</i></html>");
 			this.add(label, gridbagConstraints);
 
-			gridbagConstraints.gridx++;
+			gridbagConstraints.gridx = 1;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridwidth = 1;
 			textfieldFeatureWindowPixels = new JTextField(5);
 			textfieldFeatureWindowPixels.addKeyListener(new KeyAdapter() {
 				@Override
@@ -132,15 +172,18 @@ public class CalibrationPanel extends DscBasePanel {
 		}
 
 		{
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.gridx = 1;
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.top = 16;
 
-			JLabel label = new JLabel("Image scale:", SwingConstants.RIGHT);
+			JLabel label = new JLabel("Image scale:");
 			this.add(label, gridbagConstraints);
 
-			gridbagConstraints.gridx++;
+			gridbagConstraints.gridx = 1;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.insets.top = 2;
 			textfieldCurrentScaleValue = new JTextField(5);
 			textfieldCurrentScaleValue.setEditable(false);
 			this.add(textfieldCurrentScaleValue, gridbagConstraints);
@@ -159,7 +202,7 @@ public class CalibrationPanel extends DscBasePanel {
 			btnOpenSetScale.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					dscPlugin.runScaleSettingDialog();
+					getControlPanel().getPlugin().runScaleSettingDialog();
 					update();
 				}
 			});
@@ -187,7 +230,7 @@ public class CalibrationPanel extends DscBasePanel {
 			btnInvertImage.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					dscPlugin.imageProcessor.invertImage();
+					getControlPanel().getPlugin().getImageProcessor().invertImage();
 				}
 			});
 			this.add(btnInvertImage, gridbagConstraints);
@@ -201,23 +244,25 @@ public class CalibrationPanel extends DscBasePanel {
 
 	@Override
 	public void update() {
-		if (this.dscPlugin.imageProcessor != null) {
-			Calibration cal = this.dscPlugin.imageProcessor.getDimensions();
+		DscModel model = getControlPanel().getPlugin().getModel();
+		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
+
+		if (imageProcessor != null) {
+			Calibration cal = imageProcessor.getDimensions();
 			model.setImageScale(cal);
 		}
 
-		this.textfieldFeatureWindowPixels.setText(String.format("%f", this.model.getFeatureWindowPixelSize()));
+		this.textfieldFeatureWindowPixels.setText(String.format("%f", model.getFeatureWindowSizeInPixels()));
 
-		if (this.model.imageHasValidPhysicalUnitScale()) {
-			this.textfieldCurrentScaleValue
-					.setText(String.format("%f", this.model.getImageScalePhysicalUnitsPerPixel()));
-			this.textfieldCurrentScaleUnits.setText(this.model.getImageScalePhysicalUnitName() + "(s) per pixel");
+		if (model.imageHasValidPhysicalUnitScale()) {
+			this.textfieldCurrentScaleValue.setText(String.format("%f", model.getImageScalePhysicalUnitsPerPixel()));
+			this.textfieldCurrentScaleUnits.setText(model.getImageScalePhysicalUnitName() + "(s) per pixel");
 
 			this.textfieldFeatureWindowPhysicalUnits.setEnabled(true);
 			this.textfieldFeatureWindowPhysicalUnits.setText(String.format("%f",
-					this.model.convertImageScalePixelsToPhysicalUnits(this.model.getFeatureWindowPixelSize())));
+					model.convertImageScaleFromPixelsToPhysicalUnits(model.getFeatureWindowSizeInPixels())));
 
-			this.lblImageUnits.setText(this.model.getImageScalePhysicalUnitName() + "(s)");
+			this.lblImageUnits.setText(model.getImageScalePhysicalUnitName() + "(s)");
 		} else {
 			String sunk = "(unknown units)";
 			this.textfieldCurrentScaleValue.setText("");
@@ -232,6 +277,7 @@ public class CalibrationPanel extends DscBasePanel {
 	}
 
 	private void onPixelsTyped(boolean setValueOnModel) {
+		DscModel model = getControlPanel().getPlugin().getModel();
 		String t = textfieldFeatureWindowPixels.getText();
 
 		double v = 0;
@@ -241,14 +287,14 @@ public class CalibrationPanel extends DscBasePanel {
 		}
 
 		if (setValueOnModel) {
-			this.model.setFeatureWindowPixelSize(v);
-			v = this.model.getFeatureWindowPixelSize();
+			model.setFeatureWindowSizeInPixels(v);
+			v = model.getFeatureWindowSizeInPixels();
 
 			textfieldFeatureWindowPixels.setText(String.format("%f", v));
 		}
 
-		if (this.model.imageHasValidPhysicalUnitScale()) {
-			double y = this.model.convertImageScalePixelsToPhysicalUnits(v);
+		if (model.imageHasValidPhysicalUnitScale()) {
+			double y = model.convertImageScaleFromPixelsToPhysicalUnits(v);
 			textfieldFeatureWindowPhysicalUnits.setText(String.format("%f", y));
 		} else {
 			textfieldFeatureWindowPhysicalUnits.setText("");
@@ -256,6 +302,7 @@ public class CalibrationPanel extends DscBasePanel {
 	}
 
 	private void onPhysicalUnitsTyped(boolean setValueOnModel) {
+		DscModel model = getControlPanel().getPlugin().getModel();
 		String t = textfieldFeatureWindowPhysicalUnits.getText();
 
 		double v = 0;
@@ -265,25 +312,59 @@ public class CalibrationPanel extends DscBasePanel {
 		}
 
 		if (setValueOnModel) {
-			this.model.setFeatureWindowPhysicalUnitSize(v);
-			v = this.model.getFeatureWindowPhysicalUnitSize();
+			model.setFeatureWindowSizeInPhysicalUnits(v);
+			v = model.getFeatureWindowSizeInPhysicalUnits();
 
 			textfieldFeatureWindowPhysicalUnits.setText(String.format("%f", v));
 		}
 
-		double y = this.model.convertImageScalePhysicalUnitsToPixels(v);
+		double y = model.convertImageScaleFromPhysicalUnitsToPixels(v);
 		textfieldFeatureWindowPixels.setText(String.format("%f", y));
 	}
 
+	private void getFeatureSizeFromSelector() {
+		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
+		double pixels = imageProcessor.getFeatureSizeSelectorRoiSizeInPixels();
+		if (pixels == 0) {
+			return;
+		}
+
+		DscModel model = getControlPanel().getPlugin().getModel();
+		boolean didFeatureSizeChange = model.setFeatureWindowSizeInPixels(pixels);
+		if (didFeatureSizeChange) {
+			this.update();
+		}
+	}
+
+	@Override
 	protected void onTimer() {
-		Calibration cal = this.dscPlugin.imageProcessor.getDimensions();
-		
+		getFeatureSizeFromSelector();
+
+		DscModel model = getControlPanel().getPlugin().getModel();
+
+		Calibration cal = getControlPanel().getPlugin().getImageProcessor().getDimensions();
+		if (cal == null) {
+			return;
+		}
+
 		double pwDesired = model.getImageScalePhysicalUnitsPerPixel();
-		
-		if (cal.pixelWidth != pwDesired
-				|| cal.getUnit() != model.getImageScalePhysicalUnitName()) {
+
+		if (cal.pixelWidth != pwDesired || cal.getUnit() != model.getImageScalePhysicalUnitName()) {
 			model.setImageScale(cal);
 			update();
 		}
 	}
+
+	@Override
+	protected void onPanelEntered() {
+		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
+		imageProcessor.showHideFeatureSizeSelectorRoi(true);
+	}
+
+	@Override
+	protected void onPanelExited() {
+		getFeatureSizeFromSelector();
+		getControlPanel().getPlugin().getImageProcessor().showHideFeatureSizeSelectorRoi(false);
+	}
+
 }

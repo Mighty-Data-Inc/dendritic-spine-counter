@@ -64,17 +64,15 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	@Parameter
 	OverlayService overlayService;
 
-	public DscModel model;
+	private DscModel model;
 
-	// TODO: Don't expose dlg. Expose model, and make model ping dlg.
-	// Maybe leave image processor exposed.
-	public DscControlPanelDialog controlPanelDlg;
-	public DscImageProcessor imageProcessor;
+	private DscControlPanelDialog controlPanelDlg;
+	private DscImageProcessor imageProcessor;
 
-	public Dataset origDataset;
+	private Dataset origDataset;
 
-	public Tool polylineTool;
-	public Tool pointTool;
+	private Tool polylineTool;
+	private Tool pointTool;
 
 	// This parameter determines how "different" a spine's brightness
 	// can be from the brightness of the dendrite that the spine comes off of.
@@ -83,19 +81,40 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	// of units, it represents the number of standard deviations of difference
 	// in pixel value samplings that the spine can have and still be considered
 	// part of the same dendritic structure.
-	public double FEATURE_SENSITIVITY_ALLOWANCE = 4.0;
+	private double FEATURE_SENSITIVITY_ALLOWANCE = 4.0;
 
 	// How far out from the polyline to search for the thickness of the dendrite.
 	// Expressed as a multiple of how many pixel window sizes to search out to.
-	public double MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES = 5.0;
-
-	// How big the features to scan for are, in pixels.
-	public int featureSizePixels = 5;
+	private double MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES = 5.0;
 
 	// The ID value to assign to the next path that gets added to our overlay.
 	// Incremented every time we add a path. Never decremented.
 	// TODO: MOve this into the model.
-	public int nextPathId = 1;
+	private int nextPathId = 1;
+
+	public Tool getPolylineTool() {
+		return this.polylineTool;
+	}
+
+	public Tool getPointTool() {
+		return this.pointTool;
+	}
+
+	public DscModel getModel() {
+		return this.model;
+	}
+
+	public DscControlPanelDialog getControlPanel() {
+		return this.controlPanelDlg;
+	}
+
+	public DscImageProcessor getImageProcessor() {
+		return this.imageProcessor;
+	}
+
+	public Dataset getOriginalImage() {
+		return this.origDataset;
+	}
 
 	// The IDE environment injects services with a "legacy" model, whereas
 	// Fiji uses a "new" model. But it's inconsistent in both cases. It's maddening.
@@ -192,10 +211,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 		model = new DscModel();
 
-		controlPanelDlg = new DscControlPanelDialog(this, model);
-
 		imageProcessor = new DscImageProcessor(this);
 		imageProcessor.createWorkingImage(origDataset, this.displayService);
+
+		controlPanelDlg = new DscControlPanelDialog(this, model);
 
 		Calibration cal = imageProcessor.getDimensions();
 		model.setImageScale(cal);
@@ -218,6 +237,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			return;
 		}
 		// TODO: Do something with this event. It has x, y, and modifier info.
+		System.out.println(String.format("Event: %s at (%d, %d)", ev.toString(), ev.getX(), ev.getY()));
 		this.controlPanelDlg.update();
 	}
 
@@ -232,7 +252,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		Executer executer = new Executer("Set Scale...");
 		executer.run();
 
-		//updateUI();
+		// updateUI();
 	}
 
 	public void updateUI() {

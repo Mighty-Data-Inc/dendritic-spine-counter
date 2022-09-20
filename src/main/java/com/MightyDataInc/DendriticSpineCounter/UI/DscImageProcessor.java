@@ -1,12 +1,15 @@
 package com.MightyDataInc.DendriticSpineCounter.UI;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.scijava.display.DisplayService;
+import org.scijava.util.IntCoords;
+import org.scijava.util.RealCoords;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
@@ -20,6 +23,7 @@ import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import ij.gui.ImageCanvas;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.axis.CalibratedAxis;
@@ -40,6 +44,8 @@ public class DscImageProcessor {
 	public Img<UnsignedByteType> workingImg;
 
 	private String workingImgWindowTitle;
+
+	private OvalRoi featureSizeSelectorRoi;
 
 	private OvalRoi currentSelectedSegmentRoi;
 
@@ -107,11 +113,11 @@ public class DscImageProcessor {
 		}
 
 		workingDisplay = (DefaultImageDisplay) (displayService.createDisplay(workingImgWindowTitle, workingImg));
-		
+
 		// Copy the axis calibrations to this display.
 		CalibratedAxis[] axes = new CalibratedAxis[origDataset.numDimensions()];
 		origDataset.axes(axes);
-		for (int iAxis = 0; iAxis < axes.length; iAxis++) {
+		for (int iAxis = 0; iAxis < workingDisplay.numDimensions(); iAxis++) {
 			workingDisplay.setAxis(axes[iAxis], iAxis);
 		}
 
@@ -291,28 +297,31 @@ public class DscImageProcessor {
 	}
 
 	// TODO: Maybe move this.
-	public DendriteSegment traceDendriteWithThicknessEstimation(double thicknessMultiplier,
-			double maxSearchDistanceWindows, OverlayService overlayService) {
-		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints(overlayService);
-		if (pathPoints == null || pathPoints.size() == 0) {
-			return null;
-		}
-
-		DendriteSegment polylineTracedPath = DendriteSegment.searchPolyline(pathPoints, workingImg, null);
-
-		int pixelWindowSize = this.ownerPlugin.controlPanelDlg.getFeatureDetectionWindowSizeInPixels();
-		polylineTracedPath.setMinimumSeparation(pixelWindowSize);
-		polylineTracedPath.smoothify(0.5);
-
-		polylineTracedPath.computeTangentsAndOrthogonals();
-
-		polylineTracedPath.findSimilarityBoundaries(pixelWindowSize, pixelWindowSize * maxSearchDistanceWindows);
-
-		polylineTracedPath.multiplyThickness(thicknessMultiplier);
-		polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
-
-		return polylineTracedPath;
-	}
+	/*
+	 * public DendriteSegment traceDendriteWithThicknessEstimation(double
+	 * thicknessMultiplier, double maxSearchDistanceWindows, OverlayService
+	 * overlayService) { List<Point2D> pathPoints =
+	 * getCurrentImagePolylinePathPoints(overlayService); if (pathPoints == null ||
+	 * pathPoints.size() == 0) { return null; }
+	 * 
+	 * DendriteSegment polylineTracedPath =
+	 * DendriteSegment.searchPolyline(pathPoints, workingImg, null);
+	 * 
+	 * int pixelWindowSize =
+	 * this.ownerPlugin.getControlPanel().getFeatureDetectionWindowSizeInPixels();
+	 * polylineTracedPath.setMinimumSeparation(pixelWindowSize);
+	 * polylineTracedPath.smoothify(0.5);
+	 * 
+	 * polylineTracedPath.computeTangentsAndOrthogonals();
+	 * 
+	 * polylineTracedPath.findSimilarityBoundaries(pixelWindowSize, pixelWindowSize
+	 * * maxSearchDistanceWindows);
+	 * 
+	 * polylineTracedPath.multiplyThickness(thicknessMultiplier);
+	 * polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
+	 * 
+	 * return polylineTracedPath; }
+	 */
 
 	public int AddPathToDrawOverlay(DendriteSegment path) {
 		if (path == null) {
@@ -330,8 +339,8 @@ public class DscImageProcessor {
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
 		getImagePlus().updateAndRepaintWindow();
 
-		path.id = this.ownerPlugin.nextPathId;
-		this.ownerPlugin.nextPathId++;
+		// path.id = this.ownerPlugin.nextPathId;
+		// this.ownerPlugin.nextPathId++;
 
 		path.roi = dendriteVolumeRoi;
 
@@ -424,4 +433,51 @@ public class DscImageProcessor {
 		}
 		impwin.toFront();
 	}
+
+	public OvalRoi showHideFeatureSizeSelectorRoi(boolean show) {
+		if (!show) {
+			if (featureSizeSelectorRoi != null) {
+				getOverlay().remove(featureSizeSelectorRoi);
+				getImagePlus().deleteRoi();
+				getImagePlus().updateAndRepaintWindow();
+				featureSizeSelectorRoi = null;
+			}
+			return null;
+		}
+
+		double pixelRadius = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels() / 2;
+
+		if (featureSizeSelectorRoi != null) {
+			getOverlay().remove(featureSizeSelectorRoi);
+			getImagePlus().deleteRoi();
+			getImagePlus().updateAndRepaintWindow();
+			featureSizeSelectorRoi = null;
+		}
+
+		ImageCanvas canvas = getImagePlus().getCanvas();
+		Rectangle rect = canvas.getSrcRect();
+
+		featureSizeSelectorRoi = new OvalRoi(rect.x + (rect.width / 2) - pixelRadius,
+				rect.y + (rect.height / 2) - pixelRadius, pixelRadius * 2, pixelRadius * 2);
+		featureSizeSelectorRoi.setFillColor(new Color(0f, .5f, 1f, .25f));
+		featureSizeSelectorRoi.setName("Feature Size Selector");
+		getOverlay().add(featureSizeSelectorRoi);
+
+		this.moveToForeground();
+		ownerPlugin.activatePolylineTool();
+
+		getImagePlus().setRoi(featureSizeSelectorRoi);
+		getImagePlus().updateAndRepaintWindow();
+
+		return featureSizeSelectorRoi;
+	}
+
+	public double getFeatureSizeSelectorRoiSizeInPixels() {
+		if (this.featureSizeSelectorRoi == null) {
+			return 0;
+		}
+		double px = this.featureSizeSelectorRoi.getFloatWidth();
+		return px;
+	}
+
 }

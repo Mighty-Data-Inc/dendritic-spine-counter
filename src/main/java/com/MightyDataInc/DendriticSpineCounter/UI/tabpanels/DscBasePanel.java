@@ -11,14 +11,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 public abstract class DscBasePanel extends JPanel {
 	private static final long serialVersionUID = 5162415477182496895L;
 
-	protected JTabbedPane tabbedPane;
-	protected DscModel model;
-	protected Dendritic_Spine_Counter dscPlugin;
+	private boolean isActive = false;
+
+	protected DscControlPanelDialog controlPanel;
 
 	protected GridBagConstraints standardPanelGridbagConstraints() {
 		GridBagConstraints gridbagConstraints = new GridBagConstraints();
@@ -38,10 +39,12 @@ public abstract class DscBasePanel extends JPanel {
 
 	public abstract void update();
 
-	public DscBasePanel(JTabbedPane tabbedPane, Dendritic_Spine_Counter dscplugin, DscModel model) {
-		this.tabbedPane = tabbedPane;
-		this.dscPlugin = dscplugin;
-		this.model = model;
+	public DscControlPanelDialog getControlPanel() {
+		return this.controlPanel;
+	}
+
+	public DscBasePanel(DscControlPanelDialog controlPanel) {
+		this.controlPanel = controlPanel;
 
 		init();
 		update();
@@ -57,6 +60,8 @@ public abstract class DscBasePanel extends JPanel {
 	}
 
 	protected void addNextButton(String labeltext, String pathToIcon) {
+		JTabbedPane tabbedPane = this.getControlPanel().getTabbedPane();
+
 		ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToIcon));
 
 		JButton btnNext = new JButton(labeltext, myIcon);
@@ -80,6 +85,32 @@ public abstract class DscBasePanel extends JPanel {
 		gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
 		gridbagConstraints.weighty = 1.0;
 		this.add(btnNext, gridbagConstraints);
+	}
+
+	public boolean IsActive() {
+		return this.isActive;
+	}
+
+	public void enterPanel() {
+		if (this.isActive) {
+			return;
+		}
+		this.isActive = true;
+		this.onPanelEntered();
+	}
+
+	public void exitPanel() {
+		if (!this.isActive) {
+			return;
+		}
+		this.isActive = false;
+		this.onPanelExited();
+	}
+
+	protected void onPanelEntered() {
+	}
+
+	protected void onPanelExited() {
 	}
 
 	protected void onTimer() {
