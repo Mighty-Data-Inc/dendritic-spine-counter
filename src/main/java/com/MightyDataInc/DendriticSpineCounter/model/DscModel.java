@@ -63,7 +63,8 @@ public class DscModel {
 
 	public boolean imageHasValidPhysicalUnitScale() {
 		if (imageScalePhysicalUnitName == null || imageScalePhysicalUnitName == ""
-				|| imageScalePhysicalUnitName == "null") {
+				|| imageScalePhysicalUnitName == "null" || imageScalePhysicalUnitName == "pixel"
+				|| imageScalePhysicalUnitName == "pixels" || imageScalePhysicalUnitName == "pixel(s)") {
 			return false;
 		}
 		return true;

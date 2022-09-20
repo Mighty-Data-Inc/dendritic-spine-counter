@@ -291,6 +291,8 @@ public class CalibrationPanel extends DscBasePanel {
 			v = model.getFeatureWindowSizeInPixels();
 
 			textfieldFeatureWindowPixels.setText(String.format("%f", v));
+
+			getControlPanel().getPlugin().getImageProcessor().showHideFeatureSizeSelectorRoi(true);
 		}
 
 		if (model.imageHasValidPhysicalUnitScale()) {
@@ -316,6 +318,8 @@ public class CalibrationPanel extends DscBasePanel {
 			v = model.getFeatureWindowSizeInPhysicalUnits();
 
 			textfieldFeatureWindowPhysicalUnits.setText(String.format("%f", v));
+
+			getControlPanel().getPlugin().getImageProcessor().showHideFeatureSizeSelectorRoi(true);
 		}
 
 		double y = model.convertImageScaleFromPhysicalUnitsToPixels(v);
