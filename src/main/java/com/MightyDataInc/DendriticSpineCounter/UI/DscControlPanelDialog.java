@@ -65,6 +65,7 @@ import org.scijava.plugin.PluginInfo;
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.DscBasePanel;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.TraceDendritesPanel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
@@ -89,6 +90,7 @@ public class DscControlPanelDialog extends JDialog {
 	private Dendritic_Spine_Counter ownerPlugin;
 
 	private CalibrationPanel panelCalibration;
+	private TraceDendritesPanel panelTraceDendrites;
 
 	// --------------------------------------
 	// Data-bound UI components
@@ -205,10 +207,13 @@ public class DscControlPanelDialog extends JDialog {
 			panelCalibration = new CalibrationPanel(this);
 			tabbedPane.addTab("Calibrate size", panelCalibration);
 			panelCalibration.enterPanel();
-
-			JPanel panel2 = createPathInputSpecificationPanel();
-			tabbedPane.addTab("Trace dendrites", panel2);
-
+			
+			panelTraceDendrites = new TraceDendritesPanel(this);
+			tabbedPane.addTab("Trace dendrites", panelTraceDendrites);
+			
+			
+			
+/*
 			JPanel panel3 = createSpineSelectionPanel();
 			tabbedPane.addTab("Find spines", panel3);
 
@@ -220,6 +225,7 @@ public class DscControlPanelDialog extends JDialog {
 
 			JPanel panel6 = createFileLoadSavePanel();
 			tabbedPane.addTab("Save/Load", panel6);
+			*/
 
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
@@ -476,7 +482,7 @@ public class DscControlPanelDialog extends JDialog {
 					} catch (Exception e1) {
 					}
 
-					json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
+					//json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
 					json.put("researcher", textfieldResultTableResearcher.getText().trim());
 					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
 					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
@@ -634,7 +640,7 @@ public class DscControlPanelDialog extends JDialog {
 			btnDetectSpines.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					int pixelWindowSize = getFeatureDetectionWindowSizeInPixels();
+					int pixelWindowSize = 5; //getFeatureDetectionWindowSizeInPixels();
 					int SCANSPAN = 2;
 
 					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
@@ -1255,6 +1261,7 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	public void update() {
+		/*
 		boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
 		btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
 
@@ -1285,6 +1292,7 @@ public class DscControlPanelDialog extends JDialog {
 		btnCopyTableDataToClipboard.setEnabled(areThereResults);
 
 		this.panelCalibration.update();
+		*/
 	}
 
 	/**
@@ -1317,26 +1325,6 @@ public class DscControlPanelDialog extends JDialog {
 		 * this.getFeatureDetectionWindowSizeInPixels(), cal.getRawX(1.0),
 		 * cal.getUnit())); }
 		 */
-	}
-
-	public int getFeatureDetectionWindowSizeInPixels() {
-		/*
-		 * int pixelWindowSize = 5; if (enumFeatureDetectionWindowSizeUnits ==
-		 * FeatureDetectionWindowSizeUnitsEnum.PIXELS) { try { pixelWindowSize =
-		 * Integer.valueOf(textfieldFeatureDetectionWindowSize.getText()); } catch
-		 * (NumberFormatException ex) { } } else if (enumFeatureDetectionWindowSizeUnits
-		 * == FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS) { try { double numUnits =
-		 * Double.valueOf(textfieldFeatureDetectionWindowSize.getText()); Calibration
-		 * cal = ownerPlugin.getImageProcessor().getDimensions(); if (cal != null) {
-		 * pixelWindowSize = (int) Math.floor(cal.getRawX(numUnits)); } } catch
-		 * (NumberFormatException ex) { } }
-		 * 
-		 * if (pixelWindowSize < 3) { // If pixel window is too small, then the algo
-		 * takes forever to run, // and produces noisy garbage. As such, we will impose
-		 * an internal // minimum pixel window size. pixelWindowSize = 3; }
-		 */
-
-		return 0;
 	}
 
 	public void clearSpineAssociations() {

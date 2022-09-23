@@ -13,6 +13,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -211,21 +212,39 @@ public class CalibrationPanel extends DscBasePanel {
 
 		{
 			gridbagConstraints.gridwidth = 3;
+			gridbagConstraints.gridheight = 1;
+			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 20;
+			gridbagConstraints.insets.bottom = 8;
+			this.add(new JSeparator(), gridbagConstraints);
+		}
+
+		{
+			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.gridheight = 2;
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 
-			JLabel label = new JLabel("<html>" + "<hr/><br/>" + "This plugin uses 2D images with a light background. "
+			String pathToImage = "images/guides/invert-bw.png";
+			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+			JLabel imglabel = new JLabel(myIcon);
+			this.add(imglabel, gridbagConstraints);
+
+			gridbagConstraints.gridx = 1;
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.gridheight = 1;
+			JLabel label = new JLabel("<html>This plugin uses 2D images with a light background. "
 					+ "If you wish to analyze 3D stacks, please first convert them "
 					+ "to a 2D image (using MinIP, MaxIP, etc.). "
 					+ "If your background is dark, you may use the button below to invert the image." + "</html>");
-			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;
 			this.add(label, gridbagConstraints);
 
 			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridx = 1;
 
 			gridbagConstraints.insets.top = 4;
+			gridbagConstraints.insets.bottom = 20;
 			JButton btnInvertImage = new JButton("Invert image brightness levels");
 			btnInvertImage.addActionListener(new ActionListener() {
 				@Override

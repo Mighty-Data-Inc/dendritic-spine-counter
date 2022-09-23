@@ -78,7 +78,7 @@ public abstract class DscBasePanel extends JPanel {
 		});
 
 		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.gridy++;
+		gridbagConstraints.gridy = 10;
 		gridbagConstraints.gridx = 0;
 		gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
 		gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
