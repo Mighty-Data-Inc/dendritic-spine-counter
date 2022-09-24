@@ -52,25 +52,24 @@ public class CalibrationPanel extends DscBasePanel {
 	@Override
 	public JPanel init() {
 		this.setLayout(new GridBagLayout());
-
 		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
 		gridbagConstraints.insets.top = 8;
 		gridbagConstraints.insets.left = 16;
 		gridbagConstraints.insets.right = 16;
 		gridbagConstraints.weighty = 0.0;
 
-		String infoMsg = "<html><div style=\"padding-left: 4em;\">"
+		String infoMsg = "<div style=\"padding-left: 4em;\">"
 				+ "<p><strong>Dendritic Spine Counter needs to know how big your spines are on this image.</strong></p><br/>"
-				+ "<p>In the center of your Working Image window, you should see a <b>small blue selection circle</b>, "
-				+ "with little square control points around it indicating that you can move it around "
-				+ "and resize it. " + "(If you don't see this circle or you can't move it around, click "
+				+ "<p>In the center of your Working Image window, you should see a <strong>small blue selection circle</strong>, "
+				+ "which you should be able to move around and resize. "
+				+ "(If you don't see this circle or if you can't move it around, click "
 				+ "\"Re-center calibration circle\" to put it in the center of your Working Image window.)</p>"
 				+ "<ul><li>Pick a roughly average-sized dendritic spine anywhere on your image.</li>"
 				+ "<li>Pan and zoom so that this spine is prominent in your window.</li>"
-				+ "<li>Move the calibration circle onto this spine. (You can use the \"Re-center\" button to "
-				+ "easily move it to your pan-zoomed viewport.)</li>"
-				+ "<li>Resize the calibration circle to match the size of the spine. Try to keep the circle circular. (Pro tip: Use the SHIFT key.)</li>"
-				+ "<li>When done, click \"Next\" at the bottom of this panel.</li></ul>";
+				+ "<li>Move the calibration circle onto this spine. "
+				+ "(If the circle isn't in your viewport, click the \"Re-center\" button.)</li>"
+				+ "<li>Resize the calibration circle to match the size of the spine. Try to keep the circle circular. (Try holding the SHIFT key while resizing.)</li>"
+				+ "</ul><p>When you're done, click \"Next\" at the bottom of this panel.</p>";
 
 		{
 			JLabel label = new JLabel("<html>" + infoMsg + "</html>", SwingConstants.RIGHT);

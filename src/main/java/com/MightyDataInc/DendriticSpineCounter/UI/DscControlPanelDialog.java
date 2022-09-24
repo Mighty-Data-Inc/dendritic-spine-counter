@@ -1118,7 +1118,7 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	public void countSpinesAndBuildTable() {
-		List<Point2D> points = ownerPlugin.getImageProcessor().getPointsFromCurrentPolylineRoiSelection();
+		List<Point2D> points = ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints();
 		clearSpineAssociations();
 		associateSpinesWithDendriteSegments(points);
 		populateResultsTable();

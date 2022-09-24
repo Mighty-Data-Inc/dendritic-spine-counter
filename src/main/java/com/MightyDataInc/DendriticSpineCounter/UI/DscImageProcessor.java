@@ -12,9 +12,11 @@ import org.scijava.util.IntCoords;
 import org.scijava.util.RealCoords;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.model.DendritePixel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.PointExtractor;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
+import com.MightyDataInc.DendriticSpineCounter.model.TracerPixel;
 
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -54,9 +56,9 @@ public class DscImageProcessor {
 	}
 
 	public void update() {
-		if (this.workingDisplay != null) {
-			this.workingDisplay.update();
-		}
+		// if (this.workingDisplay != null) {
+		// this.workingDisplay.update();
+		// }
 
 		ImagePlus imp = this.getImagePlus();
 		if (imp != null) {
@@ -211,8 +213,26 @@ public class DscImageProcessor {
 			for (long y = 0; y < height; y++) {
 				r.setPosition(new long[] { x, y });
 				UnsignedByteType t = r.get();
-				t.setReal(255 - t.getRealFloat());
 			}
+		}
+		update();
+	}
+
+	public void drawPixels(List<? extends Point2D> pixels, double brightness) {
+		if (workingImg == null) {
+			return;
+		}
+
+		final RandomAccess<UnsignedByteType> r = workingImg.randomAccess();
+
+		for (Point2D pixel : pixels) {
+			int x = (int) pixel.getX();
+			int y = (int) pixel.getY();
+
+			r.setPosition(new long[] { x, y });
+			UnsignedByteType t = r.get();
+
+			t.setReal(255 * brightness);
 		}
 		update();
 	}
@@ -251,7 +271,7 @@ public class DscImageProcessor {
 		return brightnesses;
 	}
 
-	public List<Point2D> getCurrentImagePolylinePathPoints(OverlayService overlayService) {
+	public List<Point2D> getCurrentImagePolylinePathPoints() {
 		List<Point2D> pathPoints = null;
 
 		// We will extract points from an ROI. But the question is, which
@@ -281,47 +301,48 @@ public class DscImageProcessor {
 		// If this is the case, then we want the LAST overlay of the
 		// appropriate type (hence the reverse), because that's the one that
 		// the user added just before (or during) invoking this plugin.
-		if (pathPoints == null && overlayService != null) {
-			List<Overlay> overlays = overlayService.getOverlays();
-			Collections.reverse(overlays);
-			for (Overlay overlay : overlays) {
-				List<Point2D> points = PointExtractor.getPointsFromOverlay(overlay);
-				if (points.size() > 0) {
-					pathPoints = points;
-					break;
-				}
-			}
-		}
+		// NOTE: Never mind! It seems to work anyway!
+		/*
+		 * if (pathPoints == null && overlayService != null) { List<Overlay> overlays =
+		 * overlayService.getOverlays(); Collections.reverse(overlays); for (Overlay
+		 * overlay : overlays) { List<Point2D> points =
+		 * PointExtractor.getPointsFromOverlay(overlay); if (points.size() > 0) {
+		 * pathPoints = points; break; } } }
+		 */
 
 		return pathPoints;
 	}
 
 	// TODO: Maybe move this.
-	/*
-	 * public DendriteSegment traceDendriteWithThicknessEstimation(double
-	 * thicknessMultiplier, double maxSearchDistanceWindows, OverlayService
-	 * overlayService) { List<Point2D> pathPoints =
-	 * getCurrentImagePolylinePathPoints(overlayService); if (pathPoints == null ||
-	 * pathPoints.size() == 0) { return null; }
-	 * 
-	 * DendriteSegment polylineTracedPath =
-	 * DendriteSegment.searchPolyline(pathPoints, workingImg, null);
-	 * 
-	 * int pixelWindowSize =
-	 * this.ownerPlugin.getControlPanel().getFeatureDetectionWindowSizeInPixels();
-	 * polylineTracedPath.setMinimumSeparation(pixelWindowSize);
-	 * polylineTracedPath.smoothify(0.5);
-	 * 
-	 * polylineTracedPath.computeTangentsAndOrthogonals();
-	 * 
-	 * polylineTracedPath.findSimilarityBoundaries(pixelWindowSize, pixelWindowSize
-	 * * maxSearchDistanceWindows);
-	 * 
-	 * polylineTracedPath.multiplyThickness(thicknessMultiplier);
-	 * polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
-	 * 
-	 * return polylineTracedPath; }
-	 */
+	public DendriteSegment traceDendriteWithThicknessEstimation() {
+		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints();
+		if (pathPoints == null || pathPoints.size() == 0) {
+			return null;
+		}
+
+		List<TracerPixel> darktrace = TracerPixel.trace(pathPoints, workingImg, null);
+
+		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace,
+				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
+		this.drawPixels(dendritePixels, 1.0);
+
+		return null;
+
+//		DendriteSegment polylineTracedPath = DendriteSegment.searchPolyline(pathPoints, workingImg, null);
+//
+//		double pixelWindowSize = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels();
+//		polylineTracedPath.setMinimumSeparation(pixelWindowSize);
+//		polylineTracedPath.smoothify(0.5);
+//
+//		polylineTracedPath.computeTangentsAndOrthogonals();
+//
+//		polylineTracedPath.findSimilarityBoundaries(pixelWindowSize, pixelWindowSize);
+//
+//		// polylineTracedPath.multiplyThickness(thicknessMultiplier);
+//		// polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
+//
+//		return polylineTracedPath;
+	}
 
 	public int AddPathToDrawOverlay(DendriteSegment path) {
 		if (path == null) {
@@ -334,6 +355,9 @@ public class DscImageProcessor {
 		dendriteVolumeRoi.setFillColor(new Color(.4f, .6f, 1f, .4f));
 
 		getOverlay().add(dendriteVolumeRoi, dendriteVolumeRoi.toString());
+
+		ImageCanvas canvas = getImagePlus().getCanvas();
+		Rectangle rect = canvas.getSrcRect();
 
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
@@ -407,19 +431,6 @@ public class DscImageProcessor {
 		}
 		getImagePlus().setRoi(spinesRoi, true);
 		getImagePlus().updateAndRepaintWindow();
-	}
-
-	public List<Point2D> getPointsFromCurrentPolylineRoiSelection() {
-		if (getImagePlus() == null) {
-			return new ArrayList<Point2D>();
-		}
-		Roi roi = getImagePlus().getRoi();
-		if (roi == null) {
-			return new ArrayList<Point2D>();
-		}
-
-		List<Point2D> points = PointExtractor.getPointsFromLegacyRoi(roi);
-		return points;
 	}
 
 	public void moveToForeground() {
