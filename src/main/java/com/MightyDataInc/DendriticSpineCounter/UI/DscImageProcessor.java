@@ -320,11 +320,19 @@ public class DscImageProcessor {
 			return null;
 		}
 
+		double featureWindowSize = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels();
+
 		List<TracerPixel> darktrace = TracerPixel.trace(pathPoints, workingImg, null);
 
-		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace,
-				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
+		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace, featureWindowSize, workingImg);
 		this.drawPixels(dendritePixels, 1.0);
+
+		List<Point2D> rightPixels = new ArrayList<Point2D>();
+		for (DendritePixel dpixel : dendritePixels) {
+			Point2D orthoRightPx = dpixel.getPixelSidepathPoint(DendritePixel.PathSide.RIGHT);
+			rightPixels.add(orthoRightPx);
+		}
+		this.drawPixels(rightPixels, 0.8);
 
 		return null;
 
