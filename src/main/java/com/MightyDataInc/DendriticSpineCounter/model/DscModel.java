@@ -1,8 +1,25 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
+import java.util.ArrayList;
+
 import ij.measure.Calibration;
 
+import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEvent;
+import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEventListener;
+
 public class DscModel {
+	// region Event handling
+
+	private ArrayList<DscModelChangedEventListener> listenerList = new ArrayList<DscModelChangedEventListener>();
+
+	public void addFooListener(DscModelChangedEventListener l) {
+		listenerList.add(l);
+	}
+
+	public void removeFooListener(DscModelChangedEventListener l) {
+		listenerList.remove(l);
+	}
+
 	// region Feature window size and unit scale
 
 	private double featureWindowSizeInPixels = 25;

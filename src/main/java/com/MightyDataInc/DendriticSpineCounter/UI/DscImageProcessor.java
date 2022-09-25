@@ -315,10 +315,9 @@ public class DscImageProcessor {
 
 		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints,
 				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
-		
-		
-		this.renderDendriteBranch(dendriteBranch);		
-		
+
+		this.renderDendriteBranch(dendriteBranch);
+
 		return dendriteBranch;
 	}
 
@@ -332,7 +331,7 @@ public class DscImageProcessor {
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
 		getImagePlus().updateAndRepaintWindow();
-		
+
 		return 1; // return path.id
 	}
 
