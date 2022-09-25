@@ -1,8 +1,5 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
-import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
-import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
-
 import ij.measure.Calibration;
 
 public class DscModel {

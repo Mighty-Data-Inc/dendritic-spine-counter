@@ -4,14 +4,12 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.scijava.display.DisplayService;
-import org.scijava.util.IntCoords;
-import org.scijava.util.RealCoords;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
 import com.MightyDataInc.DendriticSpineCounter.model.DendritePixel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.PointExtractor;
@@ -20,18 +18,16 @@ import com.MightyDataInc.DendriticSpineCounter.model.TracerPixel;
 
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.gui.ImageCanvas;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.axis.CalibratedAxis;
 import net.imagej.display.DefaultImageDisplay;
-import net.imagej.display.OverlayService;
-import net.imagej.overlay.Overlay;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
@@ -313,56 +309,24 @@ public class DscImageProcessor {
 		return pathPoints;
 	}
 
-	// TODO: Maybe move this.
-	public DendriteSegment traceDendriteWithThicknessEstimation() {
+	public DendriteBranch traceDendriteWithThicknessEstimation() {
 		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints();
 		if (pathPoints == null || pathPoints.size() == 0) {
 			return null;
 		}
 
-		double featureWindowSize = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels();
-
-		List<TracerPixel> darktrace = TracerPixel.trace(pathPoints, workingImg, null);
-
-		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace, featureWindowSize, workingImg);
-		this.drawPixels(dendritePixels, 1.0);
-
-		List<Point2D> rightPixels = new ArrayList<Point2D>();
-		for (DendritePixel dpixel : dendritePixels) {
-			Point2D orthoRightPx = dpixel.getPixelSidepathPoint(DendritePixel.PathSide.RIGHT);
-			rightPixels.add(orthoRightPx);
-		}
-		this.drawPixels(rightPixels, 0.8);
-
-		return null;
-
-//		DendriteSegment polylineTracedPath = DendriteSegment.searchPolyline(pathPoints, workingImg, null);
-//
-//		double pixelWindowSize = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels();
-//		polylineTracedPath.setMinimumSeparation(pixelWindowSize);
-//		polylineTracedPath.smoothify(0.5);
-//
-//		polylineTracedPath.computeTangentsAndOrthogonals();
-//
-//		polylineTracedPath.findSimilarityBoundaries(pixelWindowSize, pixelWindowSize);
-//
-//		// polylineTracedPath.multiplyThickness(thicknessMultiplier);
-//		// polylineTracedPath.smoothSimilarityBoundaryDistances(0.5);
-//
-//		return polylineTracedPath;
+		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints,
+				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
+		
+		return dendriteBranch;
 	}
 
-	public int AddPathToDrawOverlay(DendriteSegment path) {
-		if (path == null) {
+	public int addPathToDrawOverlay(DendriteBranch dendrite) {
+		if (dendrite == null) {
 			return 0;
 		}
-		PolygonRoi dendriteVolumeRoi = path.getSimilarityVolume();
 
-		dendriteVolumeRoi.setStrokeColor(Color.BLUE);
-		dendriteVolumeRoi.setStrokeWidth(1.5);
-		dendriteVolumeRoi.setFillColor(new Color(.4f, .6f, 1f, .4f));
-
-		getOverlay().add(dendriteVolumeRoi, dendriteVolumeRoi.toString());
+		getOverlay().add(dendrite.roi, dendrite.roi.toString());
 
 		ImageCanvas canvas = getImagePlus().getCanvas();
 		Rectangle rect = canvas.getSrcRect();
@@ -370,20 +334,8 @@ public class DscImageProcessor {
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
 		getImagePlus().updateAndRepaintWindow();
-
-		// path.id = this.ownerPlugin.nextPathId;
-		// this.ownerPlugin.nextPathId++;
-
-		path.roi = dendriteVolumeRoi;
-
-		/*
-		 * Calibration cal = this.getDimensions(); if (cal != null &&
-		 * !cal.getUnits().isEmpty()) { double pixelLength = path.pixelLength();
-		 * path.nameSuffix = String.format(", length: %.3f %s", cal.getX(pixelLength),
-		 * cal.getUnits()); }
-		 */
-
-		return path.id;
+		
+		return 1; // return path.id
 	}
 
 	public void RemovePathFromDrawOverlay(DendriteSegment path) {

@@ -45,15 +45,12 @@ public class TracerPixel extends Point2D implements Comparable<TracerPixel> {
 	 *         obeying the constraints of the search parameters laid out in the
 	 *         WEIGHT calibrations.
 	 */
-	public static List<TracerPixel> trace(int xStart, int yStart, int xEnd, int yEnd, Img<UnsignedByteType> workingImg,
+	public static List<TracerPixel> trace(int xStart, int yStart, int xEnd, int yEnd, Img<UnsignedByteType> img,
 			List<TracerPixel> totalSearchVolume) {
 		PriorityQueue<TracerPixel> searchFrontier = new PriorityQueue<TracerPixel>();
 		HashMap<String, TracerPixel> alreadyVisited = new HashMap<String, TracerPixel>();
 
-		TracerPixel startPixel = new TracerPixel();
-		startPixel.x = xStart;
-		startPixel.y = yStart;
-		startPixel.fromImg = workingImg;
+		TracerPixel startPixel = new TracerPixel(img, xStart, yStart);
 		searchFrontier.add(startPixel);
 		alreadyVisited.put(startPixel.key(), startPixel);
 
@@ -142,9 +139,6 @@ public class TracerPixel extends Point2D implements Comparable<TracerPixel> {
 			ylast = y;
 		}
 		return path;
-	}
-
-	public TracerPixel() {
 	}
 
 	public <T extends RealType<?>> TracerPixel(Img<T> img, int x, int y) {

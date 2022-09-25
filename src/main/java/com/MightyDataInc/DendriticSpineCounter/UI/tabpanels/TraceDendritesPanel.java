@@ -4,10 +4,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Point2D;
 import java.net.URL;
 import java.util.List;
@@ -16,22 +12,16 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
-import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
-import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
-import ij.Executer;
 import ij.IJ;
 import ij.gui.Roi;
-import ij.measure.Calibration;
 
 public class TraceDendritesPanel extends DscBasePanel {
 	private static final long serialVersionUID = 6374646782021205583L;
@@ -148,10 +138,10 @@ public class TraceDendritesPanel extends DscBasePanel {
 			return;
 		}
 
-		DendriteSegment dendritePath = controlPanel.getPlugin().getImageProcessor()
+		DendriteBranch dendrite = controlPanel.getPlugin().getImageProcessor()
 				.traceDendriteWithThicknessEstimation();
-		// pathListModel.addElement(dendritePath);
-		controlPanel.getPlugin().getImageProcessor().AddPathToDrawOverlay(dendritePath);
+
+		controlPanel.getPlugin().getImageProcessor().addPathToDrawOverlay(dendrite);
 		controlPanel.getPlugin().getImageProcessor().update();
 	}
 }

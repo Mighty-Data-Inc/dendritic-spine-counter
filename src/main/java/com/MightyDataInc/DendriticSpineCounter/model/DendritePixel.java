@@ -2,17 +2,14 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
-
-import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.RealType;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import ij.gui.PolygonRoi;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
 
 public class DendritePixel extends Point2D {
 
@@ -20,6 +17,11 @@ public class DendritePixel extends Point2D {
 	// https://stackoverflow.com/questions/8811815/is-it-possible-to-assign-numeric-value-to-an-enum-in-java
 	public enum PathSide {
 		LEFT(0), RIGHT(1);
+
+		public final static PathSide[] sides() {
+			PathSide[] retval = { LEFT, RIGHT };
+			return retval;
+		}
 
 		private final int value;
 
@@ -98,12 +100,28 @@ public class DendritePixel extends Point2D {
 			dpixel.unitNormal = vecNormal;
 		}
 
-		// Search for thickness boundaries.
-		// This requires an image. If we don't have an image, we can't scan for a
-		// thickness boundary.
+		// Search for thickness boundaries. (This requires having an image.)
 		if (img != null) {
 			for (DendritePixel dpixel : dpixels) {
 				dpixel.findSimilarityBoundaries();
+			}
+
+			// Smooth out the similarity boundaries.
+			for (PathSide side : PathSide.sides()) {
+				for (int i = 1; i < dpixels.size() - 2; i++) {
+					DendritePixel dpixel = dpixels.get(i);
+					DendritePixel dpixelPrev = dpixels.get(i - 1);
+					DendritePixel dpixelNext = dpixels.get(i + 1);
+
+					double dist = dpixel.getPixelSidepathDistance(side);
+					double distPrev = dpixelPrev.getPixelSidepathDistance(side);
+					double distNext = dpixelNext.getPixelSidepathDistance(side);
+
+					double distMean = (distPrev + distNext) / 2;
+
+					double distNew = (distMean * 0.75) + (dist * 0.25);
+					dpixel.setPixelSidepathDistance(side, distNew);
+				}
 			}
 		}
 
@@ -270,17 +288,20 @@ public class DendritePixel extends Point2D {
 		double distanceMax = this.featureWindowSize * 4;
 		double vicinityRadius = this.featureWindowSize / 2;
 
-		// System.out.println(String.format("local vicinity stats: %f±%f(n=%d)", vicinityStats.getMean(),
-		//		vicinityStats.getStandardDeviation(), vicinityStats.getN()));
+		// System.out.println(String.format("local vicinity stats: %f±%f(n=%d)",
+		// vicinityStats.getMean(),
+		// vicinityStats.getStandardDeviation(), vicinityStats.getN()));
 
 		for (double dist = 0; dist < distanceMax; dist++) {
 			SummaryStatistics testpointVicinityStats = computePixelVicinityStatsInDirection(side, dist, 0,
 					vicinityRadius, 0);
 
-			// System.out.println(String.format("  distance out: %f. Stats: %f±%f(n=%d)", dist, testpointVicinityStats.getMean(),
-			//		testpointVicinityStats.getStandardDeviation(), testpointVicinityStats.getN()));
+			// System.out.println(String.format(" distance out: %f. Stats: %f±%f(n=%d)",
+			// dist, testpointVicinityStats.getMean(),
+			// testpointVicinityStats.getStandardDeviation(),
+			// testpointVicinityStats.getN()));
 
-			boolean isDifferent = areStatsDifferent(testpointVicinityStats, this.vicinityStats, 1.5);
+			boolean isDifferent = areStatsDifferent(testpointVicinityStats, this.vicinityStats, 1.25);
 			if (isDifferent == true) {
 				return dist;
 			}

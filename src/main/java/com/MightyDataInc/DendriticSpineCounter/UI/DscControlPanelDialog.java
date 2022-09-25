@@ -1524,7 +1524,7 @@ public class DscControlPanelDialog extends JDialog {
 			dendrite.fromJSON(jsonDend, ownerPlugin.getImageProcessor().workingImg);
 
 			this.pathListModel.addElement(dendrite);
-			ownerPlugin.getImageProcessor().AddPathToDrawOverlay(dendrite);
+			//ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
 
 			allspines.addAll(dendrite.spines);
 		}
