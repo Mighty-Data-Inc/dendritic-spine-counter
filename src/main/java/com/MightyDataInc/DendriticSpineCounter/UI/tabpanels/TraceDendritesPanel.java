@@ -141,7 +141,6 @@ public class TraceDendritesPanel extends DscBasePanel {
 		DendriteBranch dendrite = controlPanel.getPlugin().getImageProcessor()
 				.traceDendriteWithThicknessEstimation();
 
-		controlPanel.getPlugin().getImageProcessor().addPathToDrawOverlay(dendrite);
-		controlPanel.getPlugin().getImageProcessor().update();
+		controlPanel.getPlugin().getImageProcessor().renderDendriteBranch(dendrite);
 	}
 }

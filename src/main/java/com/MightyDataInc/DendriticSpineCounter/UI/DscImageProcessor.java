@@ -10,11 +10,9 @@ import org.scijava.display.DisplayService;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
-import com.MightyDataInc.DendriticSpineCounter.model.DendritePixel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.PointExtractor;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
-import com.MightyDataInc.DendriticSpineCounter.model.TracerPixel;
 
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -22,7 +20,6 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
@@ -209,6 +206,7 @@ public class DscImageProcessor {
 			for (long y = 0; y < height; y++) {
 				r.setPosition(new long[] { x, y });
 				UnsignedByteType t = r.get();
+				t.setReal(255 - t.getRealDouble());
 			}
 		}
 		update();
@@ -318,18 +316,18 @@ public class DscImageProcessor {
 		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints,
 				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
 		
+		
+		this.renderDendriteBranch(dendriteBranch);		
+		
 		return dendriteBranch;
 	}
 
-	public int addPathToDrawOverlay(DendriteBranch dendrite) {
+	public int renderDendriteBranch(DendriteBranch dendrite) {
 		if (dendrite == null) {
 			return 0;
 		}
 
 		getOverlay().add(dendrite.roi, dendrite.roi.toString());
-
-		ImageCanvas canvas = getImagePlus().getCanvas();
-		Rectangle rect = canvas.getSrcRect();
 
 		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
 		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
