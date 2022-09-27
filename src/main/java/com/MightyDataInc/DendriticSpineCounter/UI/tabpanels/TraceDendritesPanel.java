@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -27,7 +26,6 @@ import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
-import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 
 import ij.IJ;
 import ij.gui.Roi;
