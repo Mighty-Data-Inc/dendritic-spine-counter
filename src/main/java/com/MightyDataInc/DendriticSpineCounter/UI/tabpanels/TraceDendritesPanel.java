@@ -233,10 +233,6 @@ public class TraceDendritesPanel extends DscBasePanel {
 			dendrite.setRoi(roiBeingEdited);
 		}
 		this.currentDendrite = dendrite;
-
-		for (DendriteBranch dit : controlPanel.getPlugin().getModel().getDendrites()) {
-			System.out.println(dit.toString());
-		}
 	}
 
 	@Override
