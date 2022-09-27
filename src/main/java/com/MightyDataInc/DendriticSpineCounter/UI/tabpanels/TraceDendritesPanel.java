@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -14,6 +15,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -35,6 +37,9 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	private JButton btnActivatePolylineTool;
 	private JButton btnTraceCurrentPolyline;
+
+	private JButton btnDeleteBranch;
+	private JButton btnRenameBranch;
 
 	private JList<DendriteBranch> pathListBox;
 	private DefaultListModel<DendriteBranch> pathListModel;
@@ -134,7 +139,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 			gridbagConstraints.gridy++;
 
 			this.pathListModel = new DefaultListModel<DendriteBranch>();
-			this.pathListBox = new JList<DendriteBranch>(this.pathListModel);
+			pathListBox = new JList<DendriteBranch>(this.pathListModel);
 			pathListBox.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
 			JScrollPane listScroller = new JScrollPane(pathListBox);
@@ -160,6 +165,51 @@ public class TraceDendritesPanel extends DscBasePanel {
 			gridbagConstraints.gridy++;
 		}
 
+		{
+			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.gridx = 1;
+
+			String pathToImage = "images/icons/dsc--delete-dendrite-path-24.png";
+			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+
+			btnDeleteBranch = new JButton("Delete Branch", myIcon);
+			btnDeleteBranch.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (currentDendrite == null) {
+						return;
+					}
+					controlPanel.getPlugin().getModel().removeDendrite(currentDendrite);
+					pathListModel.removeElement(currentDendrite);
+					update();
+				}
+			});
+
+			this.add(btnDeleteBranch, gridbagConstraints);
+			gridbagConstraints.gridx++;
+
+			pathToImage = "images/icons/rename-24.png";
+			myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+
+			btnRenameBranch = new JButton("Rename Branch", myIcon);
+			btnRenameBranch.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (currentDendrite == null) {
+						return;
+					}
+					String m = JOptionPane.showInputDialog("Please enter a name for this dendrite branch",
+							currentDendrite.name);
+					currentDendrite.name = m;
+
+					update();
+				}
+			});
+
+			this.add(btnRenameBranch, gridbagConstraints);
+			gridbagConstraints.gridy++;
+		}
+
 		addNextButton("Next: Find spines", "images/icons/dsc--find-spines-24.png");
 
 		update();
@@ -168,6 +218,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	@Override
 	public void update() {
+		pathListBox.updateUI();
 	}
 
 	private void updateCurrentDendriteSelection(DendriteBranch dendrite) {

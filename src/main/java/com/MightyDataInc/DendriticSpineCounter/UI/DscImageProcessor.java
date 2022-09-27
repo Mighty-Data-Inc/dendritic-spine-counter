@@ -20,6 +20,7 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
@@ -268,41 +269,30 @@ public class DscImageProcessor {
 	public List<Point2D> getCurrentImagePolylinePathPoints() {
 		List<Point2D> pathPoints = null;
 
-		// We will extract points from an ROI. But the question is, which
-		// ROI will we use?
-
-		// If we're running via Fiji, then the ImageJ1.x infrastructure will
-		// provide us with a WindowManager, and the WindowManager will have a
-		// current image. If we can get an ROI from there, then that is what
-		// we will go with.
-
 		ImagePlus currentImage = getImagePlus();
-		if (currentImage != null) {
-			Roi currentRoi = currentImage.getRoi();
-			if (currentRoi != null) {
-				List<Point2D> points = PointExtractor.getPointsFromLegacyRoi(currentRoi);
-				if (points.size() > 0) {
-					pathPoints = points;
-				}
-			}
+		if (currentImage == null) {
+			return null;
 		}
 
-		// If we're running via a debugger or possibly the command line, then
-		// we might just have overlay information from the OverlayService.
-		// The overlays in the OverlayService might have ROIs that are not
-		// registered the ROIService. As such, we need to access them via
-		// the overlays, because we don't have access to them anywhere else.
-		// If this is the case, then we want the LAST overlay of the
-		// appropriate type (hence the reverse), because that's the one that
-		// the user added just before (or during) invoking this plugin.
-		// NOTE: Never mind! It seems to work anyway!
-		/*
-		 * if (pathPoints == null && overlayService != null) { List<Overlay> overlays =
-		 * overlayService.getOverlays(); Collections.reverse(overlays); for (Overlay
-		 * overlay : overlays) { List<Point2D> points =
-		 * PointExtractor.getPointsFromOverlay(overlay); if (points.size() > 0) {
-		 * pathPoints = points; break; } } }
-		 */
+		Roi currentRoi = currentImage.getRoi();
+		if (currentRoi == null) {
+			return null;
+		}
+
+		PolygonRoi polyRoi = null;
+		try {
+			polyRoi = (PolygonRoi) currentRoi;
+			if (polyRoi.getType() != Roi.POLYLINE) {
+				return null;
+			}
+		} catch (ClassCastException ex) {
+			return null;
+		}
+
+		List<Point2D> points = PointExtractor.getPointsFromLegacyRoi(polyRoi);
+		if (points.size() > 0) {
+			pathPoints = points;
+		}
 
 		return pathPoints;
 	}
@@ -443,8 +433,9 @@ public class DscImageProcessor {
 		if (roi != null) {
 			getOverlay().remove(roi);
 			getImagePlus().setRoi(roi, true);
-			return getImagePlus().getRoi(); 
+			return getImagePlus().getRoi();
 		} else {
+			getImagePlus().deleteRoi();
 			return null;
 		}
 	}

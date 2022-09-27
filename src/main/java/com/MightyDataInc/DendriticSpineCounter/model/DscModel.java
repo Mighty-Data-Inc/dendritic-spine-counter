@@ -123,6 +123,9 @@ public class DscModel {
 	}
 
 	public void removeDendrite(DendriteBranch dendriteBranch) {
+		if (dendriteBranch == null) {
+			return;
+		}
 		if (dendrites.containsKey(dendriteBranch.getId())) {
 			dendrites.remove(dendriteBranch.getId());
 		}

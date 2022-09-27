@@ -7,6 +7,9 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -26,8 +29,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.Box;
-import javax.swing.ButtonGroup;
+
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -35,30 +37,21 @@ import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-import ij.Executer;
-import ij.ImagePlus;
-import ij.IJ;
-import ij.gui.Roi;
-import ij.measure.Calibration;
-import net.imagej.display.OverlayService;
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+//import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.JSONParser;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
@@ -71,14 +64,8 @@ import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
 import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel.PathSide;
 
-import java.awt.datatransfer.StringSelection;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-//import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.JSONParser;
+import ij.IJ;
+import ij.measure.Calibration;
 
 public class DscControlPanelDialog extends JDialog {
 
@@ -97,21 +84,11 @@ public class DscControlPanelDialog extends JDialog {
 
 	private JTabbedPane tabbedPane;
 
-	private JButton btnActivatePolylineTool;
-	private JButton btnTraceCurrentPolyline;
 	private JButton btnActivateMultiPointTool;
 	private JButton btnDetectSpines;
 
 	private JSlider sliderDetectionSensitivity;
 
-	private JButton btnDeleteBranch;
-	private JButton btnRenameBranch;
-	private JButton btnNextSegment;
-	private JButton btnPrevSegment;
-	private JButton btnMakeSegmentWider;
-	private JButton btnMakeSegmentNarrower;
-	private JButton btnShiftSegmentLeft;
-	private JButton btnShiftSegmentRight;
 	private JButton btnCopyTableDataToClipboard;
 
 	private JButton btnSaveDataToFile;
@@ -123,10 +100,7 @@ public class DscControlPanelDialog extends JDialog {
 	private JTextField textfieldResultTableImageDesignation;
 	private JTextField textfieldResultTableImageCustomLabel;
 
-	private JList<DendriteSegment> pathListBox;
 	private DefaultListModel<DendriteSegment> pathListModel;
-	private int pathSegmentIndexSelected;
-
 	private JTable resultsTable;
 	private JScrollPane resultsTableHolder;
 	private Object[][] resultsTableData = new Object[0][4];
@@ -708,401 +682,6 @@ public class DscControlPanelDialog extends JDialog {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					tabbedPane.setSelectedIndex(3);
-				}
-			});
-			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;
-			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
-			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
-			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
-			gridbagConstraints.weighty = 1.0;
-			panel.add(btnNext, gridbagConstraints);
-		}
-
-		return panel;
-	}
-
-	/**
-	 * This panel lets users place points to mark spines, and generates a report
-	 * table.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createSpineClassificationPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-
-		{
-			gridbagConstraints.gridwidth = 2;
-			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-			JLabel label = new JLabel("<html>"
-					+ "In this panel you will categorize spines into classes based on their morphologies. "
-					+ "In the previous step, you created a Multi-point Tool selection to locate spines on the image. "
-					+ "This tool will now help you go through the selected spines one by one, measure "
-					+ "their features, and decide the best class to fit each one into. " + "</html>");
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.insets.bottom = 4;
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			String pathToImage = "images/icons/data-table-results-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			JButton btnNext = new JButton("Next: Report Results", myIcon);
-
-			btnNext.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					tabbedPane.setSelectedIndex(4);
-				}
-			});
-			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;
-			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
-			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
-			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
-			gridbagConstraints.weighty = 1.0;
-			panel.add(btnNext, gridbagConstraints);
-		}
-
-		return panel;
-	}
-
-	/**
-	 * When the dialog first pops up, the user is given the chance to specify how
-	 * they will input the path that will eventually be followed to trace the
-	 * dendrite. This is done through an introductory text and a couple of buttons.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createPathInputSpecificationPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-		// panel.setBorder(BorderFactory.createLineBorder(getForeground()));
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-
-		gridbagConstraints.gridwidth = 2;
-		gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-		{
-			JLabel label = new JLabel("<html>" + "Use the Polyline tool to trace a dendrite segment. "
-					+ "Your trace doesn't need to follow the dendrite precisely at first. "
-					+ "You'll have the chance to refine the trace later." + "</html>");
-			// We want extra space at the bottom of this label.
-			panel.add(label, gridbagConstraints);
-
-			// Because we're using the same gridbagConstraints object for subsequent
-			// UI elements in this panel, let's set the bottom space value back to
-			// our standard.
-			gridbagConstraints.insets.bottom = 4;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			ImageIcon icon = null;
-			PluginInfo<?> polylineInfo = ownerPlugin.getPolylineTool().getInfo();
-			String iconDescription = polylineInfo.getDescription();
-			try {
-				URL iconURL = polylineInfo.getIconURL();
-				icon = new ImageIcon(iconURL, iconDescription);
-			} catch (InstantiableException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			btnActivatePolylineTool = new JButton("Activate Polyline Tool to add a new path", icon);
-			btnActivatePolylineTool.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					ownerPlugin.getImageProcessor().getImagePlus().setRoi((Roi) null);
-					ownerPlugin.getImageProcessor().update();
-
-					IJ.setTool("polyline");
-					update();
-					ownerPlugin.getImageProcessor().update();
-				}
-			});
-			panel.add(btnActivatePolylineTool, gridbagConstraints);
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			String pathToImage = "images/icons/dsc--trace-dendrite-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnTraceCurrentPolyline = new JButton("Use existing polyline path to trace dendrite", myIcon);
-
-			btnTraceCurrentPolyline.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					/*
-					 * DendriteSegment dendritePath =
-					 * ownerPlugin.getImageProcessor().traceDendriteWithThicknessEstimation(.8,
-					 * ownerPlugin.MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES, null);
-					 * pathListModel.addElement(dendritePath);
-					 * ownerPlugin.getImageProcessor().AddPathToDrawOverlay(dendritePath);
-					 * ownerPlugin.getImageProcessor().update();
-					 */
-				}
-			});
-			panel.add(btnTraceCurrentPolyline, gridbagConstraints);
-			gridbagConstraints.gridy++;
-		}
-		{
-			JLabel label = new JLabel(
-					"<html>" + "<b>Dendrite Branches:</b> Select a branch to modify or delete." + "</html>");
-			panel.add(label, gridbagConstraints);
-			gridbagConstraints.gridy++;
-
-			this.pathListBox = new JList<DendriteSegment>(this.pathListModel);
-			pathListBox.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-
-			JScrollPane listScroller = new JScrollPane(pathListBox);
-			listScroller.setPreferredSize(new Dimension(250, 140));
-			listScroller.setMinimumSize(new Dimension(250, 140));
-
-			// https://stackoverflow.com/questions/13800775/find-selected-item-of-a-jlist-and-display-it-in-real-time
-			pathListBox.addListSelectionListener(new ListSelectionListener() {
-				@Override
-				public void valueChanged(ListSelectionEvent ev) {
-					if (ev.getValueIsAdjusting()) {
-						// The selection is still changing. One item is being unselected
-						// while the other is still being selected.
-						return;
-					}
-
-					// Unselect all items first.
-					Object[] paths = pathListModel.toArray();
-					for (Object path : paths) {
-						ownerPlugin.getImageProcessor().SelectPath((DendriteSegment) path, false);
-					}
-
-					// Now select the one path that's actually selected.
-					DendriteSegment path = pathListBox.getSelectedValue();
-					ownerPlugin.getImageProcessor().SelectPath(path, true);
-					pathSegmentIndexSelected = 0;
-					if (path != null && path.path != null && path.path.size() > 0) {
-						// ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(path.path.get(0),
-						// ownerPlugin.featureSizePixels);
-					} else {
-						ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(null, 0);
-					}
-
-					update();
-					ownerPlugin.getImageProcessor().update();
-				}
-			});
-
-			panel.add(listScroller, gridbagConstraints);
-			gridbagConstraints.gridy++;
-		}
-		{
-
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
-			{
-				String pathToImage = "images/icons/dsc--delete-dendrite-path-24.png";
-				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnDeleteBranch = new JButton("Delete Branch", myIcon);
-				btnDeleteBranch.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						DendriteSegment selectedPath = pathListBox.getSelectedValue();
-						if (selectedPath == null) {
-							return;
-						}
-						pathListModel.removeElement(selectedPath);
-						ownerPlugin.getImageProcessor().RemovePathFromDrawOverlay(selectedPath);
-						pathSegmentIndexSelected = 0;
-						updateSelectedSegment();
-
-						// Now we delete the spines that were on the deleted segment.
-						// Unfortunately, setting the spine selection is kinda an
-						// all-or-nothing operation, so we need to gather all
-						// spines from all OTHER paths and create a new ROI from them.
-						// pathListModel isn't iterable so we'll do this the old fashioned way.
-						List<Point2D> spinesRemaining = new ArrayList<Point2D>();
-						for (int iDend = 0; iDend < pathListModel.getSize(); iDend++) {
-							DendriteSegment dendSegment = pathListModel.get(iDend);
-							spinesRemaining.addAll(dendSegment.spines);
-						}
-						ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(spinesRemaining);
-						associateSpinesWithDendriteSegments(spinesRemaining);
-
-						update();
-						ownerPlugin.getImageProcessor().update();
-					}
-				});
-
-				panel.add(btnDeleteBranch, gridbagConstraints);
-				gridbagConstraints.gridx++;
-			}
-
-			{
-				String pathToImage = "images/icons/rename-24.png";
-				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnRenameBranch = new JButton("Rename Branch", myIcon);
-				btnRenameBranch.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						DendriteSegment selectedPath = pathListBox.getSelectedValue();
-						if (selectedPath == null) {
-							return;
-						}
-						String m = JOptionPane.showInputDialog("Please enter a name for this dendrite branch",
-								selectedPath.name);
-						selectedPath.name = m;
-
-						pathListBox.updateUI();
-					}
-				});
-
-				panel.add(btnRenameBranch, gridbagConstraints);
-				gridbagConstraints.gridy++;
-			}
-
-			gridbagConstraints.gridwidth = 2;
-			gridbagConstraints.gridx = 0;
-			{
-				JLabel label = new JLabel("<html>" + "To edit the width of the selected dendrite segment at any point, "
-						+ "use the controls below to move the highlighted region forward and "
-						+ "back along the segment and adjust accordingly." + "</html>");
-				panel.add(label, gridbagConstraints);
-				gridbagConstraints.gridy++;
-			}
-
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
-			{
-				String pathToImage = "images/icons/dsc--region-back.png";
-				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnPrevSegment = new JButton("< Region Back", myIcon);
-				btnPrevSegment.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						pathSegmentIndexSelected--;
-						updateSelectedSegment();
-					}
-				});
-
-				panel.add(btnPrevSegment, gridbagConstraints);
-				gridbagConstraints.gridx++;
-
-				pathToImage = "images/icons/dsc--region-fwd.png";
-				myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnNextSegment = new JButton("Region Fwd >", myIcon);
-				btnNextSegment.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						pathSegmentIndexSelected++;
-						updateSelectedSegment();
-					}
-				});
-				panel.add(btnNextSegment, gridbagConstraints);
-				gridbagConstraints.gridx++;
-			}
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		{
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
-			{
-				String pathToImage = "images/icons/dsc--thinnen-24.png";
-				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnMakeSegmentNarrower = new JButton("- Region Thinner", myIcon);
-				btnMakeSegmentNarrower.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						changeSelectedSegmentThickness(-1.0);
-					}
-				});
-
-				panel.add(btnMakeSegmentNarrower, gridbagConstraints);
-				gridbagConstraints.gridx++;
-
-				pathToImage = "images/icons/dsc--widen-24.png";
-				myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnMakeSegmentWider = new JButton("Region Thicker +", myIcon);
-				btnMakeSegmentWider.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						changeSelectedSegmentThickness(2.0);
-					}
-				});
-				panel.add(btnMakeSegmentWider, gridbagConstraints);
-				gridbagConstraints.gridx++;
-			}
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		{
-			gridbagConstraints.gridwidth = 1;
-			gridbagConstraints.gridx = 0;
-			{
-				String pathToImage = "images/icons/dsc--region-shift-left.png";
-				ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnShiftSegmentLeft = new JButton("Region Shift Left", myIcon);
-				btnShiftSegmentLeft.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						shiftSelectedSegmentPosition(-1.0);
-					}
-				});
-
-				panel.add(btnShiftSegmentLeft, gridbagConstraints);
-				gridbagConstraints.gridx++;
-
-				pathToImage = "images/icons/dsc--region-shift-right.png";
-				myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-				btnShiftSegmentRight = new JButton("Region Shift Right", myIcon);
-				btnShiftSegmentRight.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						shiftSelectedSegmentPosition(1.0);
-					}
-				});
-				panel.add(btnShiftSegmentRight, gridbagConstraints);
-				gridbagConstraints.gridx++;
-			}
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 0;
-		}
-
-		{
-			String pathToImage = "images/icons/dsc--find-spines-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			JButton btnNext = new JButton("Next: Find spines", myIcon);
-
-			btnNext.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					tabbedPane.setSelectedIndex(2);
 				}
 			});
 			gridbagConstraints.insets.top = 20;
