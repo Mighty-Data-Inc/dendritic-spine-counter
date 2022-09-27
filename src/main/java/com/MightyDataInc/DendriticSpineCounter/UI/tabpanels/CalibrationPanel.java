@@ -122,7 +122,7 @@ public class CalibrationPanel extends DscBasePanel {
 
 			// First (real) row: Ask them to give us a number.
 			// If this number is in pixels, then that's all we need from them at this point.
-			JLabel label = new JLabel("<html>Feature detection window size <i>(minimum 5 pixels)</i></html>");
+			JLabel label = new JLabel("<html>Spine detection window size <i>(minimum 5 pixels)</i></html>");
 			this.add(label, gridbagConstraints);
 
 			gridbagConstraints.gridx = 1;

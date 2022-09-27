@@ -1,5 +1,6 @@
 package com.MightyDataInc.DendriticSpineCounter.UI.tabpanels;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -8,10 +9,16 @@ import java.awt.geom.Point2D;
 import java.net.URL;
 import java.util.List;
 
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
@@ -28,6 +35,11 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	private JButton btnActivatePolylineTool;
 	private JButton btnTraceCurrentPolyline;
+
+	private JList<DendriteBranch> pathListBox;
+	private DefaultListModel<DendriteBranch> pathListModel;
+
+	private DendriteBranch currentDendrite = null;
 
 	public TraceDendritesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
@@ -96,7 +108,8 @@ public class TraceDendritesPanel extends DscBasePanel {
 			String pathToImage = "images/icons/dsc--trace-dendrite-24.png";
 			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
 
-			btnTraceCurrentPolyline = new JButton("Use the active Polyline Path to trace dendrite", myIcon);
+			btnTraceCurrentPolyline = new JButton("Use the active Polyline selection to trace a new dendrite branch",
+					myIcon);
 			btnTraceCurrentPolyline.setEnabled(false);
 
 			btnTraceCurrentPolyline.addActionListener(new ActionListener() {
@@ -107,7 +120,44 @@ public class TraceDendritesPanel extends DscBasePanel {
 			});
 			gridbagConstraints.gridx++;
 			this.add(btnTraceCurrentPolyline, gridbagConstraints);
+		}
 
+		{
+			gridbagConstraints.gridx = 0;
+			gridbagConstraints.gridwidth = 3;
+			gridbagConstraints.gridy++;
+
+			JLabel label = new JLabel(
+					"<html>" + "<b>Dendrite Branches:</b> Select a branch to modify or delete." + "</html>");
+			this.add(label, gridbagConstraints);
+
+			gridbagConstraints.gridy++;
+
+			this.pathListModel = new DefaultListModel<DendriteBranch>();
+			this.pathListBox = new JList<DendriteBranch>(this.pathListModel);
+			pathListBox.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+
+			JScrollPane listScroller = new JScrollPane(pathListBox);
+			listScroller.setPreferredSize(new Dimension(250, 140));
+			listScroller.setMinimumSize(new Dimension(250, 140));
+
+			// https://stackoverflow.com/questions/13800775/find-selected-item-of-a-jlist-and-display-it-in-real-time
+			pathListBox.addListSelectionListener(new ListSelectionListener() {
+				@Override
+				public void valueChanged(ListSelectionEvent ev) {
+					if (ev.getValueIsAdjusting()) {
+						// The selection is still changing. One item is being unselected
+						// while the other is still being selected.
+						return;
+					}
+
+					DendriteBranch dendrite = pathListBox.getSelectedValue();
+					updateCurrentDendriteSelection(dendrite);
+				}
+			});
+
+			this.add(listScroller, gridbagConstraints);
+			gridbagConstraints.gridy++;
 		}
 
 		addNextButton("Next: Find spines", "images/icons/dsc--find-spines-24.png");
@@ -120,27 +170,44 @@ public class TraceDendritesPanel extends DscBasePanel {
 	public void update() {
 	}
 
-	@Override
-	protected void onTimer() {
-		List<Point2D> pathPoints = getCurrentActivePolylinePathPoints();
-		boolean isThereACurrentPath = pathPoints != null;
-		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
+	private void updateCurrentDendriteSelection(DendriteBranch dendrite) {
+		if (dendrite == null) {
+			controlPanel.getPlugin().getImageProcessor().setCurrentRoi(null);
+		} else {
+			// When you set the current ROI on the image processor, it actually creates
+			// a new ROI. If you want the user to be able to edit the ROI and to have those
+			// changes stick on the dendrite object, you need to assign the newly created
+			// ROI back to the dendrite.
+			Roi roiBeingEdited = controlPanel.getPlugin().getImageProcessor().setCurrentRoi(dendrite.getRoi());
+			dendrite.setRoi(roiBeingEdited);
+		}
+		this.currentDendrite = dendrite;
+
+		for (DendriteBranch dit : controlPanel.getPlugin().getModel().getDendrites()) {
+			System.out.println(dit.toString());
+		}
 	}
 
-	private List<Point2D> getCurrentActivePolylinePathPoints() {
+	@Override
+	protected void onTimer() {
 		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor().getCurrentImagePolylinePathPoints();
-		return pathPoints;
+		boolean isThereACurrentPath = pathPoints != null;
+		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
+
+		controlPanel.getPlugin().getImageProcessor().drawDendriteOverlays();
 	}
 
 	private void onBtnTrace() {
-		List<Point2D> pathPoints = getCurrentActivePolylinePathPoints();
+		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor().getCurrentImagePolylinePathPoints();
 		if (pathPoints == null || pathPoints.size() < 2) {
 			return;
 		}
 
-		DendriteBranch dendrite = controlPanel.getPlugin().getImageProcessor()
-				.traceDendriteWithThicknessEstimation();
+		DendriteBranch dendrite = controlPanel.getPlugin().getImageProcessor().traceDendriteWithThicknessEstimation();
 
-		controlPanel.getPlugin().getImageProcessor().renderDendriteBranch(dendrite);
+		controlPanel.getPlugin().getModel().addDendrite(dendrite);
+		this.pathListModel.addElement(dendrite);
+
+		this.updateCurrentDendriteSelection(dendrite);
 	}
 }

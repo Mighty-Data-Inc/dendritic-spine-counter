@@ -316,23 +316,10 @@ public class DscImageProcessor {
 		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints,
 				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
 
-		this.renderDendriteBranch(dendriteBranch);
+		this.drawDendriteOverlays();
+		this.setCurrentRoi(dendriteBranch.getRoi());
 
 		return dendriteBranch;
-	}
-
-	public int renderDendriteBranch(DendriteBranch dendrite) {
-		if (dendrite == null) {
-			return 0;
-		}
-
-		getOverlay().add(dendrite.roi, dendrite.roi.toString());
-
-		// https://forum.image.sc/t/how-to-update-properties-of-roi-simultaneously-as-its-values-in-dialog-box-change/21486/3
-		// https://imagej.nih.gov/ij/developer/api/ij/ImagePlus.html#updateAndRepaintWindow--
-		getImagePlus().updateAndRepaintWindow();
-
-		return 1; // return path.id
 	}
 
 	public void RemovePathFromDrawOverlay(DendriteSegment path) {
@@ -434,10 +421,32 @@ public class DscImageProcessor {
 		this.moveToForeground();
 		ownerPlugin.activatePolylineTool();
 
-		getImagePlus().setRoi(featureSizeSelectorRoi);
+		this.setCurrentRoi(featureSizeSelectorRoi);
 		getImagePlus().updateAndRepaintWindow();
 
 		return featureSizeSelectorRoi;
+	}
+
+	public void drawDendriteOverlays() {
+		// Remove all dendrite overlays first, and repaint them second.
+		getOverlay().clear();
+		for (DendriteBranch dendrite : this.ownerPlugin.getModel().getDendrites()) {
+			getOverlay().add(dendrite.getRoi());
+		}
+	}
+
+	public Roi setCurrentRoi(Roi roi) {
+		// Draw all the persistent overlays, then remove the one that is currently being
+		// edited and add it back in as a current selection.
+		this.drawDendriteOverlays();
+
+		if (roi != null) {
+			getOverlay().remove(roi);
+			getImagePlus().setRoi(roi, true);
+			return getImagePlus().getRoi(); 
+		} else {
+			return null;
+		}
 	}
 
 	public double getFeatureSizeSelectorRoiSizeInPixels() {

@@ -2,6 +2,7 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,11 +13,49 @@ import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class DendriteBranch {
-	public List<DendritePixel> dendritePixels = new ArrayList<DendritePixel>();
-	public Img<UnsignedByteType> img = null;
-	public PolygonRoi roi = null;
+	private List<DendritePixel> dendritePixels = new ArrayList<DendritePixel>();
+	private Img<UnsignedByteType> img = null;
+	private PolygonRoi roi = null;
+	private int id = 0;
 
-	private DendriteBranch() {
+	// The branch's user-provided name. Overrides the default name, if supplied.
+	public String name = "";
+
+	private static int nextId = 1;
+
+	public List<DendritePixel> getCenterLine() {
+		return this.dendritePixels;
+	}
+
+	public PolygonRoi getRoi() {
+		return this.roi;
+	}
+
+	public PolygonRoi setRoi(Roi roi) {
+		PolygonRoi polygonRoi = null;
+		try {
+			polygonRoi = (PolygonRoi) roi;
+		} catch (ClassCastException ex) {
+		}
+
+		this.roi = polygonRoi;
+		return this.roi;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	private DendriteBranch(List<DendritePixel> dendritePixels, Img<UnsignedByteType> img) {
+		this.dendritePixels = dendritePixels;
+		this.img = img;
+
+		if (this.img != null) {
+			this.roi = generatePolygonRoi();
+		}
+
+		this.id = nextId;
+		nextId++;
 	}
 
 	public static DendriteBranch fromPathPoints(List<Point2D> pathPoints, double featureWindowSize,
@@ -35,10 +74,7 @@ public class DendriteBranch {
 			return null;
 		}
 
-		DendriteBranch dendrite = new DendriteBranch();
-		dendrite.dendritePixels = dendritePixels;
-		dendrite.img = img;
-		dendrite.roi = dendrite.generatePolygonRoi();
+		DendriteBranch dendrite = new DendriteBranch(dendritePixels, img);
 
 		return dendrite;
 	}
@@ -59,7 +95,7 @@ public class DendriteBranch {
 	 * @return A legacy polygon Roi that can be added to the image or the
 	 *         RoiManager.
 	 */
-	private List<Point2D> getPolygonPoints() {
+	private List<Point2D> getSimilarityBoundaryPoints() {
 		List<Point2D> leftPixels = this.getSidePath(DendritePixel.PathSide.LEFT);
 		List<Point2D> rightPixels = this.getSidePath(DendritePixel.PathSide.RIGHT);
 
@@ -70,7 +106,7 @@ public class DendriteBranch {
 	}
 
 	private PolygonRoi generatePolygonRoi() {
-		List<Point2D> points = this.getPolygonPoints();
+		List<Point2D> points = this.getSimilarityBoundaryPoints();
 
 		float[] xPoints = new float[points.size()];
 		float[] yPoints = new float[points.size()];
@@ -88,5 +124,73 @@ public class DendriteBranch {
 		roi.setFillColor(new Color(.4f, .6f, 1f, .4f));
 
 		return roi;
+	}
+
+	public List<Point2D> getRoiPoints() {
+		if (this.roi == null) {
+			return null;
+		}
+
+		int xcoords[] = roi.getXCoordinates();
+		int ycoords[] = roi.getYCoordinates();
+
+		if (xcoords.length != ycoords.length) {
+			throw new IllegalArgumentException(
+					String.format("Dendrite branch's ROI somehow has %d X coordinates but %d Y coordinates",
+							xcoords.length, ycoords.length));
+		}
+
+		List<Point2D> points = new ArrayList<Point2D>();
+
+		for (int i = 0; i < xcoords.length; i++) {
+			int x = xcoords[i];
+			int y = ycoords[i];
+			Point2D point = new Point2D.Double(x, y);
+			points.add(point);
+		}
+		return points;
+	}
+
+	public double getLengthInPixels() {
+		DendritePixel lastPoint = null;
+		double totalLength = 0;
+		for (DendritePixel dpixel : dendritePixels) {
+			if (lastPoint != null) {
+				double dist = dpixel.distance(lastPoint);
+				totalLength += dist;
+			}
+			lastPoint = dpixel;
+		}
+		return totalLength;
+	}
+
+	public String getName() {
+		String s = this.name;
+		if (s == null) {
+			s = "";
+		}
+		s = s.trim();
+
+		if (s.isEmpty()) {
+			if (dendritePixels == null || dendritePixels.size() == 0) {
+				s = "Path with no points specified";
+			} else if (dendritePixels.size() == 1) {
+				Point2D pixelFirst = dendritePixels.get(0);
+				s = String.format("Dendrite branch #%d: (%d, %d)", this.id, (int) pixelFirst.getX(),
+						(int) pixelFirst.getY());
+			} else {
+				Point2D pixelFirst = dendritePixels.get(0);
+				Point2D pixelLast = dendritePixels.get(dendritePixels.size() - 1);
+				s = String.format("Dendrite branch #%d: (%d, %d) to (%d, %d)", this.id, (int) pixelFirst.getX(),
+						(int) pixelFirst.getY(), (int) pixelLast.getX(), (int) pixelLast.getY());
+			}
+		}
+		return s;
+	}
+
+	@Override
+	public String toString() {
+		String s = this.getName();
+		return s;
 	}
 }

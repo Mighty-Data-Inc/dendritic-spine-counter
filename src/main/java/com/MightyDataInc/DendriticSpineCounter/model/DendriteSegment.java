@@ -36,9 +36,8 @@ public class DendriteSegment {
 	public String name = "";
 
 	// Additional info provided by the system, which appears in the dendrite
-	// branch's
-	// displayed name. At the time of this writing, this is just the length of the
-	// path.
+	// branch's displayed name. At the time of this writing, this is just the length
+	// of the path.
 	public String nameSuffix;
 
 	// Spines associated with this search pixel path.

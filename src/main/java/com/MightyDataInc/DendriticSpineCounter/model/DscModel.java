@@ -1,11 +1,12 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+
+import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEventListener;
 
 import ij.measure.Calibration;
-
-import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEvent;
-import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEventListener;
 
 public class DscModel {
 	// region Event handling
@@ -110,7 +111,35 @@ public class DscModel {
 
 	// endregion
 
-	// region Manage dendrite segments
+	// region Manage dendrites.
+	private TreeMap<Integer, DendriteBranch> dendrites = new TreeMap<Integer, DendriteBranch>();
+
+	public void addDendrite(DendriteBranch dendrite) {
+		if (dendrites.containsKey(dendrite.getId())) {
+			throw new IllegalArgumentException(
+					String.format("Dendrite branch collection already has element with id %d", dendrite.getId()));
+		}
+		dendrites.put(dendrite.getId(), dendrite);
+	}
+
+	public void removeDendrite(DendriteBranch dendriteBranch) {
+		if (dendrites.containsKey(dendriteBranch.getId())) {
+			dendrites.remove(dendriteBranch.getId());
+		}
+	}
+
+	public DendriteBranch getDendrite(int id) {
+		if (dendrites.containsKey(id)) {
+			return dendrites.get(id);
+		}
+		return null;
+	}
+
+	public List<DendriteBranch> getDendrites() {
+		List<DendriteBranch> dlist = new ArrayList<DendriteBranch>();
+		dlist.addAll(dendrites.values());
+		return dlist;
+	}
 
 	// endregion
 }
