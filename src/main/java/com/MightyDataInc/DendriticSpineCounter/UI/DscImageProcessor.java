@@ -10,16 +10,14 @@ import org.scijava.display.DisplayService;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
-import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
 import com.MightyDataInc.DendriticSpineCounter.model.PointExtractor;
-import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
 
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.OvalRoi;
-import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
@@ -42,8 +40,6 @@ public class DscImageProcessor {
 	private String workingImgWindowTitle;
 
 	private OvalRoi featureSizeSelectorRoi;
-
-	private OvalRoi currentSelectedSegmentRoi;
 
 	public DscImageProcessor(Dendritic_Spine_Counter ownerPlugin) {
 		this.ownerPlugin = ownerPlugin;
@@ -266,7 +262,7 @@ public class DscImageProcessor {
 		return brightnesses;
 	}
 
-	public List<Point2D> getCurrentImagePolylinePathPoints() {
+	public List<Point2D> getCurrentImagePolylinePathPoints(int roiType) {
 		List<Point2D> pathPoints = null;
 
 		ImagePlus currentImage = getImagePlus();
@@ -282,7 +278,9 @@ public class DscImageProcessor {
 		PolygonRoi polyRoi = null;
 		try {
 			polyRoi = (PolygonRoi) currentRoi;
-			if (polyRoi.getType() != Roi.POLYLINE) {
+
+			if (roiType != 0 && polyRoi.getType() != roiType) {
+				// NOTE: It's possible that we should also try casting to a PointRoi.
 				return null;
 			}
 		} catch (ClassCastException ex) {
@@ -298,7 +296,7 @@ public class DscImageProcessor {
 	}
 
 	public DendriteBranch traceDendriteWithThicknessEstimation() {
-		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints();
+		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints(Roi.POLYLINE);
 		if (pathPoints == null || pathPoints.size() == 0) {
 			return null;
 		}
@@ -310,61 +308,6 @@ public class DscImageProcessor {
 		this.setCurrentRoi(dendriteBranch.getRoi());
 
 		return dendriteBranch;
-	}
-
-	public void RemovePathFromDrawOverlay(DendriteSegment path) {
-		if (path == null || path.roi == null) {
-			return;
-		}
-		getOverlay().remove(path.roi);
-		getImagePlus().updateAndRepaintWindow();
-	}
-
-	public void SelectPath(DendriteSegment path, boolean isSelected) {
-		if (path == null || path.roi == null) {
-			return;
-		}
-
-		if (isSelected) {
-			path.roi.setFillColor(new Color(.6f, 1f, 1f, .4f));
-		} else {
-			path.roi.setFillColor(new Color(.4f, .6f, 1f, .4f));
-		}
-		getImagePlus().updateAndRepaintWindow();
-	}
-
-	public OvalRoi SetSelectedSegmentCursor(SearchPixel px, double featureSizePixels) {
-		if (currentSelectedSegmentRoi != null) {
-			this.getOverlay().remove(currentSelectedSegmentRoi);
-			currentSelectedSegmentRoi = null;
-		}
-
-		if (px == null) {
-			return null;
-		}
-
-		double totalSpan = px.getPixelSidepathDistance(SearchPixel.PathSide.LEFT)
-				+ px.getPixelSidepathDistance(SearchPixel.PathSide.RIGHT);
-
-		totalSpan += 2 * featureSizePixels;
-		double halfSpan = totalSpan / 2.0;
-
-		OvalRoi newRoi = new OvalRoi(px.x - halfSpan, px.y - halfSpan, totalSpan, totalSpan);
-		newRoi.setFillColor(new Color(0f, 1f, .5f, .5f));
-		getOverlay().add(newRoi);
-		getImagePlus().updateAndRepaintWindow();
-
-		currentSelectedSegmentRoi = newRoi;
-		return newRoi;
-	}
-
-	public void AddPointRoisAsSpineMarkers(List<Point2D> spinePoints) {
-		PointRoi spinesRoi = new PointRoi();
-		for (Point2D spinePoint : spinePoints) {
-			spinesRoi.addPoint(spinePoint.getX(), spinePoint.getY());
-		}
-		getImagePlus().setRoi(spinesRoi, true);
-		getImagePlus().updateAndRepaintWindow();
 	}
 
 	public void moveToForeground() {
@@ -418,10 +361,15 @@ public class DscImageProcessor {
 	}
 
 	public void drawDendriteOverlays() {
-		// Remove all dendrite overlays first, and repaint them second.
+		// Remove all dendrite an spine overlays first, and repaint them second.
 		getOverlay().clear();
+
 		for (DendriteBranch dendrite : this.ownerPlugin.getModel().getDendrites()) {
 			getOverlay().add(dendrite.getRoi());
+		}
+
+		for (DendriteSpine spine : this.ownerPlugin.getModel().getSpines()) {
+			getOverlay().add(spine.getRoi());
 		}
 	}
 

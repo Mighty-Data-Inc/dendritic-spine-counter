@@ -58,6 +58,7 @@ import org.scijava.plugin.PluginInfo;
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.DscBasePanel;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.FindSpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.TraceDendritesPanel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
@@ -78,16 +79,12 @@ public class DscControlPanelDialog extends JDialog {
 
 	private CalibrationPanel panelCalibration;
 	private TraceDendritesPanel panelTraceDendrites;
+	private FindSpinesPanel panelFindSpines;
 
 	// --------------------------------------
 	// Data-bound UI components
 
 	private JTabbedPane tabbedPane;
-
-	private JButton btnActivateMultiPointTool;
-	private JButton btnDetectSpines;
-
-	private JSlider sliderDetectionSensitivity;
 
 	private JButton btnCopyTableDataToClipboard;
 
@@ -150,11 +147,7 @@ public class DscControlPanelDialog extends JDialog {
 		super((Frame) null, "Dendritic Spine Counter", false);
 		ownerPlugin = plugin;
 
-		// model.dialog = this;
-
 		this.setTitle(this.generateDialogBoxTitle());
-
-		this.pathListModel = new DefaultListModel<DendriteSegment>();
 
 		setupWindowEventHandlers();
 
@@ -166,8 +159,9 @@ public class DscControlPanelDialog extends JDialog {
 		GridBagConstraints gbc = standardPanelGridbagConstraints();
 
 		{
-			JLabel label = new JLabel("<html>" + "The Dendritic Spine Counter plug-in counts spines along "
-					+ "segments of dendrite that you specify.<br/>" + "</html>");
+			JLabel label = new JLabel("<html>The Dendritic Spine Counter plug-in "
+					+ "helps you find, count, and classify spines on images of "
+					+ "dendritic segments.</html>");
 			controlPanel.add(label, gbc);
 		}
 
@@ -181,25 +175,12 @@ public class DscControlPanelDialog extends JDialog {
 			panelCalibration = new CalibrationPanel(this);
 			tabbedPane.addTab("Calibrate size", panelCalibration);
 			panelCalibration.enterPanel();
-			
+
 			panelTraceDendrites = new TraceDendritesPanel(this);
 			tabbedPane.addTab("Trace dendrites", panelTraceDendrites);
-			
-			
-			
-/*
-			JPanel panel3 = createSpineSelectionPanel();
-			tabbedPane.addTab("Find spines", panel3);
 
-			JPanel panel4 = createSpineClassificationPanel();
-			tabbedPane.addTab("Classify spines", panel4);
-
-			JPanel panel5 = createReportPanel();
-			tabbedPane.addTab("Report results", panel5);
-
-			JPanel panel6 = createFileLoadSavePanel();
-			tabbedPane.addTab("Save/Load", panel6);
-			*/
+			panelFindSpines = new FindSpinesPanel(this);
+			tabbedPane.addTab("Find spines", panelFindSpines);
 
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
@@ -456,7 +437,7 @@ public class DscControlPanelDialog extends JDialog {
 					} catch (Exception e1) {
 					}
 
-					//json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
+					// json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
 					json.put("researcher", textfieldResultTableResearcher.getText().trim());
 					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
 					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
@@ -521,187 +502,12 @@ public class DscControlPanelDialog extends JDialog {
 		return panel;
 	}
 
-	/**
-	 * This panel lets users place points to mark spines, and generates a report
-	 * table.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createSpineSelectionPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-
-		{
-			gridbagConstraints.gridwidth = 2;
-			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-			JLabel label = new JLabel(
-					"<html>" + "Use the Multi-point Tool to mark spines. " + "Dendritic Spine Counter "
-							+ "will automatically associate each spine with whichever dendrite segment "
-							+ "is closest to it." + "<ul>" + "<li>Click within the image to mark a spine.</li>"
-							+ "<li>Click and hold a marked spine (drag it) to relocate it.</li>"
-							+ "<li>Alt-Click a marked spine to remove it.</li>" + "</ul>"
-							+ "<p>Spines marked with this tool are \"tentative\", i.e. they are "
-							+ "considered a Multi-point selection, and can be added, moved, or deleted "
-							+ "as you see fit. You will have the chance to tabulate them in the "
-							+ "\"Report results\" tab." + "</html>");
-			panel.add(label, gridbagConstraints);
-
-			// Because we're using the same gridbagConstraints object for subsequent
-			// UI elements in this panel, let's set the bottom space value back to
-			// our standard.
-			gridbagConstraints.insets.bottom = 4;
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			ImageIcon icon = null;
-			PluginInfo<?> pointToolInfo = ownerPlugin.getPointTool().getInfo();
-			String iconDescription = pointToolInfo.getDescription();
-			try {
-				URL iconURL = pointToolInfo.getIconURL();
-				icon = new ImageIcon(iconURL, iconDescription);
-			} catch (InstantiableException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			btnActivateMultiPointTool = new JButton("Activate Multi-point Tool to mark spines on the image", icon);
-			btnActivateMultiPointTool.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					IJ.setTool("multi-point");
-					update();
-					ownerPlugin.getImageProcessor().moveToForeground();
-				}
-			});
-			panel.add(btnActivateMultiPointTool, gridbagConstraints);
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			JLabel label = new JLabel(
-					"<html>" + "This plug-in can auto-detect spines that project outward from the edges of "
-							+ "your dendrite segments. You can adjust the contrast sensitivity that this plug-in "
-							+ "uses for this task. Low contrast sensitivity means that a spine needs to be "
-							+ "significantly darker than its background in order to be recognized, "
-							+ "while high contrast sensitivity may try to mark a feature as a spine even if "
-							+ "it is only slightly darker than its background.<br/<br/>"
-							+ "After spines are automatically detected, you will then have the ability to move, "
-							+ "add, or delete them as you see fit.<br/<br/>"
-							+ "NOTE: Using this function will clear your current selection and replace it with "
-							+ "the auto-detected features. If you're going to use this feature, you should "
-							+ "use it <i>first</i>, and <i>then</i> add more spines manually if needed." + "</html>");
-			// We want extra space at the bottom of this label.
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			String pathToImage = "images/icons/dsc--find-spines-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnDetectSpines = new JButton("Automatically detect spines on traced dendrites", myIcon);
-			btnDetectSpines.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					int pixelWindowSize = 5; //getFeatureDetectionWindowSizeInPixels();
-					int SCANSPAN = 2;
-
-					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
-					double sensitivity = (100.0 - (double) sensitivitySliderVal) / 50.0;
-					sensitivity *= sensitivity;
-					sensitivity *= sensitivity;
-					sensitivity *= 0.25;
-					// The "sensitivity" is actually kinda backwards.
-					// It needs an easing function to mean what the labeling says it means.
-
-					List<Point2D> spines = new ArrayList<Point2D>();
-
-					Object[] paths = pathListModel.toArray();
-					for (Object path : paths) {
-						DendriteSegment dendriteSegment = (DendriteSegment) path;
-
-						for (PathSide side : PathSide.values()) {
-							DendriteSegment sidepath = dendriteSegment.createSidePath(side, pixelWindowSize,
-									pixelWindowSize / 2);
-
-							List<Point2D> spinesHere = sidepath.findSpinesAlongSidepath(pixelWindowSize, SCANSPAN,
-									sensitivity);
-
-							spines.addAll(spinesHere);
-						}
-					}
-					ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(spines);
-				}
-			});
-			panel.add(btnDetectSpines, gridbagConstraints);
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			JLabel label = new JLabel("<html>" + "Contrast sensitivity (% brightness difference)" + "</html>");
-			// We want extra space at the bottom of this label.
-			gridbagConstraints.insets.top = 16;
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			sliderDetectionSensitivity = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
-			sliderDetectionSensitivity.setMajorTickSpacing(10);
-			sliderDetectionSensitivity.setMinorTickSpacing(1);
-			sliderDetectionSensitivity.setPaintTicks(true);
-			sliderDetectionSensitivity.setPaintLabels(true);
-
-			gridbagConstraints.insets.top = 4;
-			panel.add(sliderDetectionSensitivity, gridbagConstraints);
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			String pathToImage = "images/icons/dsc--classify-spines-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			JButton btnNext = new JButton("Next: Classify Spines", myIcon);
-
-			btnNext.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					tabbedPane.setSelectedIndex(3);
-				}
-			});
-			gridbagConstraints.insets.top = 20;
-			gridbagConstraints.insets.bottom = 8;
-			gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
-			gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
-			gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
-			gridbagConstraints.weighty = 1.0;
-			panel.add(btnNext, gridbagConstraints);
-		}
-
-		return panel;
-	}
-
 	public void countSpinesAndBuildTable() {
-		List<Point2D> points = ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints();
-		clearSpineAssociations();
-		associateSpinesWithDendriteSegments(points);
-		populateResultsTable();
-		update();
+//		List<Point2D> points = ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints();
+//		clearSpineAssociations();
+//		associateSpinesWithDendriteSegments(points);
+//		populateResultsTable();
+//		update();
 	}
 
 	public void updateSelectedSegment() {
@@ -841,37 +647,39 @@ public class DscControlPanelDialog extends JDialog {
 
 	public void update() {
 		/*
-		boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
-		btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
-
-		List<Point2D> pathPoints = ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints(null);
-		boolean isThereACurrentPath = pathPoints != null;
-		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
-
-		DendriteSegment selectedBranch = this.pathListBox.getSelectedValue();
-		boolean isThereACurrentSelectedBranch = selectedBranch != null;
-		this.btnDeleteBranch.setEnabled(isThereACurrentSelectedBranch);
-		this.btnRenameBranch.setEnabled(isThereACurrentSelectedBranch);
-		this.btnPrevSegment.setEnabled(isThereACurrentSelectedBranch && this.pathSegmentIndexSelected > 0);
-		this.btnNextSegment.setEnabled(
-				isThereACurrentSelectedBranch && this.pathSegmentIndexSelected < selectedBranch.path.size() - 1);
-		this.btnMakeSegmentNarrower.setEnabled(isThereACurrentSelectedBranch);
-		this.btnMakeSegmentWider.setEnabled(isThereACurrentSelectedBranch);
-		this.btnShiftSegmentLeft.setEnabled(isThereACurrentSelectedBranch);
-		this.btnShiftSegmentRight.setEnabled(isThereACurrentSelectedBranch);
-
-		boolean isCurrentToolMultiPoint = IJ.getToolName() == "multipoint";
-		this.btnActivateMultiPointTool.setEnabled(!isCurrentToolMultiPoint);
-
-		boolean areThereAnyDendrites = !this.pathListModel.isEmpty();
-		// btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
-		btnDetectSpines.setEnabled(areThereAnyDendrites);
-
-		boolean areThereResults = this.resultsTableData.length > 0;
-		btnCopyTableDataToClipboard.setEnabled(areThereResults);
-
-		this.panelCalibration.update();
-		*/
+		 * boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
+		 * btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
+		 * 
+		 * List<Point2D> pathPoints =
+		 * ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints(null);
+		 * boolean isThereACurrentPath = pathPoints != null;
+		 * btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
+		 * 
+		 * DendriteSegment selectedBranch = this.pathListBox.getSelectedValue(); boolean
+		 * isThereACurrentSelectedBranch = selectedBranch != null;
+		 * this.btnDeleteBranch.setEnabled(isThereACurrentSelectedBranch);
+		 * this.btnRenameBranch.setEnabled(isThereACurrentSelectedBranch);
+		 * this.btnPrevSegment.setEnabled(isThereACurrentSelectedBranch &&
+		 * this.pathSegmentIndexSelected > 0); this.btnNextSegment.setEnabled(
+		 * isThereACurrentSelectedBranch && this.pathSegmentIndexSelected <
+		 * selectedBranch.path.size() - 1);
+		 * this.btnMakeSegmentNarrower.setEnabled(isThereACurrentSelectedBranch);
+		 * this.btnMakeSegmentWider.setEnabled(isThereACurrentSelectedBranch);
+		 * this.btnShiftSegmentLeft.setEnabled(isThereACurrentSelectedBranch);
+		 * this.btnShiftSegmentRight.setEnabled(isThereACurrentSelectedBranch);
+		 * 
+		 * boolean isCurrentToolMultiPoint = IJ.getToolName() == "multipoint";
+		 * this.btnActivateMultiPointTool.setEnabled(!isCurrentToolMultiPoint);
+		 * 
+		 * boolean areThereAnyDendrites = !this.pathListModel.isEmpty(); //
+		 * btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
+		 * btnDetectSpines.setEnabled(areThereAnyDendrites);
+		 * 
+		 * boolean areThereResults = this.resultsTableData.length > 0;
+		 * btnCopyTableDataToClipboard.setEnabled(areThereResults);
+		 * 
+		 * this.panelCalibration.update();
+		 */
 	}
 
 	/**
@@ -1103,13 +911,13 @@ public class DscControlPanelDialog extends JDialog {
 			dendrite.fromJSON(jsonDend, ownerPlugin.getImageProcessor().workingImg);
 
 			this.pathListModel.addElement(dendrite);
-			//ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
+			// ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
 
 			allspines.addAll(dendrite.spines);
 		}
 
 		// Add all the spines as visible ROI points in one big blast.
-		ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
+		//ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
 
 		populateResultsTable();
 

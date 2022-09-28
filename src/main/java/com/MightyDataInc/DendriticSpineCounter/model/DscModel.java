@@ -122,12 +122,13 @@ public class DscModel {
 		dendrites.put(dendrite.getId(), dendrite);
 	}
 
-	public void removeDendrite(DendriteBranch dendriteBranch) {
-		if (dendriteBranch == null) {
+	public void removeDendrite(DendriteBranch dendrite) {
+		if (dendrite == null) {
 			return;
 		}
-		if (dendrites.containsKey(dendriteBranch.getId())) {
-			dendrites.remove(dendriteBranch.getId());
+		if (dendrites.containsKey(dendrite.getId())) {
+			dendrites.remove(dendrite.getId());
+			this.removeSpinesOfDendrite(dendrite);
 		}
 	}
 
@@ -142,6 +143,72 @@ public class DscModel {
 		List<DendriteBranch> dlist = new ArrayList<DendriteBranch>();
 		dlist.addAll(dendrites.values());
 		return dlist;
+	}
+
+	public void clearDendrites() {
+		dendrites.clear();
+		spines.clear();
+	}
+
+	public void findNearestDendritesForAllSpines() {
+		for (DendriteSpine spine : this.getSpines()) {
+			spine.findNearestDendrite(getDendrites());
+		}
+	}
+
+	// endregion
+
+	// region Manage spines.
+	private TreeMap<Integer, DendriteSpine> spines = new TreeMap<Integer, DendriteSpine>();
+
+	public void addSpine(DendriteSpine spine) {
+		if (spine == null) {
+			return;
+		}
+		spines.put(spine.getId(), spine);
+	}
+
+	public void removeSpine(DendriteSpine spine) {
+		if (spine == null) {
+			return;
+		}
+		spines.remove(spine.getId());
+	}
+
+	public DendriteSpine getSpine(int id) {
+		if (spines.containsKey(id)) {
+			return spines.get(id);
+		}
+		return null;
+	}
+
+	public List<DendriteSpine> getSpines() {
+		List<DendriteSpine> slist = new ArrayList<DendriteSpine>();
+		slist.addAll(spines.values());
+		return slist;
+	}
+
+	public List<DendriteSpine> getSpinesOfDendrite(DendriteBranch dendrite) {
+		List<DendriteSpine> slist = new ArrayList<DendriteSpine>();
+		if (dendrite == null) {
+			return slist;
+		}
+		for (DendriteSpine spine : this.getSpines()) {
+			if (spine.getNearestDendrite() == dendrite) {
+				slist.add(spine);
+			}
+		}
+		return slist;
+	}
+
+	public void removeSpinesOfDendrite(DendriteBranch dendrite) {
+		for (DendriteSpine spine : this.getSpinesOfDendrite(dendrite)) {
+			this.removeSpine(spine);
+		}
+	}
+
+	public void clearSpines() {
+		spines.clear();
 	}
 
 	// endregion

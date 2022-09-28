@@ -2,7 +2,6 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -143,8 +142,8 @@ public class DendriteBranch {
 		List<Point2D> points = new ArrayList<Point2D>();
 
 		for (int i = 0; i < xcoords.length; i++) {
-			int x = xcoords[i];
-			int y = ycoords[i];
+			int x = (int) (xcoords[i] + roi.getXBase());
+			int y = (int) (ycoords[i] + roi.getYBase());
 			Point2D point = new Point2D.Double(x, y);
 			points.add(point);
 		}

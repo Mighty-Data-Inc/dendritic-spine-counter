@@ -1,7 +1,5 @@
 package com.MightyDataInc.DendriticSpineCounter;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +8,6 @@ import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.Properties;
 
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JSONObject;
@@ -74,30 +71,16 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 	private Tool polylineTool;
 	private Tool pointTool;
 
-	// This parameter determines how "different" a spine's brightness
-	// can be from the brightness of the dendrite that the spine comes off of.
-	// If it's set to zero, then the spine would have to be exactly the same
-	// brightness (or darkness) as the central line of the dendrite. In terms
-	// of units, it represents the number of standard deviations of difference
-	// in pixel value samplings that the spine can have and still be considered
-	// part of the same dendritic structure.
-	private double FEATURE_SENSITIVITY_ALLOWANCE = 4.0;
-
-	// How far out from the polyline to search for the thickness of the dendrite.
-	// Expressed as a multiple of how many pixel window sizes to search out to.
-	private double MAX_SEARCH_DISTANCE_IN_PIXEL_WINDOW_SIZE_TIMES = 5.0;
-
-	// The ID value to assign to the next path that gets added to our overlay.
-	// Incremented every time we add a path. Never decremented.
-	// TODO: MOve this into the model.
-	private int nextPathId = 1;
-
 	public Tool getPolylineTool() {
 		return this.polylineTool;
 	}
 
 	public Tool getPointTool() {
 		return this.pointTool;
+	}
+
+	public String getCurrentToolName() {
+		return IJ.getToolName();
 	}
 
 	public DscModel getModel() {

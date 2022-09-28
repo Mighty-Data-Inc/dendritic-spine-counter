@@ -10,9 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 
-import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
-import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 public abstract class DscBasePanel extends JPanel {
 	private static final long serialVersionUID = 5162415477182496895L;
