@@ -2,6 +2,7 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -126,8 +127,10 @@ public class DendriteBranch {
 	}
 
 	public List<Point2D> getRoiPoints() {
+		List<Point2D> points = new ArrayList<Point2D>();
+
 		if (this.roi == null) {
-			return null;
+			return points;
 		}
 
 		int xcoords[] = roi.getXCoordinates();
@@ -138,8 +141,6 @@ public class DendriteBranch {
 					String.format("Dendrite branch's ROI somehow has %d X coordinates but %d Y coordinates",
 							xcoords.length, ycoords.length));
 		}
-
-		List<Point2D> points = new ArrayList<Point2D>();
 
 		for (int i = 0; i < xcoords.length; i++) {
 			int x = (int) (xcoords[i] + roi.getXBase());
@@ -191,5 +192,53 @@ public class DendriteBranch {
 	public String toString() {
 		String s = this.getName();
 		return s;
+	}
+
+	public List<Point2D> getPeripheryPoints(double pixelsOutside, double pixelsBetween) {
+		List<Point2D> ptsOut = new ArrayList<Point2D>();
+		Point2D ptPrev = null;
+
+		for (Point2D ptRim : this.getRoiPoints()) {
+			if (ptPrev == null) {
+				ptPrev = ptRim;
+				continue;
+			}
+
+			double dist = ptPrev.distance(ptRim);
+
+			Point2D vecTangent = new Point2D.Double((ptRim.getX() - ptPrev.getX()) / dist,
+					(ptRim.getY() - ptPrev.getY()) / dist);
+			Point2D vecOrth = new Point2D.Double(vecTangent.getY() * pixelsOutside, -vecTangent.getX() * pixelsOutside);
+
+			for (double i = 0; i < dist; i++) {
+				double dfrac = i / dist;
+				double x = (ptPrev.getX() * dfrac) + (ptRim.getX() * (1 - dfrac)) + vecOrth.getX();
+				double y = (ptPrev.getY() * dfrac) + (ptRim.getY() * (1 - dfrac)) + vecOrth.getY();
+				Point2D pt = new Point2D.Double(x, y);
+				ptsOut.add(pt);
+			}
+
+			ptPrev = ptRim;
+		}
+
+		List<Point2D> ptsOutSpaced = new ArrayList<Point2D>();
+		ptPrev = null;
+		for (Point2D pt : ptsOut) {
+			if (ptPrev == null) {
+				ptsOutSpaced.add(pt);
+				ptPrev = pt;
+				continue;
+			}
+
+			double dist = pt.distance(ptPrev);
+			if (dist < pixelsBetween) {
+				continue;
+			}
+
+			ptsOutSpaced.add(pt);
+			ptPrev = pt;
+		}
+
+		return ptsOutSpaced;
 	}
 }

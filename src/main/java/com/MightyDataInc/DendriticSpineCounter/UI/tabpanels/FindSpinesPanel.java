@@ -21,6 +21,7 @@ import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
 
 import ij.IJ;
@@ -177,11 +178,14 @@ public class FindSpinesPanel extends DscBasePanel {
 			btnDetectSpines.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
+					double sensitivity = (double) sensitivitySliderVal / 100.0;
+
+					autoDetectSpines(sensitivity);
+
 //					int pixelWindowSize = 5; // getFeatureDetectionWindowSizeInPixels();
 //					int SCANSPAN = 2;
 //
-//					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
-//					double sensitivity = (100.0 - (double) sensitivitySliderVal) / 50.0;
 //					sensitivity *= sensitivity;
 //					sensitivity *= sensitivity;
 //					sensitivity *= 0.25;
@@ -363,5 +367,22 @@ public class FindSpinesPanel extends DscBasePanel {
 
 		controlPanel.getPlugin().getImageProcessor().setCurrentRoi(roi);
 		controlPanel.getPlugin().getImageProcessor().update();
+	}
+
+	private void autoDetectSpines(double contrastThresholdFrac) {
+		double distOutside = controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels() / 4;
+		double distBetween = distOutside;
+
+		for (DendriteBranch dendrite : controlPanel.getPlugin().getModel().getDendrites()) {
+			List<Point2D> rim = dendrite.getPeripheryPoints(distOutside, distBetween);
+			controlPanel.getPlugin().getImageProcessor().drawPixels(rim, 1);
+			
+			for (Point2D point : rim) {
+				DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(),
+						controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels());
+				controlPanel.getPlugin().getModel().addSpine(spine);
+			}
+
+		}
 	}
 }
