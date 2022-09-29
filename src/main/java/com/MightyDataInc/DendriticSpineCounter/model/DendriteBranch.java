@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
+
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import net.imglib2.img.Img;
@@ -14,7 +16,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class DendriteBranch {
 	private List<DendritePixel> dendritePixels = new ArrayList<DendritePixel>();
-	private Img<UnsignedByteType> img = null;
+	private DscImageProcessor imageProcessor = null;
 	private PolygonRoi roi = null;
 	private int id = 0;
 
@@ -46,11 +48,11 @@ public class DendriteBranch {
 		return id;
 	}
 
-	private DendriteBranch(List<DendritePixel> dendritePixels, Img<UnsignedByteType> img) {
+	private DendriteBranch(List<DendritePixel> dendritePixels, DscImageProcessor imageProcessor) {
 		this.dendritePixels = dendritePixels;
-		this.img = img;
+		this.imageProcessor = imageProcessor;
 
-		if (this.img != null) {
+		if (this.imageProcessor != null) {
 			this.roi = generatePolygonRoi();
 		}
 
@@ -59,24 +61,39 @@ public class DendriteBranch {
 	}
 
 	public static DendriteBranch fromPathPoints(List<Point2D> pathPoints, double featureWindowSize,
-			Img<UnsignedByteType> img) {
+			DscImageProcessor imageProcessor) {
 		if (pathPoints == null || pathPoints.size() == 0) {
 			return null;
 		}
 
-		List<TracerPixel> darktrace = TracerPixel.trace(pathPoints, img, null);
+		List<TracerPixel> darktrace = TracerPixel.trace(pathPoints, imageProcessor.workingImg, null);
 		if (darktrace == null || darktrace.size() == 0) {
 			return null;
 		}
 
-		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace, featureWindowSize, img);
+		List<DendritePixel> dendritePixels = DendritePixel.fromTracers(darktrace, featureWindowSize, imageProcessor);
 		if (dendritePixels == null || dendritePixels.size() == 0) {
 			return null;
 		}
 
-		DendriteBranch dendrite = new DendriteBranch(dendritePixels, img);
+		DendriteBranch dendrite = new DendriteBranch(dendritePixels, imageProcessor);
 
 		return dendrite;
+	}
+
+	public static DendriteBranch traceDendriteWithThicknessEstimation(double featureWindowSize,
+			DscImageProcessor imageProcessor) {
+		List<Point2D> pathPoints = imageProcessor.getCurrentImagePolylinePathPoints(Roi.POLYLINE);
+		if (pathPoints == null || pathPoints.size() == 0) {
+			return null;
+		}
+
+		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints, featureWindowSize, imageProcessor);
+
+		imageProcessor.drawDendriteOverlays();
+		imageProcessor.setCurrentRoi(dendriteBranch.getRoi());
+
+		return dendriteBranch;
 	}
 
 	private List<Point2D> getSidePath(DendritePixel.PathSide side) {

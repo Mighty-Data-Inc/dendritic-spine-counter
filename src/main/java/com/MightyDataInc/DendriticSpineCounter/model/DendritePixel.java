@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
+
 import ij.gui.PolygonRoi;
-import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 
 public class DendritePixel extends Point2D {
@@ -32,7 +32,8 @@ public class DendritePixel extends Point2D {
 
 	public int x;
 	public int y;
-	public Img<? extends RealType<?>> fromImg;
+
+	private DscImageProcessor imageProcessor = null;
 
 	double featureWindowSize = 0;
 	public Point2D unitNormal = new Point2D.Double(0, 0);
@@ -41,7 +42,7 @@ public class DendritePixel extends Point2D {
 	public SummaryStatistics vicinityStats = null;
 
 	public static <T extends RealType<?>> List<DendritePixel> fromTracers(List<? extends Point2D> tracers,
-			double featureWindowSize, Img<T> img) {
+			double featureWindowSize, DscImageProcessor imageProcessor) {
 		if (tracers == null || tracers.size() == 0) {
 			return null;
 		}
@@ -50,7 +51,7 @@ public class DendritePixel extends Point2D {
 
 		Point2D firstTracer = tracers.get(0);
 		DendritePixel prevDendritePixel = new DendritePixel((int) firstTracer.getX(), (int) firstTracer.getY(),
-				featureWindowSize, img);
+				featureWindowSize, imageProcessor);
 		dpixels.add(prevDendritePixel);
 
 		for (Point2D tracer : tracers) {
@@ -59,7 +60,8 @@ public class DendritePixel extends Point2D {
 				continue;
 			}
 
-			prevDendritePixel = new DendritePixel((int) tracer.getX(), (int) tracer.getY(), featureWindowSize, img);
+			prevDendritePixel = new DendritePixel((int) tracer.getX(), (int) tracer.getY(), featureWindowSize,
+					imageProcessor);
 			dpixels.add(prevDendritePixel);
 		}
 
@@ -69,7 +71,7 @@ public class DendritePixel extends Point2D {
 		// with the true end, allowing for the last segment to be slightly too long.
 		Point2D lastTracer = tracers.get(tracers.size() - 1);
 		DendritePixel lastDendritePixel = new DendritePixel((int) lastTracer.getX(), (int) lastTracer.getY(),
-				featureWindowSize, img);
+				featureWindowSize, imageProcessor);
 		dpixels.remove(dpixels.size() - 1);
 		dpixels.add(lastDendritePixel);
 
@@ -101,7 +103,7 @@ public class DendritePixel extends Point2D {
 		}
 
 		// Search for thickness boundaries. (This requires having an image.)
-		if (img != null) {
+		if (imageProcessor != null) {
 			for (DendritePixel dpixel : dpixels) {
 				dpixel.findSimilarityBoundaries();
 			}
@@ -128,11 +130,12 @@ public class DendritePixel extends Point2D {
 		return dpixels;
 	}
 
-	public <T extends RealType<?>> DendritePixel(int x, int y, double featureWindowSize, Img<T> img) {
+	public <T extends RealType<?>> DendritePixel(int x, int y, double featureWindowSize,
+			DscImageProcessor imageProcessor) {
 		this.x = x;
 		this.y = y;
 
-		this.fromImg = img;
+		this.imageProcessor = imageProcessor;
 
 		this.featureWindowSize = featureWindowSize;
 
@@ -143,8 +146,8 @@ public class DendritePixel extends Point2D {
 		this.similarityBoundaryDistance[PathSide.LEFT.value] = featureWindowRadius;
 		this.similarityBoundaryDistance[PathSide.RIGHT.value] = featureWindowRadius;
 
-		if (this.fromImg != null) {
-			this.vicinityStats = this.computePixelVicinityStats(0, 0, featureWindowRadius, 0);
+		if (this.imageProcessor != null) {
+			this.vicinityStats = this.imageProcessor.getBrightnessVicinityStats(x, y, featureWindowRadius, 0, null);
 		}
 	}
 
@@ -417,115 +420,13 @@ public class DendritePixel extends Point2D {
 			double radius, double donutHoleRadius) {
 		Point2D vecOrtho = this.getOrthogonalUnitVector(side, distOrtho);
 		Point2D vecNorm = this.getNormalUnitVector(distNorm);
-		double xoff = vecOrtho.getX() + vecNorm.getX();
-		double yoff = vecOrtho.getY() + vecNorm.getY();
+		double x = vecOrtho.getX() + vecNorm.getX() + this.getX();
+		double y = vecOrtho.getY() + vecNorm.getY() + this.getY();
 
-		SummaryStatistics stat = this.computePixelVicinityStats((int) xoff, (int) yoff, radius, donutHoleRadius);
+		SummaryStatistics stat = this.imageProcessor.getBrightnessVicinityStats((int) x,
+				(int) y, radius,
+				donutHoleRadius, null);
 		return stat;
-	}
-
-	/**
-	 * Gets a statistical description of all pixels in a circle centered on this
-	 * pixel (or an offset point).
-	 * 
-	 * @param xoff            Offset from this DendritePixel's X position to center
-	 *                        the search on.
-	 * @param yoff            Offset from this DendritePixel's Y position to center
-	 *                        the search on.
-	 * @param radius          The radius of the circle to collect pixel values from.
-	 * @param donutHoleRadius A radius of pixels to exclude from the returned
-	 *                        collection.
-	 * @return A statistical description of the pixels within the circle.
-	 */
-	public SummaryStatistics computePixelVicinityStats(int xoff, int yoff, double radius, double donutHoleRadius) {
-		List<java.lang.Double> values = getPixelValuesWithinRadius(xoff, yoff, radius, donutHoleRadius, null);
-
-		SummaryStatistics stat = new SummaryStatistics();
-		for (java.lang.Double value : values) {
-			stat.addValue(value);
-		}
-		return stat;
-	}
-
-	/**
-	 * Gets a list of values (normalized to a range of 0 to 1) of all pixels in a
-	 * circle centered on this pixel (or an offset point).
-	 * 
-	 * @param xoff            Offset from this DendritePixel's X position to center
-	 *                        the search on.
-	 * @param yoff            Offset from this DendritePixel's Y position to center
-	 *                        the search on.
-	 * @param radius          The radius of the circle to collect pixel values from.
-	 * @param donutHoleRadius A radius of pixels to exclude from the returned
-	 *                        collection.
-	 * @param polygonExclude  If provided, the search refrains from examining pixels
-	 *                        that are within this region of exclusion.
-	 * @return A list of pixel values between 0 and 1, where 0 is black and 1 is
-	 *         white, representing values outside the donut hole radius.
-	 */
-	public List<java.lang.Double> getPixelValuesWithinRadius(int xoff, int yoff, double radius, double donutHoleRadius,
-			PolygonRoi polygonExclude) {
-
-		if (this.fromImg == null) {
-			throw new IllegalArgumentException(
-					"Can't get pixel values in vicinity of DendritePixel because DendritePixel has no fromImg.");
-		}
-
-		List<java.lang.Double> pixelValues = new ArrayList<java.lang.Double>();
-		List<java.lang.Double> donutHoleValues = new ArrayList<java.lang.Double>();
-		// NOTE: We don't actually return donutHoleValues currently.
-
-		long imgWidth = this.fromImg.dimension(0);
-		long imgHeight = this.fromImg.dimension(1);
-
-		int xcenter = this.x + xoff;
-		int ycenter = this.y + yoff;
-
-		long xStart = (long) (xcenter - Math.ceil(radius));
-		if (xStart < 0) {
-			xStart = 0;
-		}
-		long yStart = (long) (ycenter - Math.ceil(radius));
-		if (yStart < 0) {
-			yStart = 0;
-		}
-		long xEnd = (long) (xcenter + Math.ceil(radius));
-		if (xEnd >= imgWidth) {
-			xEnd = imgWidth - 1;
-		}
-		long yEnd = (long) (ycenter + Math.ceil(radius));
-		if (yEnd >= imgHeight) {
-			yEnd = imgHeight - 1;
-		}
-
-		final RandomAccess<? extends RealType<?>> r = this.fromImg.randomAccess();
-
-		r.setPosition(new long[] { xStart, yStart });
-
-		for (long y = yStart; y <= yEnd; y++) {
-			for (long x = xStart; x <= xEnd; x++) {
-				if (polygonExclude != null && polygonExclude.contains((int) x, (int) y)) {
-					continue;
-				}
-
-				r.setPosition(new long[] { x, y });
-				RealType<?> t = r.get();
-
-				double distance = Math.hypot((x - xcenter), (y - ycenter));
-				if (distance > radius) {
-					continue;
-				}
-
-				double value = t.getRealDouble() / t.getMaxValue();
-				if (distance < donutHoleRadius) {
-					donutHoleValues.add(value);
-				} else {
-					pixelValues.add(value);
-				}
-			}
-		}
-
-		return pixelValues;
 	}
 
 	/**

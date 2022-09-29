@@ -235,7 +235,8 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	@Override
 	protected void onTimer() {
-		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor().getCurrentImagePolylinePathPoints(Roi.POLYLINE);
+		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor()
+				.getCurrentImagePolylinePathPoints(Roi.POLYLINE);
 		boolean isThereACurrentPath = pathPoints != null;
 		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
 
@@ -243,12 +244,15 @@ public class TraceDendritesPanel extends DscBasePanel {
 	}
 
 	private void onBtnTrace() {
-		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor().getCurrentImagePolylinePathPoints(Roi.POLYLINE);
+		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor()
+				.getCurrentImagePolylinePathPoints(Roi.POLYLINE);
 		if (pathPoints == null || pathPoints.size() < 2) {
 			return;
 		}
 
-		DendriteBranch dendrite = controlPanel.getPlugin().getImageProcessor().traceDendriteWithThicknessEstimation();
+		DendriteBranch dendrite = DendriteBranch.traceDendriteWithThicknessEstimation(
+				controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels(),
+				controlPanel.getPlugin().getImageProcessor());
 
 		controlPanel.getPlugin().getModel().addDendrite(dendrite);
 		this.pathListModel.addElement(dendrite);

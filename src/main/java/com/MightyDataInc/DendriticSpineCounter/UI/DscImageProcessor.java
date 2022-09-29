@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.display.DisplayService;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
@@ -262,6 +263,100 @@ public class DscImageProcessor {
 		return brightnesses;
 	}
 
+	/**
+	 * Gets a list of values (normalized to a range of 0 to 1) of all pixels in a
+	 * circle centered on this pixel (or an offset point).
+	 * 
+	 * @param xcenter         X position to center the search on.
+	 * @param ycenter         Y position to center the search on.
+	 * @param radius          The radius of the circle to collect pixel values from.
+	 * @param donutHoleRadius A radius of pixels to exclude from the returned
+	 *                        collection.
+	 * @param polygonExclude  If provided, the search refrains from examining pixels
+	 *                        that are within this region of exclusion.
+	 * @return A list of pixel values between 0 and 1, where 0 is black and 1 is
+	 *         white, representing values outside the donut hole radius.
+	 */
+	public List<Double> getBrightnessesWithinRadius(int xcenter, int ycenter, double radius, double donutHoleRadius,
+			PolygonRoi polygonExclude) {
+		List<Double> pixelValues = new ArrayList<java.lang.Double>();
+		List<java.lang.Double> donutHoleValues = new ArrayList<java.lang.Double>();
+		// NOTE: We don't actually return donutHoleValues currently.
+
+		long imgWidth = workingImg.dimension(0);
+		long imgHeight = workingImg.dimension(1);
+
+		long xStart = (long) (xcenter - Math.ceil(radius));
+		if (xStart < 0) {
+			xStart = 0;
+		}
+		long yStart = (long) (ycenter - Math.ceil(radius));
+		if (yStart < 0) {
+			yStart = 0;
+		}
+		long xEnd = (long) (xcenter + Math.ceil(radius));
+		if (xEnd >= imgWidth) {
+			xEnd = imgWidth - 1;
+		}
+		long yEnd = (long) (ycenter + Math.ceil(radius));
+		if (yEnd >= imgHeight) {
+			yEnd = imgHeight - 1;
+		}
+
+		final RandomAccess<? extends RealType<?>> r = workingImg.randomAccess();
+
+		r.setPosition(new long[] { xStart, yStart });
+
+		for (long y = yStart; y <= yEnd; y++) {
+			for (long x = xStart; x <= xEnd; x++) {
+				if (polygonExclude != null && polygonExclude.contains((int) x, (int) y)) {
+					continue;
+				}
+
+				r.setPosition(new long[] { x, y });
+				RealType<?> t = r.get();
+
+				double distance = Math.hypot((x - xcenter), (y - ycenter));
+				if (distance > radius) {
+					continue;
+				}
+
+				double value = t.getRealDouble() / t.getMaxValue();
+				if (distance < donutHoleRadius) {
+					donutHoleValues.add(value);
+				} else {
+					pixelValues.add(value);
+				}
+			}
+		}
+		return pixelValues;
+	}
+
+	/**
+	 * Gets a statistical description of all pixels in a circle centered on this
+	 * pixel (or an offset point).
+	 * 
+	 * @param xcenter         X position to center the search on.
+	 * @param ycenter         Y position to center the search on.
+	 * @param radius          The radius of the circle to collect pixel values from.
+	 * @param donutHoleRadius A radius of pixels to exclude from the returned
+	 *                        collection.
+	 * @param polygonExclude  If provided, the search refrains from examining pixels
+	 *                        that are within this region of exclusion.
+	 * @return A statistical description of the pixels within the circle.
+	 */
+	public SummaryStatistics getBrightnessVicinityStats(int xcenter, int ycenter, double radius, double donutHoleRadius,
+			PolygonRoi polygonExclude) {
+		List<java.lang.Double> values = getBrightnessesWithinRadius(xcenter, ycenter, radius, donutHoleRadius,
+				polygonExclude);
+
+		SummaryStatistics stat = new SummaryStatistics();
+		for (java.lang.Double value : values) {
+			stat.addValue(value);
+		}
+		return stat;
+	}
+
 	public List<Point2D> getCurrentImagePolylinePathPoints(int roiType) {
 		List<Point2D> pathPoints = null;
 
@@ -293,21 +388,6 @@ public class DscImageProcessor {
 		}
 
 		return pathPoints;
-	}
-
-	public DendriteBranch traceDendriteWithThicknessEstimation() {
-		List<Point2D> pathPoints = getCurrentImagePolylinePathPoints(Roi.POLYLINE);
-		if (pathPoints == null || pathPoints.size() == 0) {
-			return null;
-		}
-
-		DendriteBranch dendriteBranch = DendriteBranch.fromPathPoints(pathPoints,
-				this.ownerPlugin.getModel().getFeatureWindowSizeInPixels(), workingImg);
-
-		this.drawDendriteOverlays();
-		this.setCurrentRoi(dendriteBranch.getRoi());
-
-		return dendriteBranch;
 	}
 
 	public void moveToForeground() {
