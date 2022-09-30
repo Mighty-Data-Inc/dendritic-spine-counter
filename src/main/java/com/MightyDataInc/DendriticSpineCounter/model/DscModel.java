@@ -2,6 +2,7 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -244,27 +245,68 @@ public class DscModel {
 		spines.clear();
 	}
 
+
 	public List<DendriteSpine> getUnclassifiedSpines() {
 		List<DendriteSpine> unclassifiedSpines = new ArrayList<DendriteSpine>();
 		for (DendriteSpine spine : this.getSpines()) {
-			if (spine.getClassification() == null || spine.getClassification() == "") {
+			if (!spine.hasClassification()) {
 				unclassifiedSpines.add(spine);
 			}
 		}
 		return unclassifiedSpines;
 	}
 
-	public DendriteSpine findNextUnclassifiedSpine(int fromId) {
-		List<DendriteSpine> unclassifiedSpines = this.getUnclassifiedSpines();
-		if (unclassifiedSpines.size() == 0) {
+	public DendriteSpine findNextUnclassifiedSpine(DendriteSpine fromSpine) {
+		if (getUnclassifiedSpines().size() == 0) {
 			return null;
 		}
-		for (DendriteSpine spine : unclassifiedSpines) {
-			if (spine.getId() >= fromId) {
-				return spine;
+		while (true) {
+			fromSpine = findNextSpine(fromSpine);
+			if (fromSpine == null) {
+				return null;
+			}
+			if (!fromSpine.hasClassification()) {
+				return fromSpine;
 			}
 		}
-		return unclassifiedSpines.get(0);
+	}
+
+	public DendriteSpine findNextSpine(DendriteSpine fromSpine) {
+		List<DendriteSpine> spines = this.getSpines();
+		if (spines.size() == 0) {
+			return null;
+		}
+		if (fromSpine == null) {
+			return spines.get(0);
+		}
+
+		DendriteSpine prevSpine = null;
+		for (DendriteSpine spine : spines) {
+			if (prevSpine == fromSpine) {
+				return spine;
+			}
+			prevSpine = spine;
+		}
+		return spines.get(0);
+	}
+
+	public DendriteSpine findPreviousSpine(DendriteSpine fromSpine) {
+		List<DendriteSpine> spines = this.getSpines();
+		if (spines.size() == 0) {
+			return null;
+		}
+		if (fromSpine == null || fromSpine == spines.get(0)) {
+			return spines.get(spines.size() - 1);
+		}
+
+		DendriteSpine prevSpine = null;
+		for (DendriteSpine spine : spines) {
+			if (spine == fromSpine) {
+				return prevSpine;
+			}
+			prevSpine = spine;
+		}
+		return spines.get(spines.size() - 1);
 	}
 
 	// endregion

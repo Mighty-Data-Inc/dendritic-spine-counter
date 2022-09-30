@@ -62,7 +62,7 @@ public abstract class DscBasePanel extends JPanel {
 
 		ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToIcon));
 
-		JButton btnNext = new JButton(labeltext, myIcon);
+		JButton btnNext = new JButton(labeltext + " >>", myIcon);
 
 		btnNext.addActionListener(new ActionListener() {
 			@Override

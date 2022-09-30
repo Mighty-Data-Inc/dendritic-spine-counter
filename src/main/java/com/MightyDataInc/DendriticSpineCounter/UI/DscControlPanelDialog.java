@@ -57,6 +57,7 @@ import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.ClassifySpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.DscBasePanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.FindSpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.TraceDendritesPanel;
@@ -80,6 +81,7 @@ public class DscControlPanelDialog extends JDialog {
 	private CalibrationPanel panelCalibration;
 	private TraceDendritesPanel panelTraceDendrites;
 	private FindSpinesPanel panelFindSpines;
+	private ClassifySpinesPanel classifyFindSpines;
 
 	// --------------------------------------
 	// Data-bound UI components
@@ -160,8 +162,7 @@ public class DscControlPanelDialog extends JDialog {
 
 		{
 			JLabel label = new JLabel("<html>The Dendritic Spine Counter plug-in "
-					+ "helps you find, count, and classify spines on images of "
-					+ "dendritic segments.</html>");
+					+ "helps you find, count, and classify spines on images of " + "dendritic segments.</html>");
 			controlPanel.add(label, gbc);
 		}
 
@@ -181,6 +182,9 @@ public class DscControlPanelDialog extends JDialog {
 
 			panelFindSpines = new FindSpinesPanel(this);
 			tabbedPane.addTab("Find spines", panelFindSpines);
+
+			classifyFindSpines = new ClassifySpinesPanel(this);
+			tabbedPane.addTab("Classify spines", classifyFindSpines);
 
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
@@ -502,101 +506,6 @@ public class DscControlPanelDialog extends JDialog {
 		return panel;
 	}
 
-	public void countSpinesAndBuildTable() {
-//		List<Point2D> points = ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints();
-//		clearSpineAssociations();
-//		associateSpinesWithDendriteSegments(points);
-//		populateResultsTable();
-//		update();
-	}
-
-	public void updateSelectedSegment() {
-		/*
-		 * DendriteSegment selectedBranch = this.pathListBox.getSelectedValue(); if
-		 * (selectedBranch == null) { this.pathSegmentIndexSelected = 0;
-		 * ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(null, 0); return; }
-		 * 
-		 * if (this.pathSegmentIndexSelected < 0) { this.pathSegmentIndexSelected = 0; }
-		 * if (this.pathSegmentIndexSelected > selectedBranch.path.size() - 1) {
-		 * this.pathSegmentIndexSelected = selectedBranch.path.size() - 1; }
-		 * 
-		 * SearchPixel pix = selectedBranch.path.get(pathSegmentIndexSelected);
-		 * ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(pix,
-		 * ownerPlugin.featureSizePixels); this.update();
-		 */
-	}
-
-	public void changeSelectedSegmentThickness(double changeAmt) {
-		/*
-		 * changeAmt *= this.getFeatureDetectionWindowSizeInPixels() / 2;
-		 * 
-		 * DendriteSegment selectedBranch = this.pathListBox.getSelectedValue(); if
-		 * (selectedBranch == null) { return; }
-		 * 
-		 * SearchPixel pix = selectedBranch.path.get(pathSegmentIndexSelected); if (pix
-		 * == null) { return; }
-		 * 
-		 * // Left side is negative. pix.similarityBoundaryDistanceLeft -= changeAmt;
-		 * pix.similarityBoundaryDistanceLeft = Math.min(-1.0,
-		 * pix.similarityBoundaryDistanceLeft);
-		 * 
-		 * pix.similarityBoundaryDistanceRight += changeAmt;
-		 * pix.similarityBoundaryDistanceRight = Math.max(1.0,
-		 * pix.similarityBoundaryDistanceRight);
-		 * 
-		 * selectedBranch.smoothSimilarityBoundaryDistances(.5);
-		 * 
-		 * int oldBranchId = selectedBranch.id;
-		 * 
-		 * ownerPlugin.getImageProcessor().RemovePathFromDrawOverlay(selectedBranch);
-		 * selectedBranch.roi = selectedBranch.getSimilarityVolume();
-		 * 
-		 * ownerPlugin.getImageProcessor().AddPathToDrawOverlay(selectedBranch);
-		 * selectedBranch.id = oldBranchId;
-		 * 
-		 * ownerPlugin.getImageProcessor().SelectPath(selectedBranch, true);
-		 * ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(pix,
-		 * ownerPlugin.featureSizePixels);
-		 */
-	}
-
-	public void shiftSelectedSegmentPosition(double changeAmt) {
-		/*
-		 * DendriteSegment selectedBranch = this.pathListBox.getSelectedValue(); if
-		 * (selectedBranch == null) { return; }
-		 * 
-		 * changeAmt *= this.getFeatureDetectionWindowSizeInPixels() / 2;
-		 * 
-		 * // Create some smothing/easing behavior. int INDEX_SPAN = 3;
-		 * 
-		 * for (int iSpan = -INDEX_SPAN; iSpan <= INDEX_SPAN; iSpan++) { int iPix =
-		 * pathSegmentIndexSelected + iSpan; if (iPix < 0 || iPix >=
-		 * selectedBranch.path.size()) { continue; }
-		 * 
-		 * double shiftDist = changeAmt * (double) (INDEX_SPAN - Math.abs(iSpan)) /
-		 * (double) INDEX_SPAN;
-		 * 
-		 * SearchPixel pix = selectedBranch.path.get(iPix); if (pix == null) { return; }
-		 * 
-		 * pix.x += (int) shiftDist * pix.unitOrthogonal.getX(); pix.y += (int)
-		 * shiftDist * pix.unitOrthogonal.getY(); }
-		 * 
-		 * int oldBranchId = selectedBranch.id;
-		 * 
-		 * ownerPlugin.getImageProcessor().RemovePathFromDrawOverlay(selectedBranch);
-		 * selectedBranch.roi = selectedBranch.getSimilarityVolume();
-		 * 
-		 * ownerPlugin.getImageProcessor().AddPathToDrawOverlay(selectedBranch);
-		 * selectedBranch.id = oldBranchId;
-		 * 
-		 * ownerPlugin.getImageProcessor().SelectPath(selectedBranch, true);
-		 * 
-		 * SearchPixel pix = selectedBranch.path.get(pathSegmentIndexSelected);
-		 * ownerPlugin.getImageProcessor().SetSelectedSegmentCursor(pix,
-		 * ownerPlugin.featureSizePixels);
-		 */
-	}
-
 	private void setupWindowEventHandlers() {
 		addWindowFocusListener(new WindowFocusListener() {
 			@Override
@@ -646,72 +555,6 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	public void update() {
-		/*
-		 * boolean isCurrentToolPolyline = IJ.getToolName() == "polyline";
-		 * btnActivatePolylineTool.setEnabled(!isCurrentToolPolyline);
-		 * 
-		 * List<Point2D> pathPoints =
-		 * ownerPlugin.getImageProcessor().getCurrentImagePolylinePathPoints(null);
-		 * boolean isThereACurrentPath = pathPoints != null;
-		 * btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
-		 * 
-		 * DendriteSegment selectedBranch = this.pathListBox.getSelectedValue(); boolean
-		 * isThereACurrentSelectedBranch = selectedBranch != null;
-		 * this.btnDeleteBranch.setEnabled(isThereACurrentSelectedBranch);
-		 * this.btnRenameBranch.setEnabled(isThereACurrentSelectedBranch);
-		 * this.btnPrevSegment.setEnabled(isThereACurrentSelectedBranch &&
-		 * this.pathSegmentIndexSelected > 0); this.btnNextSegment.setEnabled(
-		 * isThereACurrentSelectedBranch && this.pathSegmentIndexSelected <
-		 * selectedBranch.path.size() - 1);
-		 * this.btnMakeSegmentNarrower.setEnabled(isThereACurrentSelectedBranch);
-		 * this.btnMakeSegmentWider.setEnabled(isThereACurrentSelectedBranch);
-		 * this.btnShiftSegmentLeft.setEnabled(isThereACurrentSelectedBranch);
-		 * this.btnShiftSegmentRight.setEnabled(isThereACurrentSelectedBranch);
-		 * 
-		 * boolean isCurrentToolMultiPoint = IJ.getToolName() == "multipoint";
-		 * this.btnActivateMultiPointTool.setEnabled(!isCurrentToolMultiPoint);
-		 * 
-		 * boolean areThereAnyDendrites = !this.pathListModel.isEmpty(); //
-		 * btnCountMarkedSpines.setEnabled(areThereAnyDendrites);
-		 * btnDetectSpines.setEnabled(areThereAnyDendrites);
-		 * 
-		 * boolean areThereResults = this.resultsTableData.length > 0;
-		 * btnCopyTableDataToClipboard.setEnabled(areThereResults);
-		 * 
-		 * this.panelCalibration.update();
-		 */
-	}
-
-	/**
-	 * Update the states of the UI controls in the Feature Detection Size Input
-	 * Panel based on the values of our underlying member variables.
-	 */
-	public void updateFeatureDetectionSizeInputPanel() {
-		/*
-		 * radioFeatureDetectionWindowInPixels
-		 * .setSelected(enumFeatureDetectionWindowSizeUnits ==
-		 * FeatureDetectionWindowSizeUnitsEnum.PIXELS);
-		 * radioFeatureDetectionWindowInImageUnits
-		 * .setSelected(enumFeatureDetectionWindowSizeUnits ==
-		 * FeatureDetectionWindowSizeUnitsEnum.IMAGE_UNITS);
-		 * 
-		 * Calibration cal = (ownerPlugin.getImageProcessor() != null) ?
-		 * ownerPlugin.getImageProcessor().getDimensions() : null; boolean isCalibrated
-		 * = cal != null; if (!isCalibrated) {
-		 * radioFeatureDetectionWindowInImageUnits.setText("(image units)");
-		 * radioFeatureDetectionWindowInImageUnits.setEnabled(false);
-		 * lblImageResolution.setText(String.format( "<html>" +
-		 * "Feature window size set to %d pixels<br/>" + "(image scale not set)." +
-		 * "</html>", this.getFeatureDetectionWindowSizeInPixels())); } else {
-		 * radioFeatureDetectionWindowInImageUnits.setText(cal.getUnits());
-		 * radioFeatureDetectionWindowInImageUnits.setEnabled(true);
-		 * 
-		 * lblImageResolution.setText(String.format( "<html>" +
-		 * "Feature window size set to %d pixels<br/>" +
-		 * "(image scale set to %.3f pixels per %s)." + "</html>",
-		 * this.getFeatureDetectionWindowSizeInPixels(), cal.getRawX(1.0),
-		 * cal.getUnit())); }
-		 */
 	}
 
 	public void clearSpineAssociations() {
@@ -720,31 +563,6 @@ public class DscControlPanelDialog extends JDialog {
 			DendriteSegment dendrite = (DendriteSegment) segment;
 			dendrite.spines.clear();
 		}
-	}
-
-	public void associateSpinesWithDendriteSegments(List<Point2D> spineMarks) {
-		Object[] segments = this.pathListModel.toArray();
-		this.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-
-		for (Point2D spineMark : spineMarks) {
-			DendriteSegment closestPath = null;
-			double closestPathDist = Double.MAX_VALUE;
-
-			for (Object segment : segments) {
-				DendriteSegment dendrite = (DendriteSegment) segment;
-				SearchPixel nearestPixelInDendrite = dendrite.findNearestPixel(spineMark.getX(), spineMark.getY());
-
-				double thisDist = Math.hypot(nearestPixelInDendrite.x - spineMark.getX(),
-						nearestPixelInDendrite.y - spineMark.getY());
-
-				if (closestPath == null || thisDist < closestPathDist) {
-					closestPathDist = thisDist;
-					closestPath = dendrite;
-				}
-			}
-			closestPath.spines.add(spineMark);
-		}
-		this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	}
 
 	public void populateResultsTable() {
@@ -917,7 +735,7 @@ public class DscControlPanelDialog extends JDialog {
 		}
 
 		// Add all the spines as visible ROI points in one big blast.
-		//ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
+		// ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
 
 		populateResultsTable();
 

@@ -19,14 +19,14 @@ public class DendriteSpine extends Point2D {
 
 	private double x = 0;
 	private double y = 0;
-	
+
 	public double neckLengthInPixels = 0;
 	public double neckWidthInPixels = 0;
 	public double headWidthInPixels = 0;
 
 	public double contrast = 0;
-	
-	public Point2D angle = null;
+
+	public double angle = 0;
 
 	private double featureWindowSize = 5;
 
@@ -36,6 +36,7 @@ public class DendriteSpine extends Point2D {
 
 	public void setSize(double size) {
 		this.featureWindowSize = size;
+		this.createRoiAtCurrentLocation();
 	}
 
 	private OvalRoi roi = null;
@@ -91,6 +92,10 @@ public class DendriteSpine extends Point2D {
 		return this.classification;
 	}
 
+	public boolean hasClassification() {
+		return this.getClassification() != null && this.getClassification().trim().length() > 0;
+	}
+
 	private DendriteBranch nearestDendrite = null;
 
 	public DendriteBranch getNearestDendrite() {
@@ -111,7 +116,7 @@ public class DendriteSpine extends Point2D {
 	public DendriteBranch findNearestDendrite(Collection<DendriteBranch> dendrites) {
 		double winnerDist = java.lang.Double.MAX_VALUE;
 		DendriteBranch winnerDendrite = null;
-		Point2D winnerAngle = null;
+		Point2D winnerAngleUnitVector = null;
 
 		for (DendriteBranch dendrite : dendrites) {
 			if (dendrite == null) {
@@ -130,7 +135,7 @@ public class DendriteSpine extends Point2D {
 					winnerDendrite = dendrite;
 
 					if (dist > 0) {
-						winnerAngle = new Point2D.Double((this.getX() - point.getX()) / dist,
+						winnerAngleUnitVector = new Point2D.Double((this.getX() - point.getX()) / dist,
 								(this.getY() / point.getY()) / dist);
 					}
 				}
@@ -138,7 +143,9 @@ public class DendriteSpine extends Point2D {
 		}
 
 		this.setNearestDendrite(winnerDendrite);
-		this.angle = winnerAngle;
+		if (winnerAngleUnitVector != null) {
+			this.angle = Math.atan2(winnerAngleUnitVector.getX(), winnerAngleUnitVector.getY());
+		}
 		return winnerDendrite;
 	}
 
