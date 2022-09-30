@@ -1,6 +1,7 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -168,6 +169,38 @@ public class DscModel {
 		spines.put(spine.getId(), spine);
 	}
 
+	public boolean addSpineWithOverlapImprovement(DendriteSpine spine) {
+		List<DendriteSpine> overlaps = spine.findAllOverlaps(getSpines());
+		if (spine.contrast == 0 && overlaps.size() > 0) {
+			return false;
+		}
+		if (overlaps.size() == 0) {
+			this.addSpine(spine);
+			return true;
+		}
+
+		double maxContrast = 0;
+		for (DendriteSpine olspine : overlaps) {
+			if (olspine.contrast > maxContrast) {
+				maxContrast = olspine.contrast;
+			}
+		}
+		if (maxContrast > spine.contrast) {
+			// At least one existing overlapping spine has better contrast than this one.
+			return false;
+		}
+		// This spine has the best contrast. Get rid of all others.
+		removeSpines(overlaps);
+		this.addSpine(spine);
+		return true;
+	}
+
+	public void removeSpines(Collection<DendriteSpine> spines) {
+		for (DendriteSpine spine : spines) {
+			removeSpine(spine);
+		}
+	}
+
 	public void removeSpine(DendriteSpine spine) {
 		if (spine == null) {
 			return;
@@ -209,6 +242,29 @@ public class DscModel {
 
 	public void clearSpines() {
 		spines.clear();
+	}
+
+	public List<DendriteSpine> getUnclassifiedSpines() {
+		List<DendriteSpine> unclassifiedSpines = new ArrayList<DendriteSpine>();
+		for (DendriteSpine spine : this.getSpines()) {
+			if (spine.getClassification() == null || spine.getClassification() == "") {
+				unclassifiedSpines.add(spine);
+			}
+		}
+		return unclassifiedSpines;
+	}
+
+	public DendriteSpine findNextUnclassifiedSpine(int fromId) {
+		List<DendriteSpine> unclassifiedSpines = this.getUnclassifiedSpines();
+		if (unclassifiedSpines.size() == 0) {
+			return null;
+		}
+		for (DendriteSpine spine : unclassifiedSpines) {
+			if (spine.getId() >= fromId) {
+				return spine;
+			}
+		}
+		return unclassifiedSpines.get(0);
 	}
 
 	// endregion

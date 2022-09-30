@@ -17,15 +17,19 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSlider;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
+import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 import ij.IJ;
 import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 
 public class FindSpinesPanel extends DscBasePanel {
@@ -309,20 +313,31 @@ public class FindSpinesPanel extends DscBasePanel {
 			return;
 		}
 
+		double featureWindowSize = controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels();
+		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
+		DscModel model = controlPanel.getPlugin().getModel();
+
 		for (Point2D point : points) {
-			DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(),
-					controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels());
-			controlPanel.getPlugin().getModel().addSpine(spine);
+			DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(), featureWindowSize);
+			model.addSpine(spine);
 		}
 
-		controlPanel.getPlugin().getModel().findNearestDendritesForAllSpines();
+		model.findNearestDendritesForAllSpines();
 
-		controlPanel.getPlugin().getImageProcessor().setCurrentRoi(null);
-		controlPanel.getPlugin().getImageProcessor().update();
+		imageProcessor.setCurrentRoi(null);
+		imageProcessor.update();
 	}
 
 	private boolean warnMightRemoveClassifications() {
-		if (controlPanel.getPlugin().getModel().getSpines().size() == 0) {
+		DscModel model = controlPanel.getPlugin().getModel();
+
+		if (model.getSpines().size() == 0) {
+			// No spines!
+			return true;
+		}
+
+		if (model.getUnclassifiedSpines().size() == model.getSpines().size()) {
+			// No spines are classified, so we can't lose any data.
 			return true;
 		}
 
@@ -370,19 +385,52 @@ public class FindSpinesPanel extends DscBasePanel {
 	}
 
 	private void autoDetectSpines(double contrastThresholdFrac) {
-		double distOutside = controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels() / 4;
+		double contrastThresholdFracEased = contrastThresholdFrac * contrastThresholdFrac / 2;
+
+		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
+		DscModel model = controlPanel.getPlugin().getModel();
+		double featureWindowSize = model.getFeatureWindowSizeInPixels();
+
+		model.clearSpines();
+		imageProcessor.setCurrentRoi(null);
+
+		double outerSpineCircleRadius = 1.25 * featureWindowSize;
+		double innerSpineCircleRadius = .75 * featureWindowSize;
+
+		double distOutside = featureWindowSize / 4;
 		double distBetween = distOutside;
 
 		for (DendriteBranch dendrite : controlPanel.getPlugin().getModel().getDendrites()) {
-			List<Point2D> rim = dendrite.getPeripheryPoints(distOutside, distBetween);
-			controlPanel.getPlugin().getImageProcessor().drawPixels(rim, 1);
-			
-			for (Point2D point : rim) {
-				DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(),
-						controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels());
-				controlPanel.getPlugin().getModel().addSpine(spine);
-			}
+			List<Point2D> spineCandidates = dendrite.getPeripheryPoints(distOutside, distBetween);
+			for (Point2D spineCandidate : spineCandidates) {
+				PolygonRoi dendriteRoi = (dendrite != null) ? dendrite.getRoi() : null;
 
+				SummaryStatistics statsOutside = imageProcessor.getBrightnessVicinityStats((int) spineCandidate.getX(),
+						(int) spineCandidate.getY(), outerSpineCircleRadius, innerSpineCircleRadius, dendriteRoi);
+				SummaryStatistics statsInside = imageProcessor.getBrightnessVicinityStats((int) spineCandidate.getX(),
+						(int) spineCandidate.getY(), innerSpineCircleRadius, 0, dendriteRoi);
+
+				// We'll use a very simple and dumb ersatz statistical test to see if this spot
+				// should be considered to contain a spine.
+				// The outside low should still be brighter than the inside high.
+
+				double insideBrightness = statsInside.getMean();
+				double outsideBrightness = statsOutside.getMean();
+				double spineContrast = (outsideBrightness - insideBrightness);
+				if (spineContrast < contrastThresholdFracEased) {
+					continue;
+				}
+
+				DendriteSpine spine = new DendriteSpine(spineCandidate.getX(), spineCandidate.getY(),
+						featureWindowSize);
+				spine.contrast = spineContrast;
+				model.addSpineWithOverlapImprovement(spine);
+			}
 		}
+
+		model.findNearestDendritesForAllSpines();
+
+		imageProcessor.update();
+		imageProcessor.getDisplay().update();
 	}
 }

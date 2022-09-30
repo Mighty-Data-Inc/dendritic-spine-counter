@@ -2,6 +2,7 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,6 +19,14 @@ public class DendriteSpine extends Point2D {
 
 	private double x = 0;
 	private double y = 0;
+	
+	public double neckLengthInPixels = 0;
+	public double neckWidthInPixels = 0;
+	public double headWidthInPixels = 0;
+
+	public double contrast = 0;
+	
+	public Point2D angle = null;
 
 	private double featureWindowSize = 5;
 
@@ -102,6 +111,7 @@ public class DendriteSpine extends Point2D {
 	public DendriteBranch findNearestDendrite(Collection<DendriteBranch> dendrites) {
 		double winnerDist = java.lang.Double.MAX_VALUE;
 		DendriteBranch winnerDendrite = null;
+		Point2D winnerAngle = null;
 
 		for (DendriteBranch dendrite : dendrites) {
 			if (dendrite == null) {
@@ -118,11 +128,17 @@ public class DendriteSpine extends Point2D {
 				if (dist < winnerDist) {
 					winnerDist = dist;
 					winnerDendrite = dendrite;
+
+					if (dist > 0) {
+						winnerAngle = new Point2D.Double((this.getX() - point.getX()) / dist,
+								(this.getY() / point.getY()) / dist);
+					}
 				}
 			}
 		}
 
 		this.setNearestDendrite(winnerDendrite);
+		this.angle = winnerAngle;
 		return winnerDendrite;
 	}
 
@@ -143,4 +159,21 @@ public class DendriteSpine extends Point2D {
 		return this.y;
 	}
 
+	public boolean overlaps(DendriteSpine otherSpine) {
+		double centersDist = this.distance(otherSpine);
+		double radii = (this.getSize() + otherSpine.getSize()) / 2.0;
+		// Allow a little bit of grace.
+		radii *= 0.8;
+		return centersDist < radii;
+	}
+
+	public List<DendriteSpine> findAllOverlaps(Collection<DendriteSpine> spines) {
+		List<DendriteSpine> outs = new ArrayList<DendriteSpine>();
+		for (DendriteSpine spine : spines) {
+			if (spine.overlaps(this)) {
+				outs.add(spine);
+			}
+		}
+		return outs;
+	}
 }
