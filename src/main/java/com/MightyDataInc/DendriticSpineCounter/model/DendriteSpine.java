@@ -145,6 +145,13 @@ public class DendriteSpine extends Point2D {
 		this.setNearestDendrite(winnerDendrite);
 		if (winnerAngleUnitVector != null) {
 			this.angle = Math.atan2(winnerAngleUnitVector.getY(), winnerAngleUnitVector.getX());
+
+			// From the image, angle=0 means that we're pointed directly to the right.
+			// That means that the dendrite is on our left, and the spine is poking
+			// rightward.
+			// But when we render it in the Classify Spines panel, we want the dendrite body
+			// to be on the bottom with the spine extending upward. So we rotate it.
+			this.angle = (1.5 * Math.PI) - this.angle;
 		}
 		return winnerDendrite;
 	}

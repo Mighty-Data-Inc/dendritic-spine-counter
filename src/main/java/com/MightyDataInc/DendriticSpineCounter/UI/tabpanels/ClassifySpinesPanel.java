@@ -1,11 +1,13 @@
 package com.MightyDataInc.DendriticSpineCounter.UI.tabpanels;
 
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -24,6 +26,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	private DendriteSpine currentSpine;
 
 	private BufferedImage imgSpine;
+	private Graphics2D gfxSpine;
+
 	private JLabel lblSpineImg;
 	private JLabel lblSpineId;
 	private int imgSpineSize;
@@ -76,6 +80,18 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			lblSpineImg = new JLabel();
 			lblSpineImg.setIcon(imgSpineIcon);
 			this.add(lblSpineImg, gridbagConstraints);
+			// lblSpineImg.addMouseListener(sdf dsf sdf sd fasfd asdf sadf );
+			lblSpineImg.addMouseMotionListener(new MouseMotionListener() {
+				@Override
+				public void mouseDragged(MouseEvent arg0) {
+					onSpineImageDragged(arg0.getX(), arg0.getY());
+				}
+
+				@Override
+				public void mouseMoved(MouseEvent arg0) {
+				}
+			});
+			// lblSpineImg.addMouseWheelListener(sdf dsf sdf sd fasfd asdf sadf );
 
 			gridbagConstraints.gridx = 2;
 			gridbagConstraints.gridheight = 1;
@@ -156,11 +172,19 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	@Override
 	protected void onPanelExited() {
+		if (gfxSpine != null) {
+			gfxSpine.dispose();
+		}
 	}
 
 	private void renderSpineImage() {
 		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
 		imgSpine = new BufferedImage(imgSpineSize, imgSpineSize, BufferedImage.TYPE_INT_ARGB);
+
+		if (gfxSpine != null) {
+			gfxSpine.dispose();
+		}
+		gfxSpine = imgSpine.createGraphics();
 
 		double pixelScale = 1;
 		if (currentSpine != null) {
@@ -177,12 +201,11 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				// Figure out what pixel coordinates on the source image correspond to each of
 				// our xy coords.
-				// NOTE: We invert the y coordinate because we want the dendrite body to be on
-				// the bottom of the display and the spine to stick up.
 				double xRel = (x - imgSpineSize / 2) * pixelScale;
-				double yRel = -(y - imgSpineSize / 2) * pixelScale;
+				double yRel = (y - imgSpineSize / 2) * pixelScale;
 
 				double angle = currentSpine.angle;
+
 				double xRelRot = xRel * Math.cos(angle) + yRel * Math.sin(angle);
 				double yRelRot = yRel * Math.cos(angle) - xRel * Math.sin(angle);
 
@@ -213,5 +236,10 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		if (currentSpine == null) {
 			currentSpine = model.findNextSpine(null);
 		}
+	}
+
+	private void onSpineImageDragged(int x, int y) {
+		System.out.println(String.format("drag %d,%d", x, y));
+
 	}
 }
