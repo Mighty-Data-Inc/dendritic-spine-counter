@@ -1,13 +1,17 @@
 package com.MightyDataInc.DendriticSpineCounter.UI.tabpanels;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
@@ -40,6 +44,10 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	private JProgressBar progressBar;
 
+	private boolean isDragging;
+	private Point2D ptDragStart;
+	private Point2D ptDragSpineOrigPosition;
+
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
 	}
@@ -56,6 +64,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		this.imgSpineSize = 300;
 		DscModel model = controlPanel.getPlugin().getModel();
 
+		ptDragStart = null;
+		ptDragSpineOrigPosition = null;
+
 		this.setLayout(new GridBagLayout());
 
 		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
@@ -67,8 +78,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		{
 			gridbagConstraints.gridx = 0;
 
-			gridbagConstraints.gridwidth = 2;
-			gridbagConstraints.gridheight = 6;
+			gridbagConstraints.gridwidth = 6;
+			gridbagConstraints.gridheight = 12;
 			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
 			imgSpine = new BufferedImage(imgSpineSize, imgSpineSize, BufferedImage.TYPE_INT_ARGB);
@@ -82,7 +93,32 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			lblSpineImg = new JLabel();
 			lblSpineImg.setIcon(imgSpineIcon);
 			this.add(lblSpineImg, gridbagConstraints);
-			// lblSpineImg.addMouseListener(sdf dsf sdf sd fasfd asdf sadf );
+			lblSpineImg.addMouseListener(new MouseListener() {
+				@Override
+				public void mouseClicked(MouseEvent arg0) {
+				}
+
+				@Override
+				public void mouseEntered(MouseEvent arg0) {
+				}
+
+				@Override
+				public void mouseExited(MouseEvent arg0) {
+				}
+
+				@Override
+				public void mousePressed(MouseEvent arg0) {
+					ptDragStart = new Point2D.Double(arg0.getX(), arg0.getY());
+					ptDragSpineOrigPosition = (currentSpine == null) ? null
+							: new Point2D.Double(currentSpine.getX(), currentSpine.getY());
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent arg0) {
+					ptDragStart = null;
+					ptDragSpineOrigPosition = null;
+				}
+			});
 			lblSpineImg.addMouseMotionListener(new MouseMotionListener() {
 				@Override
 				public void mouseDragged(MouseEvent arg0) {
@@ -95,7 +131,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			});
 			// lblSpineImg.addMouseWheelListener(sdf dsf sdf sd fasfd asdf sadf );
 
-			gridbagConstraints.gridx = 2;
+			gridbagConstraints.gridx = 6;
 			gridbagConstraints.gridheight = 1;
 
 			progressBar = new JProgressBar();
@@ -119,8 +155,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					update();
 				}
 			});
-			gridbagConstraints.gridx = 2;
-			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.gridwidth = 2;
 			gridbagConstraints.insets.top = 8;
 			this.add(btnPrevSpine, gridbagConstraints);
 
@@ -132,11 +167,63 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					update();
 				}
 			});
-			gridbagConstraints.gridx = 3;
+			gridbagConstraints.gridx = 8;
 			this.add(btnNextSpine, gridbagConstraints);
 
-			gridbagConstraints.gridy++;
+			btnNextUnclassified = new JButton("Next Unclassed →");
+			btnNextUnclassified.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					currentSpine = model.findNextUnclassifiedSpine(currentSpine);
+					update();
+				}
+			});
+			gridbagConstraints.gridx = 10;
+			this.add(btnNextUnclassified, gridbagConstraints);
+		}
 
+		{
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 8;
+
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridwidth = 2;
+			JButton btnRotLeft = new JButton("⭯  Rotate Left");
+			btnRotLeft.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					if (currentSpine == null) {
+						return;
+					}
+					currentSpine.angle -= 0.1;
+					update();
+				}
+			});
+			this.add(btnRotLeft, gridbagConstraints);
+
+			gridbagConstraints.gridx = 8;
+			JButton btnPan = new JButton("❖ Pan");
+			this.add(btnPan, gridbagConstraints);
+			btnPan.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+				}
+			});
+
+			gridbagConstraints.gridx = 10;
+			JButton btnRotRight = new JButton("⭮  Rotate Right");
+			btnRotRight.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					if (currentSpine == null) {
+						return;
+					}
+					currentSpine.angle += 0.1;
+					update();
+				}
+			});
+			this.add(btnRotRight, gridbagConstraints);
 		}
 
 		addNextButton("Next: Generate Report", "images/icons/data-table-results-24.png");
@@ -195,16 +282,19 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		}
 	}
 
+	private double getPixelScale() {
+		double pixelScale = 1;
+		if (currentSpine != null) {
+			pixelScale = (currentSpine.getSize() * 1.25) / imgSpineSize;
+		}
+		return pixelScale;
+	}
+
 	private void renderSpineImage() {
 		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
 		imgSpine = new BufferedImage(imgSpineSize, imgSpineSize, BufferedImage.TYPE_INT_ARGB);
 
-		if (gfxSpine != null) {
-			gfxSpine.dispose();
-		}
-		gfxSpine = imgSpine.createGraphics();
-
-		double pixelScale = 1;
+		double pixelScale = getPixelScale();
 		if (currentSpine != null) {
 			pixelScale = (currentSpine.getSize() * 1.25) / imgSpineSize;
 		}
@@ -257,7 +347,25 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	}
 
 	private void onSpineImageDragged(int x, int y) {
-		System.out.println(String.format("drag %d,%d", x, y));
+		if (this.currentSpine == null || this.ptDragStart == null || this.ptDragSpineOrigPosition == null) {
+			return;
+		}
+		double dragDiffX = x - this.ptDragStart.getX();
+		double dragDiffY = y - this.ptDragStart.getY();
 
+		double pixelScale = this.getPixelScale();
+		double dragImagePositionDeltaX = dragDiffX * pixelScale;
+		double dragImagePositionDeltaY = dragDiffY * pixelScale;
+
+		double angle = currentSpine.angle;
+		double moveX = dragImagePositionDeltaX * Math.cos(angle) + dragImagePositionDeltaY * Math.sin(angle);
+		double moveY = dragImagePositionDeltaY * Math.cos(angle) - dragImagePositionDeltaX * Math.sin(angle);
+
+		double newImgX = this.ptDragSpineOrigPosition.getX() - moveX;
+		double newImgY = this.ptDragSpineOrigPosition.getY() - moveY;
+
+		currentSpine.setLocation(newImgX, newImgY);
+		update();
+		this.controlPanel.getPlugin().getImageProcessor().getDisplay().update();
 	}
 }
