@@ -135,8 +135,8 @@ public class DendriteSpine extends Point2D {
 					winnerDendrite = dendrite;
 
 					if (dist > 0) {
-						winnerAngleUnitVector = new Point2D.Double((this.getX() - point.getX()) / dist,
-								(this.getY() / point.getY()) / dist);
+						winnerAngleUnitVector = new Point2D.Double(this.getX() - point.getX(),
+								this.getY() - point.getY());
 					}
 				}
 			}
@@ -144,7 +144,7 @@ public class DendriteSpine extends Point2D {
 
 		this.setNearestDendrite(winnerDendrite);
 		if (winnerAngleUnitVector != null) {
-			this.angle = Math.atan2(winnerAngleUnitVector.getX(), winnerAngleUnitVector.getY());
+			this.angle = Math.atan2(winnerAngleUnitVector.getY(), winnerAngleUnitVector.getX());
 		}
 		return winnerDendrite;
 	}

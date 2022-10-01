@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
@@ -130,7 +131,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			lblSpineId.setText("No current dendritic spine selected.");
 		} else {
 			lblSpineId.setText(String.format("Dendritic Spine #%d: (%.1f,%.1f), width %.1f, orientation %.3f",
-					currentSpine.getId(), currentSpine.getX(), currentSpine.getY(), currentSpine.getSize(), currentSpine.angle));
+					currentSpine.getId(), currentSpine.getX(), currentSpine.getY(), currentSpine.getSize(),
+					currentSpine.angle));
 		}
 
 		DscModel model = controlPanel.getPlugin().getModel();
@@ -142,6 +144,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				(100.0 * numSpinesClassified / numSpines)));
 		progressBar.setMaximum(numSpines);
 		progressBar.setValue(numSpinesClassified);
+
+		renderSpineImage();
 	}
 
 	@Override
@@ -155,10 +159,53 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	}
 
 	private void renderSpineImage() {
+		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
+		imgSpine = new BufferedImage(imgSpineSize, imgSpineSize, BufferedImage.TYPE_INT_ARGB);
+
+		double pixelScale = 1;
+		if (currentSpine != null) {
+			pixelScale = (currentSpine.getSize() * 1.25) / imgSpineSize;
+		}
+
+		for (int y = 0; y < imgSpineSize; y++) {
+			for (int x = 0; x < imgSpineSize; x++) {
+				if (this.currentSpine == null) {
+					// Paint the field white.
+					imgSpine.setRGB(x, y, Integer.MAX_VALUE);
+					continue;
+				}
+
+				// Figure out what pixel coordinates on the source image correspond to each of
+				// our xy coords.
+				// NOTE: We invert the y coordinate because we want the dendrite body to be on
+				// the bottom of the display and the spine to stick up.
+				double xRel = (x - imgSpineSize / 2) * pixelScale;
+				double yRel = -(y - imgSpineSize / 2) * pixelScale;
+
+				double angle = currentSpine.angle;
+				double xRelRot = xRel * Math.cos(angle) + yRel * Math.sin(angle);
+				double yRelRot = yRel * Math.cos(angle) - xRel * Math.sin(angle);
+
+				double xImg = currentSpine.getX() + xRelRot;
+				double yImg = currentSpine.getY() + yRelRot;
+
+				double brightness = imageProcessor.getBrightnessAtFluidPixel(xImg, yImg);
+				int v = (int) (brightness * 255);
+				int rgb = (255 << 24) | (v << 16) | (v << 8) | v;
+				imgSpine.setRGB(x, y, rgb);
+			}
+		}
+		ImageIcon imgSpineIcon = new ImageIcon(imgSpine);
+		lblSpineImg.setIcon(imgSpineIcon);
 	}
 
 	private void updateCurrentSpineToAvailable() {
 		DscModel model = controlPanel.getPlugin().getModel();
+
+		if (currentSpine != null && !model.hasSpine(currentSpine)) {
+			// Make sure we're not showing the remnants of a deleted spine.
+			currentSpine = null;
+		}
 
 		if (currentSpine == null) {
 			currentSpine = model.findNextUnclassifiedSpine(null);

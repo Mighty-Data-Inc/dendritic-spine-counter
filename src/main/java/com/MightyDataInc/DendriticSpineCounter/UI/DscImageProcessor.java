@@ -263,6 +263,62 @@ public class DscImageProcessor {
 		return brightnesses;
 	}
 
+	public double getBrightnessAtFluidPixel(double x, double y) {
+		// The brightness of the pixel will be weighted by how far into the
+		// next pixel the value protrudes.
+
+		long imgWidth = workingImg.dimension(0);
+		long imgHeight = workingImg.dimension(1);
+
+		if (x < 1) {
+			x = 1;
+		}
+		if (y < 1) {
+			y = 1;
+		}
+		if (x >= imgWidth - 1) {
+			x = (int) imgWidth - 2;
+		}
+		if (y >= imgHeight - 1) {
+			y = (int) imgHeight - 2;
+		}
+
+		double xBase = Math.floor(x);
+		double yBase = Math.floor(y);
+
+		double x1frac = x - xBase;
+		double y1frac = y - yBase;
+
+		double x0frac = 1.0 - x1frac;
+		double y0frac = 1.0 - y1frac;
+
+		double w00 = x0frac * y0frac;
+		double w10 = x1frac * y0frac;
+		double w01 = x0frac * y1frac;
+		double w11 = x1frac * y1frac;
+
+		final RandomAccess<UnsignedByteType> r = workingImg.randomAccess();
+
+		r.setPosition(new long[] { (int) x, (int) y });
+		UnsignedByteType t = r.get();
+		double b00 = t.getRealDouble() / 255.0;
+
+		r.setPosition(new long[] { (int) x + 1, (int) y });
+		t = r.get();
+		double b10 = t.getRealDouble() / 255.0;
+
+		r.setPosition(new long[] { (int) x, (int) y + 1 });
+		t = r.get();
+		double b01 = t.getRealDouble() / 255.0;
+
+		r.setPosition(new long[] { (int) x + 1, (int) y + 1 });
+		t = r.get();
+		double b11 = t.getRealDouble() / 255.0;
+
+		double bWeighted = (b00 * w00) + (b10 * w10) + (b01 * w01) + (b11 * w11);
+		return bWeighted;
+	}
+
 	/**
 	 * Gets a list of values (normalized to a range of 0 to 1) of all pixels in a
 	 * circle centered on this pixel (or an offset point).

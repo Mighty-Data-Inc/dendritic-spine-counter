@@ -169,6 +169,10 @@ public class DscModel {
 		}
 		spines.put(spine.getId(), spine);
 	}
+	
+	public boolean hasSpine(DendriteSpine spine) {
+		return this.spines.containsKey(spine.getId());
+	}
 
 	public boolean addSpineWithOverlapImprovement(DendriteSpine spine) {
 		List<DendriteSpine> overlaps = spine.findAllOverlaps(getSpines());
