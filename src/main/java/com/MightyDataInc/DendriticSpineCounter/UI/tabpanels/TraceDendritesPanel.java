@@ -179,7 +179,9 @@ public class TraceDendritesPanel extends DscBasePanel {
 					}
 					controlPanel.getPlugin().getModel().removeDendrite(currentDendrite);
 					pathListModel.removeElement(currentDendrite);
+					
 					update();
+					controlPanel.getPlugin().getImageProcessor().update();
 				}
 			});
 
@@ -256,6 +258,8 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 		controlPanel.getPlugin().getModel().addDendrite(dendrite);
 		this.pathListModel.addElement(dendrite);
+		
+		controlPanel.getPlugin().getModel().findNearestDendritesForAllSpines();
 
 		this.updateCurrentDendriteSelection(dendrite);
 	}

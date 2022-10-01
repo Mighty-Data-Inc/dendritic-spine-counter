@@ -1,5 +1,6 @@
 package com.MightyDataInc.DendriticSpineCounter.UI.tabpanels;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,6 +31,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	private JLabel lblSpineImg;
 	private JLabel lblSpineId;
+	private JLabel lblDendriteId;
 	private int imgSpineSize;
 
 	private JButton btnPrevSpine;
@@ -58,7 +60,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
 		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.bottom = 4;
+		gridbagConstraints.insets.bottom = 2;
 		gridbagConstraints.insets.left = 4;
 		gridbagConstraints.insets.right = 4;
 
@@ -104,6 +106,11 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			this.add(lblSpineId, gridbagConstraints);
 			gridbagConstraints.gridy++;
 
+			lblDendriteId = new JLabel();
+			gridbagConstraints.insets.top = 0;
+			this.add(lblDendriteId, gridbagConstraints);
+			gridbagConstraints.gridy++;
+
 			btnPrevSpine = new JButton("← Previous Spine");
 			btnPrevSpine.addActionListener(new ActionListener() {
 				@Override
@@ -114,6 +121,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			});
 			gridbagConstraints.gridx = 2;
 			gridbagConstraints.gridwidth = 1;
+			gridbagConstraints.insets.top = 8;
 			this.add(btnPrevSpine, gridbagConstraints);
 
 			btnNextSpine = new JButton("Next Spine →");
@@ -145,10 +153,20 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	public void update() {
 		if (currentSpine == null) {
 			lblSpineId.setText("No current dendritic spine selected.");
+			lblDendriteId.setText("");
 		} else {
-			lblSpineId.setText(String.format("Dendritic Spine #%d: (%.1f,%.1f), width %.1f, orientation %.3f",
-					currentSpine.getId(), currentSpine.getX(), currentSpine.getY(), currentSpine.getSize(),
-					currentSpine.angle));
+			lblSpineId
+					.setText(String.format("Spine #%d: (%.1f,%.1f), width %.1f, orientation %.3f", currentSpine.getId(),
+							currentSpine.getX(), currentSpine.getY(), currentSpine.getSize(), currentSpine.angle));
+
+			if (currentSpine.getNearestDendrite() == null) {
+				lblDendriteId.setForeground(Color.RED);
+				lblDendriteId.setText("Spine is not linked to a dendrite branch.");
+			} else {
+				lblDendriteId.setForeground(Color.BLACK);
+				lblDendriteId.setText("Linked to dendrite branch: " + currentSpine.getNearestDendrite().toString());
+			}
+
 		}
 
 		DscModel model = controlPanel.getPlugin().getModel();

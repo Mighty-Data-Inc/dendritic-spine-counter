@@ -9,6 +9,8 @@ import java.util.List;
 import ij.gui.OvalRoi;
 
 public class DendriteSpine extends Point2D {
+	private static double MAX_DISTANCE_OF_SPINE_FROM_DENDRITE_IN_FEATURE_WINDOWS = 2;
+
 	private static int nextId = 1;
 
 	private int id = 0;
@@ -140,6 +142,11 @@ public class DendriteSpine extends Point2D {
 					}
 				}
 			}
+		}
+
+		if (winnerDist > MAX_DISTANCE_OF_SPINE_FROM_DENDRITE_IN_FEATURE_WINDOWS * this.featureWindowSize) {
+			// This winner is too far from its dendrite to count as being associated with it.
+			return null;
 		}
 
 		this.setNearestDendrite(winnerDendrite);
