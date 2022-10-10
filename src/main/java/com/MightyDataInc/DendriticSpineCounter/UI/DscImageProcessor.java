@@ -22,7 +22,6 @@ import ij.gui.Line;
 import ij.gui.OvalRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.axis.CalibratedAxis;
@@ -542,20 +541,20 @@ public class DscImageProcessor {
 		double diameter = spine.getSize() + 10f;
 		double x = spine.getX();
 		double y = spine.getY();
-		double angle = spine.angle;
 
 		Roi circleroi = new OvalRoi(x - diameter / 2, y - diameter / 2, diameter, diameter);
-		circleroi.setStrokeWidth(5f);
+		circleroi.setStrokeWidth(3f);
 		circleroi.setStrokeColor(new Color(0f, 1f, 0f, 1f));
 
 		// If it's at an angle of 0, then that means that it's oriented such that
 		// the stem is off to the right. However, we want to draw it such that it's
 		// pointing at the bottom.
-		double xoff = diameter * Math.sin(angle);
-		double yoff = diameter * Math.cos(angle);
+		double angle = (Math.PI / 2) - spine.angle;
+		double xoff = (diameter * 0.75) * Math.cos(angle);
+		double yoff = (diameter * 0.75) * Math.sin(angle);
 
 		Roi lineroi = new Line(x, y, x + xoff, y + yoff);
-		lineroi.setStrokeWidth(4f);
+		lineroi.setStrokeWidth(3f);
 		lineroi.setStrokeColor(new Color(0f, 1f, 0f, 1f));
 
 		getOverlay().add(circleroi);

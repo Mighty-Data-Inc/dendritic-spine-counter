@@ -213,12 +213,17 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			gridbagConstraints.gridwidth = 6;
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.top = 16;
-			gridbagConstraints.insets.bottom = 16;
+			gridbagConstraints.insets.bottom = 8;
 			this.add(new JSeparator(), gridbagConstraints);
 
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.top = 4;
 			gridbagConstraints.insets.bottom = 4;
+			this.add(new JLabel(
+					"<html>Move, resize, or reorient the spine.<br/>(All movement controls are oriented relative to the spine viewport.)</html>"),
+					gridbagConstraints);
+
+			gridbagConstraints.gridy++;
 
 			gridbagConstraints.gridx = 6;
 			gridbagConstraints.gridwidth = 2;
@@ -230,6 +235,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 						return;
 					}
 					currentSpine.angle -= 0.1;
+					if (currentSpine.angle < -Math.PI) {
+						currentSpine.angle += 2 * Math.PI;
+					}
 					update();
 				}
 			});
@@ -264,6 +272,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 						return;
 					}
 					currentSpine.angle += 0.1;
+					if (currentSpine.angle > Math.PI) {
+						currentSpine.angle -= 2 * Math.PI;
+					}
 					update();
 				}
 			});
@@ -277,6 +288,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			btnZoomOut.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
+					changeSpineSize(1.1);
+					update();
 				}
 			});
 			this.add(btnZoomOut, gridbagConstraints);
@@ -286,6 +299,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			btnZoomIn.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
+					changeSpineSize(0.9);
+					update();
 				}
 			});
 			this.add(btnZoomIn, gridbagConstraints);
@@ -393,6 +408,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		imageProcessor.getDisplay().update();
 		imageProcessor.drawDendriteOverlays();
 		imageProcessor.drawCurrentSpineIndicator(currentSpine);
+
+		imageProcessor.moveToForeground();
 	}
 
 	@Override
@@ -414,6 +431,31 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			pixelScale = (currentSpine.getSize() * 1.25) / imgSpineSize;
 		}
 		return pixelScale;
+	}
+
+	private void changeSpineSize(double mult) {
+		if (currentSpine == null) {
+			return;
+		}
+		double newSize = currentSpine.getSize() * mult;
+
+		double featureWindowSize = this.controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels();
+
+		double sizeMin = featureWindowSize * 0.75f;
+		double sizeMax = featureWindowSize * 4f;
+
+		if (newSize < sizeMin) {
+			newSize = sizeMin;
+		}
+		if (newSize > sizeMax) {
+			newSize = sizeMax;
+		}
+
+		if (newSize < 5) {
+			newSize = 5;
+		}
+
+		currentSpine.setSize(newSize);
 	}
 
 	private void renderSpineImage() {
