@@ -11,14 +11,19 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
 
+import javax.swing.DefaultButtonModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
@@ -34,6 +39,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	private Graphics2D gfxSpine;
 
 	private JLabel lblSpineImg;
+	private JLabel lblViewportInfo;
 	private JLabel lblSpineId;
 	private JLabel lblDendriteId;
 	private int imgSpineSize;
@@ -44,9 +50,17 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	private JProgressBar progressBar;
 
-	private boolean isDragging;
+	private String currentTool = "pan";
+
 	private Point2D ptDragStart;
 	private Point2D ptDragSpineOrigPosition;
+
+	private JButton btnPan;
+	private JButton btnMeasure;
+
+	private JComboBox dropdownUnits;
+
+	private ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodia"));
 
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
@@ -79,7 +93,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			gridbagConstraints.gridx = 0;
 
 			gridbagConstraints.gridwidth = 6;
-			gridbagConstraints.gridheight = 12;
+			gridbagConstraints.gridheight = 16;
 			gridbagConstraints.fill = GridBagConstraints.HORIZONTAL;
 
 			imgSpine = new BufferedImage(imgSpineSize, imgSpineSize, BufferedImage.TYPE_INT_ARGB);
@@ -100,6 +114,11 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				@Override
 				public void mouseEntered(MouseEvent arg0) {
+					if (currentTool == "pan") {
+						lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+					} else if (currentTool == "measure") {
+						lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
+					}
 				}
 
 				@Override
@@ -131,7 +150,14 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			});
 			// lblSpineImg.addMouseWheelListener(sdf dsf sdf sd fasfd asdf sadf );
 
+			gridbagConstraints.gridheight = 1;
+			gridbagConstraints.gridy = 17;
+			lblViewportInfo = new JLabel("Viewport info:");
+		}
+
+		{
 			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridy = 0;
 			gridbagConstraints.gridheight = 1;
 
 			progressBar = new JProgressBar();
@@ -183,8 +209,16 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		}
 
 		{
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridwidth = 6;
 			gridbagConstraints.gridy++;
-			gridbagConstraints.insets.top = 8;
+			gridbagConstraints.insets.top = 16;
+			gridbagConstraints.insets.bottom = 16;
+			this.add(new JSeparator(), gridbagConstraints);
+
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 4;
+			gridbagConstraints.insets.bottom = 4;
 
 			gridbagConstraints.gridx = 6;
 			gridbagConstraints.gridwidth = 2;
@@ -202,16 +236,26 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			this.add(btnRotLeft, gridbagConstraints);
 
 			gridbagConstraints.gridx = 8;
-			JButton btnPan = new JButton("❖ Pan");
-			this.add(btnPan, gridbagConstraints);
+			btnPan = new JButton("❖ Pan");
 			btnPan.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
+					currentTool = "pan";
 					lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
 				}
 			});
+			btnPan.setModel(new DefaultButtonModel() {
+				private static final long serialVersionUID = 3972502560509913497L;
+
+				@Override
+				public boolean isPressed() {
+					return currentTool == "pan";
+				}
+			});
+			this.add(btnPan, gridbagConstraints);
 
 			gridbagConstraints.gridx = 10;
+			gridbagConstraints.gridheight = 1;
 			JButton btnRotRight = new JButton("⭮  Rotate Right");
 			btnRotRight.addActionListener(new ActionListener() {
 				@Override
@@ -224,6 +268,76 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				}
 			});
 			this.add(btnRotRight, gridbagConstraints);
+
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 4;
+
+			gridbagConstraints.gridx = 6;
+			JButton btnZoomOut = new JButton("🔍- Zoom Out");
+			btnZoomOut.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+				}
+			});
+			this.add(btnZoomOut, gridbagConstraints);
+
+			gridbagConstraints.gridx = 10;
+			JButton btnZoomIn = new JButton("🔍+  Zoom In");
+			btnZoomIn.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+				}
+			});
+			this.add(btnZoomIn, gridbagConstraints);
+		}
+
+		{
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridwidth = 6;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 16;
+			gridbagConstraints.insets.bottom = 16;
+			this.add(new JSeparator(), gridbagConstraints);
+
+			JLabel lblMeasureInstructions = new JLabel(
+					"<html>" + "Click the \"📏 Measure\" button, and then move your mouse cursor "
+							+ "onto the viewport and hold down the mouse button to trace a path on "
+							+ "the zoomed-in image. When you release the button, the length of the "
+							+ "traced path will be copied into your copy-paste buffer, and you can "
+							+ "paste it (Control-V or Command-V) into the corresponding measurement field.</html>");
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 4;
+			gridbagConstraints.insets.bottom = 4;
+			this.add(lblMeasureInstructions, gridbagConstraints);
+
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridwidth = 2;
+			btnMeasure = new JButton("📏 Measure");
+			btnMeasure.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					currentTool = "measure";
+					lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
+				}
+			});
+			btnMeasure.setModel(new DefaultButtonModel() {
+				private static final long serialVersionUID = 3055893288090281829L;
+
+				@Override
+				public boolean isPressed() {
+					return currentTool == "measure";
+				}
+			});
+			this.add(btnMeasure, gridbagConstraints);
+
+			JLabel lblUnits = new JLabel("Units: ", SwingConstants.RIGHT);
+			gridbagConstraints.gridx += 2;
+			this.add(lblUnits, gridbagConstraints);
+
+			dropdownUnits = new JComboBox<String>();
+			gridbagConstraints.gridx += 2;
+			this.add(dropdownUnits, gridbagConstraints);
+
 		}
 
 		addNextButton("Next: Generate Report", "images/icons/data-table-results-24.png");
@@ -238,8 +352,10 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	@Override
 	public void update() {
+		DscImageProcessor imageProcessor = this.controlPanel.getPlugin().getImageProcessor();
+
 		if (currentSpine == null) {
-			lblSpineId.setText("No current dendritic spine selected.");
+			lblSpineId.setText("No dendritic spine currently selected.");
 			lblDendriteId.setText("");
 		} else {
 			lblSpineId
@@ -253,7 +369,6 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				lblDendriteId.setForeground(Color.BLACK);
 				lblDendriteId.setText("Linked to dendrite branch: " + currentSpine.getNearestDendrite().toString());
 			}
-
 		}
 
 		DscModel model = controlPanel.getPlugin().getModel();
@@ -267,6 +382,17 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		progressBar.setValue(numSpinesClassified);
 
 		renderSpineImage();
+		if (currentSpine == null) {
+			lblViewportInfo.setText("<html>Viewport info: <i>No spine currently selected.</i></html>");
+		} else {
+			String positionInfo = String.format("(%.1f, %.1f)∠%.2f°", currentSpine.getX(), currentSpine.getY(),
+					Math.toDegrees(currentSpine.angle));
+			lblViewportInfo.setText("<html>Viewport info: " + positionInfo + "</html>");
+		}
+
+		imageProcessor.getDisplay().update();
+		imageProcessor.drawDendriteOverlays();
+		imageProcessor.drawCurrentSpineIndicator(currentSpine);
 	}
 
 	@Override
@@ -353,19 +479,20 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		double dragDiffX = x - this.ptDragStart.getX();
 		double dragDiffY = y - this.ptDragStart.getY();
 
-		double pixelScale = this.getPixelScale();
-		double dragImagePositionDeltaX = dragDiffX * pixelScale;
-		double dragImagePositionDeltaY = dragDiffY * pixelScale;
+		if (this.currentTool == "pan") {
+			double pixelScale = this.getPixelScale();
+			double dragImagePositionDeltaX = dragDiffX * pixelScale;
+			double dragImagePositionDeltaY = dragDiffY * pixelScale;
 
-		double angle = currentSpine.angle;
-		double moveX = dragImagePositionDeltaX * Math.cos(angle) + dragImagePositionDeltaY * Math.sin(angle);
-		double moveY = dragImagePositionDeltaY * Math.cos(angle) - dragImagePositionDeltaX * Math.sin(angle);
+			double angle = currentSpine.angle;
+			double moveX = dragImagePositionDeltaX * Math.cos(angle) + dragImagePositionDeltaY * Math.sin(angle);
+			double moveY = dragImagePositionDeltaY * Math.cos(angle) - dragImagePositionDeltaX * Math.sin(angle);
 
-		double newImgX = this.ptDragSpineOrigPosition.getX() - moveX;
-		double newImgY = this.ptDragSpineOrigPosition.getY() - moveY;
+			double newImgX = this.ptDragSpineOrigPosition.getX() - moveX;
+			double newImgY = this.ptDragSpineOrigPosition.getY() - moveY;
 
-		currentSpine.setLocation(newImgX, newImgY);
-		update();
-		this.controlPanel.getPlugin().getImageProcessor().getDisplay().update();
+			currentSpine.setLocation(newImgX, newImgY);
+			update();
+		}
 	}
 }

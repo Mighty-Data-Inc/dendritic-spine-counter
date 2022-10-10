@@ -18,9 +18,11 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.Line;
 import ij.gui.OvalRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.measure.Calibration;
 import net.imagej.Dataset;
 import net.imagej.axis.CalibratedAxis;
@@ -123,7 +125,7 @@ public class DscImageProcessor {
 		return WindowManager.getImage(workingImgWindowTitle);
 	}
 
-	private ij.gui.Overlay getOverlay() {
+	public ij.gui.Overlay getOverlay() {
 		ij.gui.Overlay overlay = getImagePlus().getOverlay();
 		if (overlay == null) {
 			overlay = new ij.gui.Overlay();
@@ -532,4 +534,31 @@ public class DscImageProcessor {
 		return px;
 	}
 
+	public void drawCurrentSpineIndicator(DendriteSpine spine) {
+		if (spine == null) {
+			return;
+		}
+
+		double diameter = spine.getSize() + 10f;
+		double x = spine.getX();
+		double y = spine.getY();
+		double angle = spine.angle;
+
+		Roi circleroi = new OvalRoi(x - diameter / 2, y - diameter / 2, diameter, diameter);
+		circleroi.setStrokeWidth(5f);
+		circleroi.setStrokeColor(new Color(0f, 1f, 0f, 1f));
+
+		// If it's at an angle of 0, then that means that it's oriented such that
+		// the stem is off to the right. However, we want to draw it such that it's
+		// pointing at the bottom.
+		double xoff = diameter * Math.sin(angle);
+		double yoff = diameter * Math.cos(angle);
+
+		Roi lineroi = new Line(x, y, x + xoff, y + yoff);
+		lineroi.setStrokeWidth(4f);
+		lineroi.setStrokeColor(new Color(0f, 1f, 0f, 1f));
+
+		getOverlay().add(circleroi);
+		getOverlay().add(lineroi);
+	}
 }

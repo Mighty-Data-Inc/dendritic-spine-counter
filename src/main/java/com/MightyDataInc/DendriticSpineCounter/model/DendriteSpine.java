@@ -55,7 +55,7 @@ public class DendriteSpine extends Point2D {
 		roi = new OvalRoi(x - size / 2, y - size / 2, size, size);
 
 		roi.setStrokeColor(Color.GREEN);
-		roi.setStrokeWidth(1.5);
+		roi.setStrokeWidth(3);
 		roi.setFillColor(new Color(.4f, 1f, .6f, .4f));
 	}
 

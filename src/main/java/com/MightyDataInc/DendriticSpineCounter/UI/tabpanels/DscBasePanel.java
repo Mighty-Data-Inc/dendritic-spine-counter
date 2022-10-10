@@ -49,7 +49,9 @@ public abstract class DscBasePanel extends JPanel {
 
 		ActionListener fnKeepUpdated = new ActionListener() {
 			public void actionPerformed(ActionEvent evnt) {
-				onTimer();
+				if (isActive) {
+					onTimer();
+				}
 			}
 		};
 		Timer timer = new Timer(1000, fnKeepUpdated); // timer is ticking
