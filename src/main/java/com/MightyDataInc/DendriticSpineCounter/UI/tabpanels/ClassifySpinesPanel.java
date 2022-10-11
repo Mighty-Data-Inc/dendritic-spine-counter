@@ -11,6 +11,8 @@ import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -23,6 +25,7 @@ import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultButtonModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -30,6 +33,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
@@ -69,7 +73,10 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	private JLabel lblMeasurement;
 	private double measurement;
 
-	private ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodia"));
+	private JRadioButton radioNeckLength;
+	private JRadioButton radioNeckWidth;
+	private JRadioButton radioHeadWidth;
+	private ButtonGroup radioMeasurementButtonGroup;
 
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
@@ -128,11 +135,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				@Override
 				public void mouseEntered(MouseEvent arg0) {
-					if (currentTool == "pan") {
-						lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
-					} else if (currentTool == "measure") {
-						lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-					}
+					setImageCursor(null, arg0.isAltDown(), arg0.isControlDown());
 				}
 
 				@Override
@@ -145,7 +148,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					renderSpineImage();
 
 					measurement = 0;
-					displayMeasurement();
+					displayCurrentMeasurement();
 
 					ptDragStart = new Point2D.Double(arg0.getX(), arg0.getY());
 					ptDragSpineOrigPosition = (currentSpine == null) ? null
@@ -156,6 +159,22 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				public void mouseReleased(MouseEvent arg0) {
 					ptDragStart = null;
 					ptDragSpineOrigPosition = null;
+
+					if (measurement != 0 && currentSpine != null) {
+						if (radioNeckLength.isSelected()) {
+							currentSpine.neckLengthInPixels = measurementInImagePixels();
+							radioNeckWidth.doClick();
+						} else if (radioNeckWidth.isSelected()) {
+							currentSpine.neckWidthInPixels = measurementInImagePixels();
+							radioHeadWidth.doClick();
+						} else if (radioHeadWidth.isSelected()) {
+							currentSpine.headWidthInPixels = measurementInImagePixels();
+							radioNeckLength.doClick();
+						}
+					}
+					displayMeasurements();
+					// Clear the drawing.
+					renderSpineImage();
 				}
 			});
 			lblSpineImg.addMouseMotionListener(new MouseMotionListener() {
@@ -165,26 +184,18 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					if (arg0.isAltDown()) {
 						tool = "measure";
 						lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-					} else if (arg0.isControlDown() || arg0.isMetaDown()) {
+					} else if (arg0.isControlDown()) {
 						tool = "pan";
 						lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
 					}
 					onSpineImageDragged(arg0.getX(), arg0.getY(), tool);
-					displayMeasurement();
+					displayCurrentMeasurement();
 				}
 
 				@Override
 				public void mouseMoved(MouseEvent arg0) {
-					if (arg0.isAltDown()) {
-						lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-					} else if (arg0.isControlDown() || arg0.isMetaDown()) {
-						lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
-					} else if (currentTool == "measure") {
-						lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-					} else if (currentTool == "pan") {
-						lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
-					}
-					displayMeasurement();
+					setImageCursor(null, arg0.isAltDown(), arg0.isControlDown());
+					displayCurrentMeasurement();
 				}
 			});
 			lblSpineImg.addMouseWheelListener(new MouseWheelListener() {
@@ -233,6 +244,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					currentSpine = model.findPreviousSpine(currentSpine);
+					radioNeckLength.doClick();
 					update();
 				}
 			});
@@ -245,21 +257,25 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					currentSpine = model.findNextSpine(currentSpine);
+					radioNeckLength.doClick();
 					update();
 				}
 			});
-			gridbagConstraints.gridx = 8;
+			gridbagConstraints.gridx = 9;
 			this.add(btnNextSpine, gridbagConstraints);
 
-			btnNextUnclassified = new JButton("Next Unclassed →");
+			btnNextUnclassified = new JButton("Next Unclassified Spine →");
 			btnNextUnclassified.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					currentSpine = model.findNextUnclassifiedSpine(currentSpine);
+					radioNeckLength.doClick();
 					update();
 				}
 			});
-			gridbagConstraints.gridx = 10;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridwidth = 6;
 			this.add(btnNextUnclassified, gridbagConstraints);
 		}
 
@@ -299,7 +315,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			this.add(btnRotLeft, gridbagConstraints);
 
 			gridbagConstraints.gridx = 8;
-			btnPan = new JButton("❖ Pan");
+			btnPan = new JButton("❖ Pan (Ctrl)");
 			btnPan.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
@@ -370,11 +386,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			this.add(new JSeparator(), gridbagConstraints);
 
 			JLabel lblMeasureInstructions = new JLabel(
-					"<html>" + "Click the \"📏 Measure\" button, and then move your mouse cursor "
-							+ "onto the viewport and hold down the mouse button to trace a path on "
-							+ "the zoomed-in image. When you release the button, the length of the "
-							+ "traced path will be copied into your copy-paste buffer, and you can "
-							+ "paste it (Control-V or Command-V) into the corresponding measurement field.</html>");
+					"<html>" + "Click the \"📏 Measure\" button (or hold Alt), and then trace a path "
+							+ "on the spine viewport. When you release the mouse button, the length of "
+							+ "the traced path will be applied to the selected spine attribute.</html>");
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.top = 4;
 			gridbagConstraints.insets.bottom = 4;
@@ -382,7 +396,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 			gridbagConstraints.gridy++;
 			gridbagConstraints.gridwidth = 2;
-			btnMeasure = new JButton("📏 Measure");
+			btnMeasure = new JButton("📏 Measure (Alt)");
 			btnMeasure.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
@@ -406,12 +420,53 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			gridbagConstraints.insets.top = 8;
 			gridbagConstraints.gridwidth = 4;
 			this.add(lblMeasurement, gridbagConstraints);
+
+			radioNeckLength = new JRadioButton("Neck length:");
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridwidth = 6;
+			this.add(radioNeckLength, gridbagConstraints);
+
+			radioNeckWidth = new JRadioButton("Neck width:");
+			gridbagConstraints.gridy++;
+			gridbagConstraints.insets.top = 2;
+			gridbagConstraints.insets.bottom = 2;
+			this.add(radioNeckWidth, gridbagConstraints);
+
+			radioHeadWidth = new JRadioButton("Head width:");
+			gridbagConstraints.gridy++;
+			this.add(radioHeadWidth, gridbagConstraints);
+
+			radioMeasurementButtonGroup = new ButtonGroup();
+			radioMeasurementButtonGroup.add(radioNeckLength);
+			radioMeasurementButtonGroup.add(radioNeckWidth);
+			radioMeasurementButtonGroup.add(radioHeadWidth);
+
+			radioNeckLength.doClick();
 		}
 
 		addNextButton("Next: Generate Report", "images/icons/data-table-results-24.png");
 
 		update();
 		return this;
+	}
+
+	private void setImageCursor(String tool, boolean isAltDown, boolean isControlDown) {
+		if (tool == null || tool.trim() == "") {
+			tool = this.currentTool;
+		}
+
+		if (isAltDown) {
+			tool = "measure";
+		} else if (isControlDown) {
+			tool = "pan";
+		}
+
+		if (tool == "pan") {
+			lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
+		} else if (tool == "measure") {
+			lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
+		}
 	}
 
 	@Override
@@ -467,7 +522,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			lblViewportInfo.setText("<html>Viewport info: " + positionInfo + "<br/>" + zoomInfo + "</html>");
 		}
 
-		displayMeasurement();
+		displayMeasurements();
+		displayCurrentMeasurement();
 
 		imageProcessor.getDisplay().update();
 		imageProcessor.drawDendriteOverlays();
@@ -592,29 +648,46 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		return imagePixels;
 	}
 
-	private double measurementInPhysicalUnits() {
+	private String getMeasurementHtmlString(double measurePixels) {
+		String sMeasure = "<i>(none></i>";
+		if (measurePixels == 0) {
+			return sMeasure;
+		}
+
+		sMeasure = String.format("%.1f px", measurePixels);
+
 		DscModel model = this.controlPanel.getPlugin().getModel();
 		if (!model.imageHasValidPhysicalUnitScale()) {
-			return 0;
+			return sMeasure;
 		}
-		double imagePixels = this.measurementInImagePixels();
-		double physicalUnits = model.convertImageScaleFromPixelsToPhysicalUnits(imagePixels);
-		return physicalUnits;
+
+		double physicalUnits = model.convertImageScaleFromPixelsToPhysicalUnits(measurePixels);
+
+		sMeasure += String.format(" (%.3f %s)", physicalUnits,
+				this.controlPanel.getPlugin().getModel().getImageScalePhysicalUnitName());
+
+		return sMeasure;
 	}
 
-	private void displayMeasurement() {
-		String sInner = "<i>(none)</i>";
-		if (this.measurement != 0) {
-			sInner = String.format("%.1f pixels", measurementInImagePixels());
-
-			double physicalUnits = measurementInPhysicalUnits();
-			if (physicalUnits != 0) {
-				sInner += String.format(" (%.3f %s)", physicalUnits,
-						this.controlPanel.getPlugin().getModel().getImageScalePhysicalUnitName());
-			}
-		}
-		String s = "<html>Measurement: " + sInner + "</html>";
+	private void displayCurrentMeasurement() {
+		String s = this.getMeasurementHtmlString(measurementInImagePixels());
 		this.lblMeasurement.setText(s);
+	}
+
+	private void displayMeasurements() {
+		double neckLength = 0;
+		double neckWidth = 0;
+		double headWidth = 0;
+
+		if (this.currentSpine != null) {
+			neckLength = this.currentSpine.neckLengthInPixels;
+			neckWidth = this.currentSpine.neckWidthInPixels;
+			headWidth = this.currentSpine.headWidthInPixels;
+		}
+
+		this.radioNeckLength.setText("<html>Neck length: " + this.getMeasurementHtmlString(neckLength) + "</html>");
+		this.radioNeckWidth.setText("<html>Neck width: " + this.getMeasurementHtmlString(neckWidth) + "</html>");
+		this.radioHeadWidth.setText("<html>Head width: " + this.getMeasurementHtmlString(headWidth) + "</html>");
 	}
 
 	private void onSpineImageDragged(int x, int y, String tool) {
@@ -651,7 +724,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				double dist = pt.distance(this.ptDragStart);
 				measurement += dist;
-				displayMeasurement();
+				displayCurrentMeasurement();
 
 				this.ptDragStart = pt;
 			}

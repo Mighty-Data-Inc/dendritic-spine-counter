@@ -1,6 +1,7 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
@@ -168,7 +169,7 @@ public class DscModel {
 		}
 		spines.put(spine.getId(), spine);
 	}
-	
+
 	public boolean hasSpine(DendriteSpine spine) {
 		return this.spines.containsKey(spine.getId());
 	}
@@ -248,7 +249,6 @@ public class DscModel {
 		spines.clear();
 	}
 
-
 	public List<DendriteSpine> getUnclassifiedSpines() {
 		List<DendriteSpine> unclassifiedSpines = new ArrayList<DendriteSpine>();
 		for (DendriteSpine spine : this.getSpines()) {
@@ -311,6 +311,12 @@ public class DscModel {
 		}
 		return spines.get(spines.size() - 1);
 	}
+
+	// endregion
+
+	// region Spine classes.
+
+	public ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodia"));
 
 	// endregion
 }
