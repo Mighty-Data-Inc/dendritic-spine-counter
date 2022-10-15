@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +32,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
@@ -264,6 +266,21 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			gridbagConstraints.gridx = 9;
 			this.add(btnNextSpine, gridbagConstraints);
 
+			JButton btnDeleteSpine = new JButton("🗑 Delete Spine");
+			btnDeleteSpine.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					boolean didDelete = deleteCurrentSpine();
+					if (didDelete) {
+						btnNextUnclassified.doClick();
+					}
+				}
+			});
+			gridbagConstraints.gridy++;
+			gridbagConstraints.gridx = 6;
+			gridbagConstraints.gridwidth = 2;
+			this.add(btnDeleteSpine, gridbagConstraints);
+
 			btnNextUnclassified = new JButton("Next Unclassified Spine →");
 			btnNextUnclassified.addActionListener(new ActionListener() {
 				@Override
@@ -273,9 +290,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					update();
 				}
 			});
-			gridbagConstraints.gridy++;
-			gridbagConstraints.gridx = 6;
-			gridbagConstraints.gridwidth = 6;
+			gridbagConstraints.gridx = 9;
+			gridbagConstraints.gridwidth = 2;
 			this.add(btnNextUnclassified, gridbagConstraints);
 		}
 
@@ -729,5 +745,27 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				this.ptDragStart = pt;
 			}
 		}
+	}
+
+	private boolean deleteCurrentSpine() {
+		if (this.currentSpine == null) {
+			return false;
+		}
+
+		String pathToImage = "images/icons/warning-icon.png";
+		ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
+		Image imgScaled = myIcon.getImage().getScaledInstance(40, 40, java.awt.Image.SCALE_SMOOTH);
+
+		int input = JOptionPane.showConfirmDialog(null,
+				"<html><p>Delete current spine.</p>" + "<p>Are you sure?</p><br/>", "Delete current spine?",
+				JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, new ImageIcon(imgScaled));
+
+		// 0=yes, 1=no
+		if (input == 1) {
+			return false;
+		}
+
+		myModel().removeSpine(currentSpine);
+		return true;
 	}
 }

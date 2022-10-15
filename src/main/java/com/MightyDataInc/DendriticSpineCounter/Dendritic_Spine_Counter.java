@@ -230,12 +230,16 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		IJ.setTool("polyline");
 	}
 
+	public void activateMultiPointTool() {
+		getImageProcessor().setCurrentRoi(null);
+		IJ.setTool("multi-point");
+		getImageProcessor().moveToForeground();
+	}
+
 	public void runScaleSettingDialog() {
 		this.displayService.setActiveDisplay(this.imageProcessor.getDisplay());
 		Executer executer = new Executer("Set Scale...");
 		executer.run();
-
-		// updateUI();
 	}
 
 	public void updateUI() {

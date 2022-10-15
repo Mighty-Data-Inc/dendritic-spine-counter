@@ -97,10 +97,8 @@ public class FindSpinesPanel extends DscBasePanel {
 			btnActivateMultiPointTool.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					controlPanel.getPlugin().getImageProcessor().setCurrentRoi(null);
-					IJ.setTool("multi-point");
+					controlPanel.getPlugin().activateMultiPointTool();
 					update();
-					controlPanel.getPlugin().getImageProcessor().moveToForeground();
 				}
 			});
 			this.add(btnActivateMultiPointTool, gridbagConstraints);
@@ -183,36 +181,8 @@ public class FindSpinesPanel extends DscBasePanel {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					int sensitivitySliderVal = sliderDetectionSensitivity.getValue();
-					double sensitivity = (double) sensitivitySliderVal / 100.0;
-
+					double sensitivity = 1.0 - ((double) sensitivitySliderVal / 100.0);
 					autoDetectSpines(sensitivity);
-
-//					int pixelWindowSize = 5; // getFeatureDetectionWindowSizeInPixels();
-//					int SCANSPAN = 2;
-//
-//					sensitivity *= sensitivity;
-//					sensitivity *= sensitivity;
-//					sensitivity *= 0.25;
-//					// The "sensitivity" is actually kinda backwards.
-//					// It needs an easing function to mean what the labeling says it means.
-//
-//					List<Point2D> spines = new ArrayList<Point2D>();
-//
-//					Object[] paths = pathListModel.toArray();
-//					for (Object path : paths) {
-//						DendriteSegment dendriteSegment = (DendriteSegment) path;
-//
-//						for (PathSide side : PathSide.values()) {
-//							DendriteSegment sidepath = dendriteSegment.createSidePath(side, pixelWindowSize,
-//									pixelWindowSize / 2);
-//
-//							List<Point2D> spinesHere = sidepath.findSpinesAlongSidepath(pixelWindowSize, SCANSPAN,
-//									sensitivity);
-//
-//							spines.addAll(spinesHere);
-//						}
-//					}
-//					controlPanel.getPlugin().getImageProcessor().AddPointRoisAsSpineMarkers(spines);
 				}
 			});
 			this.add(btnDetectSpines, gridbagConstraints);
@@ -221,10 +191,11 @@ public class FindSpinesPanel extends DscBasePanel {
 		}
 
 		{
-			JLabel label = new JLabel("<html>You can adjust the contrast threshold that this plug-in "
+			JLabel label = new JLabel("<html>You can adjust the contrast sensitivity that this plug-in "
 					+ "uses for automatic spine detection. <br/>"
-					+ "Low contrast threshold may end up mis-identifying noise as spines (Type I error). <br/>"
-					+ "High contrast threshold means that some faint spines might get missed (Type II error).<br/><br/>Set constrast threshold:</html>");
+					+ "Low sensitivity may end up mis-identifying noise as spines (Type I error). <br/>"
+					+ "High sensitivity means that some faint spines might get missed (Type II error).<br/>"
+					+ "<br/>Set sensitivity:</html>");
 			// We want extra space at the bottom of this label.
 			gridbagConstraints.insets.top = 16;
 			this.add(label, gridbagConstraints);
@@ -295,7 +266,7 @@ public class FindSpinesPanel extends DscBasePanel {
 								+ "<p>Do you wish to Lock it now?</p><br/>"
 								+ "<p>YES: Lock your current Multi-point selection as your spines.</p>"
 								+ "<p>NO: Discard your Multi-point selection.</p>",
-						"Lock Multi-point Selection?", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+						"Lock Multi-point Selection?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
 						new ImageIcon(imgScaled));
 
 				// 0=yes, 1=no
@@ -365,6 +336,8 @@ public class FindSpinesPanel extends DscBasePanel {
 			return;
 		}
 
+		controlPanel.getPlugin().activateMultiPointTool();
+
 		List<DendriteSpine> points = controlPanel.getPlugin().getModel().getSpines();
 
 		float[] xPoints = new float[points.size()];
@@ -432,5 +405,6 @@ public class FindSpinesPanel extends DscBasePanel {
 
 		imageProcessor.update();
 		imageProcessor.getDisplay().update();
+		controlPanel.getPlugin().getImageProcessor().drawDendriteOverlays();
 	}
 }

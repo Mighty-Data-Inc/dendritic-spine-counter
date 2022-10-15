@@ -10,7 +10,10 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 
+import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
+import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
+import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 public abstract class DscBasePanel extends JPanel {
 	private static final long serialVersionUID = 5162415477182496895L;
@@ -18,6 +21,24 @@ public abstract class DscBasePanel extends JPanel {
 	private boolean isActive = false;
 
 	protected DscControlPanelDialog controlPanel;
+
+	protected DscControlPanelDialog myControlPanel() {
+		return this.controlPanel;
+	}
+
+	protected Dendritic_Spine_Counter myPlugin() {
+		return this.myControlPanel().getPlugin();
+	}
+	
+	protected DscModel myModel() {
+		DscModel model = this.myPlugin().getModel();
+		return model;
+	}
+	
+	protected DscImageProcessor myImageProcessor() {
+		DscImageProcessor imgproc = this.myPlugin().getImageProcessor();
+		return imgproc;
+	}
 
 	protected GridBagConstraints standardPanelGridbagConstraints() {
 		GridBagConstraints gridbagConstraints = new GridBagConstraints();

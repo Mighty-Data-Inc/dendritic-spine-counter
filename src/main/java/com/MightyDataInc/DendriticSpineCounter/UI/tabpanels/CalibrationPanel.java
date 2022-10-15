@@ -358,8 +358,15 @@ public class CalibrationPanel extends DscBasePanel {
 		}
 	}
 
+	private void showFeatureSizeSelector() {
+		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
+		imageProcessor.showHideFeatureSizeSelectorRoi(true);
+	}
+	
 	@Override
 	protected void onTimer() {
+		this.showFeatureSizeSelector();
+
 		getFeatureSizeFromSelector();
 
 		DscModel model = getControlPanel().getPlugin().getModel();
@@ -379,8 +386,7 @@ public class CalibrationPanel extends DscBasePanel {
 
 	@Override
 	protected void onPanelEntered() {
-		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
-		imageProcessor.showHideFeatureSizeSelectorRoi(true);
+		this.showFeatureSizeSelector();
 	}
 
 	@Override
