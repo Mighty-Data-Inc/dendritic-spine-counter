@@ -145,7 +145,8 @@ public class DendriteSpine extends Point2D {
 		}
 
 		if (winnerDist > MAX_DISTANCE_OF_SPINE_FROM_DENDRITE_IN_FEATURE_WINDOWS * this.featureWindowSize) {
-			// This winner is too far from its dendrite to count as being associated with it.
+			// This winner is too far from its dendrite to count as being associated with
+			// it.
 			return null;
 		}
 

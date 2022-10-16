@@ -365,7 +365,7 @@ public class CalibrationPanel extends DscBasePanel {
 	
 	@Override
 	protected void onTimer() {
-		this.showFeatureSizeSelector();
+		showFeatureSizeSelector();
 
 		getFeatureSizeFromSelector();
 

@@ -7,13 +7,12 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -21,8 +20,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -37,7 +34,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
@@ -80,6 +76,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	private JRadioButton radioHeadWidth;
 	private ButtonGroup radioMeasurementButtonGroup;
 
+	private JComboBox<String> comboSpineClass;
+
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
 	}
@@ -109,7 +107,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 		{
 			JPanel leftcol = new JPanel();
-			leftcol.setLayout(new BoxLayout(leftcol, BoxLayout.Y_AXIS));
+			leftcol.setLayout(new BoxLayout(leftcol, BoxLayout.PAGE_AXIS));
 
 			gridbagConstraints.gridx = 0;
 
@@ -128,7 +126,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 			lblSpineImg = new JLabel();
 			lblSpineImg.setIcon(imgSpineIcon);
-			leftcol.add(lblSpineImg, gridbagConstraints);
+			leftcol.add(lblSpineImg);
+			leftcol.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 
 			lblSpineImg.addMouseListener(new MouseListener() {
 				@Override
@@ -221,6 +220,39 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 			lblViewportInfo = new JLabel("Viewport info:");
 			leftcol.add(lblViewportInfo);
+
+			leftcol.add(Box.createRigidArea(new Dimension(0, 8)));
+			leftcol.add(new JLabel("Spine classification:"));
+
+			comboSpineClass = new JComboBox<String>();
+			comboSpineClass.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+			leftcol.add(comboSpineClass);
+			comboSpineClass.addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent arg0) {
+					if (currentSpine == null) {
+						return;
+					}
+					String selectedItem = (String) comboSpineClass.getSelectedItem();
+					if (selectedItem == null || !myModel().spineClasses.contains(selectedItem)) {
+						currentSpine.setClassification(null);
+					} else {
+						currentSpine.setClassification(selectedItem);
+					}
+					updateClassificationProgressBar();
+				}
+			});
+
+			leftcol.add(Box.createRigidArea(new Dimension(0, 8)));
+			JButton btnEditSpineClasses = new JButton("Edit spine classes");
+			leftcol.add(btnEditSpineClasses);
+			btnEditSpineClasses.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					editSpineClasses();
+				}
+			});
+
 		}
 
 		{
@@ -510,15 +542,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			}
 		}
 
-		DscModel model = controlPanel.getPlugin().getModel();
-		int numSpines = model.getSpines().size();
-		int numSpinesClassified = numSpines - model.getUnclassifiedSpines().size();
-
-		progressBar.setStringPainted(true);
-		progressBar.setString(String.format("Classified %d of %d spines (%.1f%%)", numSpinesClassified, numSpines,
-				(100.0 * numSpinesClassified / numSpines)));
-		progressBar.setMaximum(numSpines);
-		progressBar.setValue(numSpinesClassified);
+		updateClassificationProgressBar();
 
 		renderSpineImage();
 		if (currentSpine == null) {
@@ -530,9 +554,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			double viewportWidthPixels = this.getPixelScale() * this.imgSpineSize;
 			String zoomInfo = String.format("Width: %.2f pixel", viewportWidthPixels);
 
-			if (model.imageHasValidPhysicalUnitScale()) {
-				double physUnits = model.convertImageScaleFromPixelsToPhysicalUnits(viewportWidthPixels);
-				zoomInfo += String.format(" (%.3f %s)", physUnits, model.getImageScalePhysicalUnitName());
+			if (myModel().imageHasValidPhysicalUnitScale()) {
+				double physUnits = myModel().convertImageScaleFromPixelsToPhysicalUnits(viewportWidthPixels);
+				zoomInfo += String.format(" (%.3f %s)", physUnits, myModel().getImageScalePhysicalUnitName());
 			}
 
 			lblViewportInfo.setText("<html>Viewport info: " + positionInfo + "<br/>" + zoomInfo + "</html>");
@@ -541,11 +565,22 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		displayMeasurements();
 		displayCurrentMeasurement();
 
+		updateSpineComboBox();
+
 		imageProcessor.getDisplay().update();
 		imageProcessor.drawDendriteOverlays();
 		imageProcessor.drawCurrentSpineIndicator(currentSpine);
+	}
 
-		imageProcessor.moveToForeground();
+	private void updateClassificationProgressBar() {
+		int numSpines = myModel().getSpines().size();
+		int numSpinesClassified = numSpines - myModel().getUnclassifiedSpines().size();
+
+		progressBar.setStringPainted(true);
+		progressBar.setString(String.format("Classified %d of %d spines (%.1f%%)", numSpinesClassified, numSpines,
+				(100.0 * numSpinesClassified / numSpines)));
+		progressBar.setMaximum(numSpines);
+		progressBar.setValue(numSpinesClassified);
 	}
 
 	@Override
@@ -757,8 +792,11 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		Image imgScaled = myIcon.getImage().getScaledInstance(40, 40, java.awt.Image.SCALE_SMOOTH);
 
 		int input = JOptionPane.showConfirmDialog(null,
-				"<html><p>Delete current spine.</p>" + "<p>Are you sure?</p><br/>", "Delete current spine?",
-				JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, new ImageIcon(imgScaled));
+				"<html><p>Delete current spine.</p><br/>"
+						+ "<p>You've indicated that the current selection is not a spine, "
+						+ "and it should be deleted from the list of spines.</p><br/><p>Are you sure?</p><br/>",
+				"Delete current spine?", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
+				new ImageIcon(imgScaled));
 
 		// 0=yes, 1=no
 		if (input == 1) {
@@ -766,6 +804,64 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		}
 
 		myModel().removeSpine(currentSpine);
+		this.update();
+
 		return true;
+	}
+
+	private void updateSpineComboBox() {
+		String currentSpineClass = "";
+		if (currentSpine != null) {
+			// The current spine's class will get cleared when we remove all items,
+			// so we need to make sure we remember it and then reapply it.
+			currentSpineClass = this.currentSpine.getClassification();
+		}
+
+		comboSpineClass.removeAllItems();
+		comboSpineClass.addItem("");
+
+		if (currentSpine != null && currentSpineClass != null) {
+			currentSpine.setClassification(currentSpineClass);
+		}
+
+		for (String spineClass : myModel().spineClasses) {
+			comboSpineClass.addItem(spineClass);
+		}
+
+		if (this.currentSpine != null && this.currentSpine.hasClassification()) {
+			if (!myModel().spineClasses.contains(currentSpineClass)) {
+				currentSpineClass = "";
+			}
+			comboSpineClass.setSelectedItem(currentSpineClass);
+		}
+	}
+
+	private void editSpineClasses() {
+		String commalist = String.join(", ", myModel().spineClasses);
+
+		String s = (String) JOptionPane.showInputDialog(null,
+				"List the names of your spine classes, separated by commas.", "Edit spine classes",
+				JOptionPane.PLAIN_MESSAGE, null, null, commalist);
+
+		if (s == null || s.length() == 0) {
+			// Cancelled.
+			return;
+		}
+
+		s = s.trim();
+
+		String[] parsedItems = s.split(", ");
+		if (parsedItems.length == 0) {
+			return;
+		}
+
+		String[] parsedItemsTrimmed = new String[parsedItems.length];
+		for (int i = 0; i < parsedItems.length; i++) {
+			parsedItemsTrimmed[i] = parsedItems[i].trim();
+		}
+
+		myModel().setSpineClasses(parsedItemsTrimmed);
+
+		update();
 	}
 }

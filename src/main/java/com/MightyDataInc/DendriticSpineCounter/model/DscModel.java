@@ -318,5 +318,15 @@ public class DscModel {
 
 	public ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodia"));
 
+	public void setSpineClasses(String[] newClasses) {
+		spineClasses = new ArrayList<String>(Arrays.asList(newClasses));
+		
+		for (DendriteSpine spine : spines.values()) {
+			if (!spineClasses.contains(spine.getClassification())) {
+				spine.setClassification(null);
+			}
+		}
+	}
+	
 	// endregion
 }

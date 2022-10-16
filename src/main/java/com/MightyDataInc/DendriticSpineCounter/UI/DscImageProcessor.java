@@ -488,7 +488,6 @@ public class DscImageProcessor {
 		featureSizeSelectorRoi.setName("Feature Size Selector");
 		getOverlay().add(featureSizeSelectorRoi);
 
-		this.moveToForeground();
 		ownerPlugin.activatePolylineTool();
 
 		this.setCurrentRoi(featureSizeSelectorRoi);
