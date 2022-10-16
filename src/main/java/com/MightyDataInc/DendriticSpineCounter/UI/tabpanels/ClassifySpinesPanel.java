@@ -34,6 +34,9 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
+import javax.swing.JTextArea;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
@@ -77,6 +80,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	private ButtonGroup radioMeasurementButtonGroup;
 
 	private JComboBox<String> comboSpineClass;
+
+	private JTextArea textNotes;
 
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
@@ -257,6 +262,31 @@ public class ClassifySpinesPanel extends DscBasePanel {
 				}
 			});
 
+			leftcol.add(Box.createRigidArea(new Dimension(0, 16)));
+			leftcol.add(new JLabel("Notes about this spine (optional)"));
+
+			textNotes = new JTextArea();
+			textNotes.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+			textNotes.setLineWrap(true);
+			textNotes.setWrapStyleWord(true);
+			leftcol.add(textNotes);
+			textNotes.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void changedUpdate(DocumentEvent arg0) {
+				}
+
+				@Override
+				public void insertUpdate(DocumentEvent arg0) {
+					String text = textNotes.getText();
+					if (currentSpine != null) {
+						currentSpine.notes = text;
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent arg0) {
+				}
+			});
 		}
 
 		{
@@ -570,6 +600,14 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		displayCurrentMeasurement();
 
 		updateSpineComboBox();
+
+		if (currentSpine == null) {
+			this.textNotes.setEnabled(false);
+			this.textNotes.setText("");
+		} else {
+			this.textNotes.setEnabled(true);
+			this.textNotes.setText(currentSpine.notes);
+		}
 
 		imageProcessor.getDisplay().update();
 		imageProcessor.drawDendriteOverlays();

@@ -29,6 +29,8 @@ public class DendriteSpine extends Point2D {
 	public double contrast = 0;
 
 	public double angle = 0;
+	
+	public String notes = "";
 
 	private double featureWindowSize = 5;
 
