@@ -29,12 +29,12 @@ public abstract class DscBasePanel extends JPanel {
 	protected Dendritic_Spine_Counter myPlugin() {
 		return this.myControlPanel().getPlugin();
 	}
-	
+
 	protected DscModel myModel() {
 		DscModel model = this.myPlugin().getModel();
 		return model;
 	}
-	
+
 	protected DscImageProcessor myImageProcessor() {
 		DscImageProcessor imgproc = this.myPlugin().getImageProcessor();
 		return imgproc;
@@ -118,6 +118,11 @@ public abstract class DscBasePanel extends JPanel {
 		}
 		this.isActive = true;
 		this.onPanelEntered();
+
+		// Automatically fire the timer when we enter the panel.
+		// That way, the user doesn't have to wait for time-based
+		// UI maintenance.
+		this.onTimer();
 	}
 
 	public void exitPanel() {

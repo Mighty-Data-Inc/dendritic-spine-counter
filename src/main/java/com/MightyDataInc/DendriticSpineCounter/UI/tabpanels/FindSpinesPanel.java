@@ -27,7 +27,6 @@ import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
-import ij.IJ;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -225,21 +224,20 @@ public class FindSpinesPanel extends DscBasePanel {
 
 	@Override
 	public void onTimer() {
-		if (controlPanel.getPlugin().getCurrentToolName() == "multipoint") {
+		if (myPlugin().getCurrentToolName() == "multipoint") {
 			this.btnActivateMultiPointTool.setEnabled(false);
 		} else {
 			this.btnActivateMultiPointTool.setEnabled(true);
 		}
 
-		List<Point2D> points = controlPanel.getPlugin().getImageProcessor()
-				.getCurrentImagePolylinePathPoints(Roi.POINT);
+		List<Point2D> points = myImageProcessor().getCurrentImagePolylinePathPoints(Roi.POINT);
 		if (points == null || points.size() == 0) {
 			this.btnLockSpines.setEnabled(false);
 		} else {
 			this.btnLockSpines.setEnabled(true);
 		}
 
-		if (controlPanel.getPlugin().getModel().getSpines().size() > 0) {
+		if (myModel().getSpines().size() > 0) {
 			this.btnUnlockSpines.setEnabled(true);
 		} else {
 			this.btnUnlockSpines.setEnabled(false);

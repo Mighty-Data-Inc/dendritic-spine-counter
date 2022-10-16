@@ -261,7 +261,8 @@ public class DscModel {
 
 	public DendriteSpine findNextUnclassifiedSpine(DendriteSpine fromSpine) {
 		if (getUnclassifiedSpines().size() == 0) {
-			return null;
+			// If no unclassified spines exist, just get the next spine.
+			return findNextSpine(fromSpine);
 		}
 		while (true) {
 			fromSpine = findNextSpine(fromSpine);

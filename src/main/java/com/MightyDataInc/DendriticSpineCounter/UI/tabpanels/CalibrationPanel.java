@@ -14,16 +14,13 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
 import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
-import ij.Executer;
 import ij.measure.Calibration;
 
 public class CalibrationPanel extends DscBasePanel {
