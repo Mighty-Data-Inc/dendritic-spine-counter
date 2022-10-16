@@ -161,7 +161,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					ptDragStart = null;
 					ptDragSpineOrigPosition = null;
 
-					if (measurement != 0 && currentSpine != null) {
+					if (currentSpine != null) {
 						if (radioNeckLength.isSelected()) {
 							currentSpine.neckLengthInPixels = measurementInImagePixels();
 							radioNeckWidth.doClick();
@@ -172,10 +172,14 @@ public class ClassifySpinesPanel extends DscBasePanel {
 							currentSpine.headWidthInPixels = measurementInImagePixels();
 							radioNeckLength.doClick();
 						}
+
+						autoClassifyCurrentSpine();
+
+						// Clear the drawing.
+						renderSpineImage();
 					}
+
 					displayMeasurements();
-					// Clear the drawing.
-					renderSpineImage();
 				}
 			});
 			lblSpineImg.addMouseMotionListener(new MouseMotionListener() {
@@ -700,7 +704,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	}
 
 	private String getMeasurementHtmlString(double measurePixels) {
-		String sMeasure = "<i>(none></i>";
+		String sMeasure = "<i>(none)</i>";
 		if (measurePixels == 0) {
 			return sMeasure;
 		}
@@ -722,7 +726,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	private void displayCurrentMeasurement() {
 		String s = this.getMeasurementHtmlString(measurementInImagePixels());
-		this.lblMeasurement.setText(s);
+		this.lblMeasurement.setText("<html>" + s + "</html>");
 	}
 
 	private void displayMeasurements() {
@@ -863,5 +867,42 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		myModel().setSpineClasses(parsedItemsTrimmed);
 
 		update();
+	}
+
+	private String autoClassifyCurrentSpine() {
+		if (currentSpine == null) {
+			return "";
+		}
+
+		String guessedclass = "";
+
+		// Spine descriptions:
+		// https://www.frontiersin.org/articles/10.3389/fnsyn.2020.00031/full
+		if (currentSpine.neckLengthInPixels <= 2) {
+			// "Stubby spines typically do not have a neck."
+			guessedclass = "stubby";
+		} else if (currentSpine.headWidthInPixels < currentSpine.neckWidthInPixels) {
+			// "Filopodia are long, thin dendritic membrane protrusions without a clear
+			// head..."
+			guessedclass = "filopodia";
+		} else if (currentSpine.headWidthInPixels > currentSpine.neckLengthInPixels) {
+			// "Mushroom spines have a large head and a small neck..."
+			guessedclass = "mushroom";
+		} else {
+			// "Thin spines have a structure similar to the mushroom spines,
+			// but their head is smaller relative to the neck."
+			guessedclass = "thin";
+		}
+
+		// Make sure that the guessed class is part of this project.
+		if (!myModel().spineClasses.contains(guessedclass)) {
+			guessedclass = "";
+		}
+
+		currentSpine.setClassification(guessedclass);
+		this.updateClassificationProgressBar();
+		this.updateSpineComboBox();
+
+		return guessedclass;
 	}
 }
