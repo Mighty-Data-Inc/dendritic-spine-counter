@@ -87,6 +87,10 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		return this.model;
 	}
 
+	public void setModel(DscModel model) {
+		this.model = model;
+	}
+
 	public DscControlPanelDialog getControlPanel() {
 		return this.controlPanelDlg;
 	}
@@ -151,7 +155,7 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 			String datasetFilePath = filePathFromUserSelection;
 			if (filePathFromUserSelection.toLowerCase().endsWith(".json")) {
 				String fileJsonPath = filePathFromUserSelection;
-				jsonObj = DscControlPanelDialog.getJsonObjectFromFile(fileJsonPath);
+				jsonObj = DscModel.getJsonObjectFromFile(fileJsonPath);
 
 				datasetFilePath = "";
 				if (jsonObj.containsKey("originalimagefile")) {
@@ -192,20 +196,20 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		polylineTool = this.toolService.getTool("Polyline");
 		pointTool = this.toolService.getTool("Point");
 
-		model = new DscModel();
-
 		imageProcessor = new DscImageProcessor(this);
 		imageProcessor.createWorkingImage(origDataset, this.displayService);
 
-		controlPanelDlg = new DscControlPanelDialog(this, model);
-
-		Calibration cal = imageProcessor.getDimensions();
-		model.setImageScale(cal);
-		controlPanelDlg.update();
-
 		if (jsonObj != null) {
-			controlPanelDlg.loadFromJsonObject(jsonObj);
+			model = DscModel.loadFromJsonObject(jsonObj);
 		}
+		if (model == null) {
+			model = new DscModel();
+			Calibration cal = imageProcessor.getDimensions();
+			model.setImageScale(cal);
+		}
+
+		controlPanelDlg = new DscControlPanelDialog(this, model);
+		controlPanelDlg.update();
 	}
 
 	public Display<?> getOriginalDatasetDisplay() {
@@ -240,6 +244,14 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 		this.displayService.setActiveDisplay(this.imageProcessor.getDisplay());
 		Executer executer = new Executer("Set Scale...");
 		executer.run();
+	}
+
+	public String getApplicationVersion() {
+		String versionStr = this.pomProjectVersion;
+		if (versionStr == null) {
+			return "";
+		}
+		return versionStr;
 	}
 
 	public void updateUI() {

@@ -1,10 +1,22 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
+
+import javax.swing.JOptionPane;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import com.MightyDataInc.DendriticSpineCounter.model.events.DscModelChangedEventListener;
 
@@ -321,13 +333,78 @@ public class DscModel {
 
 	public void setSpineClasses(String[] newClasses) {
 		spineClasses = new ArrayList<String>(Arrays.asList(newClasses));
-		
+
 		for (DendriteSpine spine : spines.values()) {
 			if (!spineClasses.contains(spine.getClassification())) {
 				spine.setClassification(null);
 			}
 		}
 	}
-	
+
+	// endregion
+
+	// region Saving and loading
+
+	public static JSONObject getJsonObjectFromFile(String filename) {
+		String filecontents = "";
+		try {
+			filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
+		} catch (InvalidPathException e1) {
+			JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + filename, "Invalid path",
+					JOptionPane.ERROR_MESSAGE);
+			return new JSONObject();
+		} catch (NoSuchFileException e1) {
+			JOptionPane.showMessageDialog(null, "The system could not find any such file: " + filename, "No such file",
+					JOptionPane.ERROR_MESSAGE);
+			return new JSONObject();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return new JSONObject();
+		}
+
+		JSONParser parser = new JSONParser();
+		JSONObject jsonObj = null;
+		try {
+			jsonObj = (JSONObject) parser.parse(filecontents);
+		} catch (Exception e1) {
+			JOptionPane.showMessageDialog(null, e1.toString());
+			return new JSONObject();
+		}
+		return jsonObj;
+	}
+
+	public static DscModel loadFromJsonObject(JSONObject jsonObj) {
+		return null;
+		// DscModel model = new DscModel();
+		// return model;
+	}
+
+	@SuppressWarnings("unchecked")
+	public JSONObject saveToJsonObject() {
+		JSONObject jsonModel = new JSONObject();
+		jsonModel.put("feature_window_size_in_pixels", featureWindowSizeInPixels);
+		jsonModel.put("image_scale_physical_unit_name", imageScalePhysicalUnitName);
+		jsonModel.put("image_scale_physical_units_per_pixel", imageScalePhysicalUnitsPerPixel);
+
+		JSONArray jsonSpineClasses = new JSONArray();
+		jsonSpineClasses.addAll(this.spineClasses);
+		jsonModel.put("spine_classes", jsonSpineClasses);
+
+		JSONArray jsonDendrites = new JSONArray();
+		for (DendriteBranch dendrite : this.getDendrites()) {
+			jsonDendrites.add(dendrite.saveToJsonObject());
+		}
+		jsonModel.put("dendrites", jsonDendrites);
+
+		JSONArray jsonSpines = new JSONArray();
+		for (DendriteSpine spine : this.getSpines()) {
+			jsonSpines.add(spine.saveToJsonObject());
+		}
+		jsonModel.put("spines", jsonSpines);
+
+		return jsonModel;
+	}
+
 	// endregion
 }

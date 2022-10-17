@@ -6,41 +6,19 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
-import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileFilter;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-//import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.JSONParser;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
@@ -48,8 +26,8 @@ import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.ClassifySpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.DscBasePanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.FindSpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.ReportPanel;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.SaveLoadPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.TraceDendritesPanel;
-import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 public class DscControlPanelDialog extends JDialog {
@@ -66,36 +44,16 @@ public class DscControlPanelDialog extends JDialog {
 	private FindSpinesPanel panelFindSpines;
 	private ClassifySpinesPanel panelClassifySpines;
 	private ReportPanel panelReport;
+	private SaveLoadPanel panelSaveLoad;
 
 	// --------------------------------------
 	// Data-bound UI components
 
 	private JTabbedPane tabbedPane;
 
-	private JButton btnSaveDataToFile;
-	private JButton btnLoadDataFromFile;
-
-	private String getApplicationVersion(Dendritic_Spine_Counter plugin) {
-		if (plugin == null || plugin.pomProjectVersion == null) {
-			return "";
-		}
-		String versionStr = plugin.pomProjectVersion;
-		if (versionStr == null) {
-			return "";
-		}
-		return versionStr;
-	}
-
-	private String getApplicationVersion() {
-		if (this.ownerPlugin == null) {
-			return "";
-		}
-		return getApplicationVersion(this.ownerPlugin);
-	}
-
 	private String generateDialogBoxTitle(Dendritic_Spine_Counter plugin) {
 		String title = "Dendritic Spine Counter";
-		String versionStr = this.getApplicationVersion(plugin);
+		String versionStr = plugin.getApplicationVersion();
 		if (!versionStr.isEmpty()) {
 			title += " " + versionStr;
 		}
@@ -157,6 +115,9 @@ public class DscControlPanelDialog extends JDialog {
 
 			panelReport = new ReportPanel(this);
 			tabbedPane.addTab("Report results", panelReport);
+
+			panelSaveLoad = new SaveLoadPanel(this);
+			tabbedPane.addTab("Save/Load", panelSaveLoad);
 
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
@@ -220,138 +181,6 @@ public class DscControlPanelDialog extends JDialog {
 		return gridbagConstraints;
 	}
 
-	/**
-	 * This last panel lets users place points to mark spines, and generates a
-	 * report table.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createFileLoadSavePanel() {
-		FileFilter jsonFileFilter = new FileFilter() {
-			@Override
-			public boolean accept(File f) {
-				return f.getName().toLowerCase().endsWith(".json");
-			}
-
-			@Override
-			public String getDescription() {
-				return "JSON files";
-			}
-		};
-
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-
-		gridbagConstraints.gridwidth = 1;
-		{
-			JLabel label = new JLabel("<html>" + "<p>Dendritic Spine Counter stores dendrite segments along with "
-					+ "their associated spines in JSON format.</p>" + "</html>");
-			// We want extra space at the bottom of this label.
-			gridbagConstraints.insets.bottom = 16;
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridy++;
-			gridbagConstraints.insets.bottom = 8;
-			gridbagConstraints.gridwidth = 1;
-		}
-
-		{
-			String pathToImage = "images/icons/file-save-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnSaveDataToFile = new JButton("Save data to file", myIcon);
-			panel.add(btnSaveDataToFile, gridbagConstraints);
-
-			btnSaveDataToFile.addActionListener(new ActionListener() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					JFileChooser fileChooser = new JFileChooser();
-					fileChooser.setFileFilter(jsonFileFilter);
-					int result = fileChooser.showSaveDialog(null);
-					if (result != JFileChooser.APPROVE_OPTION) {
-						return;
-					}
-
-					JSONObject json = new JSONObject();
-					json.put("version", getApplicationVersion());
-
-					try {
-						json.put("originalimagefile", ownerPlugin.getOriginalImage().getImgPlus().getSource());
-					} catch (Exception e1) {
-					}
-
-					// json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
-//					json.put("researcher", textfieldResultTableResearcher.getText().trim());
-//					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
-//					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
-
-					JSONArray jsonDends = new JSONArray();
-//					for (Object dendriteObj : pathListModel.toArray()) {
-//						JSONObject jsonDend = ((DendriteSegment) dendriteObj).toJSON();
-//						jsonDends.add(jsonDend);
-//					}
-
-					json.put("dendrites", jsonDends);
-
-					String filename = fileChooser.getSelectedFile().getAbsolutePath();
-					if (!filename.toLowerCase().endsWith(".json")) {
-						filename += ".json";
-					}
-					try {
-						FileWriter writer = new FileWriter(filename);
-						writer.write(json.toJSONString());
-						writer.close();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
-			});
-
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			String pathToImage = "images/icons/file-load-24.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnLoadDataFromFile = new JButton("Load data from file", myIcon);
-			panel.add(btnLoadDataFromFile, gridbagConstraints);
-
-			btnLoadDataFromFile.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					JFileChooser fileChooser = new JFileChooser();
-					fileChooser.setFileFilter(jsonFileFilter);
-					int result = fileChooser.showOpenDialog(null);
-					if (result != JFileChooser.APPROVE_OPTION) {
-						return;
-					}
-
-					String filename = fileChooser.getSelectedFile().getAbsolutePath();
-					JSONObject jsonObj = getJsonObjectFromFile(filename);
-					if (jsonObj == null) {
-						return;
-					}
-					loadFromJsonObject(jsonObj);
-				}
-			});
-
-			gridbagConstraints.gridy++;
-		}
-
-		addEmptySpaceFillerLabel(panel, gridbagConstraints);
-
-		return panel;
-	}
-
 	private void setupWindowEventHandlers() {
 		addWindowFocusListener(new WindowFocusListener() {
 			@Override
@@ -401,83 +230,5 @@ public class DscControlPanelDialog extends JDialog {
 	}
 
 	public void update() {
-	}
-
-	private void addEmptySpaceFillerLabel(JPanel panel, GridBagConstraints gridbagConstraints) {
-		JLabel emptyLabel = new JLabel(" ");
-		gridbagConstraints.insets.top = 20;
-		gridbagConstraints.insets.bottom = 8;
-		gridbagConstraints.gridwidth = GridBagConstraints.REMAINDER;
-		gridbagConstraints.gridheight = GridBagConstraints.REMAINDER;
-		gridbagConstraints.anchor = GridBagConstraints.PAGE_END;
-		gridbagConstraints.weighty = 1.0;
-		panel.add(emptyLabel, gridbagConstraints);
-	}
-
-	public static JSONObject getJsonObjectFromFile(String filename) {
-		String filecontents = "";
-		try {
-			filecontents = new String(Files.readAllBytes(Paths.get(filename)), StandardCharsets.UTF_8);
-		} catch (InvalidPathException e1) {
-			JOptionPane.showMessageDialog(null, "Couldn't read this string as a file path: " + filename, "Invalid path",
-					JOptionPane.ERROR_MESSAGE);
-			return new JSONObject();
-		} catch (NoSuchFileException e1) {
-			JOptionPane.showMessageDialog(null, "The system could not find any such file: " + filename, "No such file",
-					JOptionPane.ERROR_MESSAGE);
-			return new JSONObject();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			return new JSONObject();
-		}
-
-		JSONParser parser = new JSONParser();
-		JSONObject jsonObj = null;
-		try {
-			jsonObj = (JSONObject) parser.parse(filecontents);
-		} catch (Exception e1) {
-			JOptionPane.showMessageDialog(null, e1.toString());
-			return new JSONObject();
-		}
-		return jsonObj;
-	}
-
-	public void loadFromJsonObject(JSONObject jsonObj) {
-		Object v = jsonObj.get("featuresizepixels");
-
-		// this.enumFeatureDetectionWindowSizeUnits =
-		// FeatureDetectionWindowSizeUnitsEnum.PIXELS;
-		// this.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
-
-//		v = jsonObj.get("researcher");
-//		this.textfieldResultTableResearcher.setText(String.format(v.toString()));
-//
-//		v = jsonObj.get("imagedesignation");
-//		this.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
-//
-//		v = jsonObj.get("customlabel");
-//		this.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
-
-		JSONArray jsonDends = (JSONArray) jsonObj.get("dendrites");
-		List<Point2D> allspines = new ArrayList<Point2D>();
-		for (int iDend = 0; iDend < jsonDends.size(); iDend++) {
-			JSONObject jsonDend = (JSONObject) jsonDends.get(iDend);
-			DendriteSegment dendrite = new DendriteSegment();
-			dendrite.fromJSON(jsonDend, ownerPlugin.getImageProcessor().workingImg);
-
-//			this.pathListModel.addElement(dendrite);
-//			// ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
-
-			allspines.addAll(dendrite.spines);
-		}
-
-		// Add all the spines as visible ROI points in one big blast.
-		// ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
-
-//		populateResultsTable();
-
-		update();
-		ownerPlugin.getImageProcessor().update();
 	}
 }

@@ -1,10 +1,14 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
+import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import ij.gui.OvalRoi;
 
@@ -29,7 +33,7 @@ public class DendriteSpine extends Point2D {
 	public double contrast = 0;
 
 	public double angle = 0;
-	
+
 	public String notes = "";
 
 	private double featureWindowSize = 5;
@@ -101,6 +105,7 @@ public class DendriteSpine extends Point2D {
 	}
 
 	private DendriteBranch nearestDendrite = null;
+	private int nearestDendriteId = -1;
 
 	public DendriteBranch getNearestDendrite() {
 		return nearestDendrite;
@@ -115,6 +120,7 @@ public class DendriteSpine extends Point2D {
 
 	public void setNearestDendrite(DendriteBranch dendrite) {
 		this.nearestDendrite = dendrite;
+		this.nearestDendriteId = dendrite.getId();
 	}
 
 	public DendriteBranch findNearestDendrite(Collection<DendriteBranch> dendrites) {
@@ -199,5 +205,28 @@ public class DendriteSpine extends Point2D {
 			}
 		}
 		return outs;
+	}
+
+	@SuppressWarnings("unchecked")
+	public JSONObject saveToJsonObject() {
+		JSONObject jsonSpine = new JSONObject();
+
+		jsonSpine.put("id", this.id);
+		jsonSpine.put("nearest_dendrite_id", this.nearestDendriteId);
+
+		jsonSpine.put("x", this.x);
+		jsonSpine.put("y", this.y);
+
+		jsonSpine.put("neck_length_in_pixels", this.neckLengthInPixels);
+		jsonSpine.put("neck_width_in_pixels", this.neckWidthInPixels);
+		jsonSpine.put("head_width_in_pixels", this.headWidthInPixels);
+
+		jsonSpine.put("contrast", this.contrast);
+		jsonSpine.put("angle", this.angle);
+		jsonSpine.put("feature_window_size", this.featureWindowSize);
+
+		jsonSpine.put("notes", this.notes);
+
+		return jsonSpine;
 	}
 }

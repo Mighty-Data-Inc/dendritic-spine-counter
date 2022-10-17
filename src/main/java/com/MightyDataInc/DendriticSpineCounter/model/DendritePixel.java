@@ -497,11 +497,4 @@ public class DendritePixel extends Point2D {
 		this.y = (int) y;
 	}
 
-	/**
-	 * Returns true if this pixel's vicinity is darker than both pixel vicinities
-	 * adjacent to it along the line perpendicular to the normal. public boolean
-	 * isDarkWithLightOnBothSides( double featureWidth, double penumbraWidth, double
-	 * groundWidth, double normalUnitX, double normalUnitY ) { }
-	 */
-
 }

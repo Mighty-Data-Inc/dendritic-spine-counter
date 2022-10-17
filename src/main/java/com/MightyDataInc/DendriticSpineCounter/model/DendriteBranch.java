@@ -1,10 +1,14 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
+import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 
@@ -12,9 +16,15 @@ import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 
 public class DendriteBranch {
+	// NOTE: Dendrite pixels are only necessary for the purpose of generating
+	// the ROI object. In practice, we should have a separate DendriteBranchTracer
+	// class that owns these DendritePixels, and the DendriteBranch only owns
+	// the resultant PolygonRoi.
 	private List<DendritePixel> dendritePixels = new ArrayList<DendritePixel>();
-	private DscImageProcessor imageProcessor = null;
+
 	private PolygonRoi roi = null;
+	private double lengthInPixels = 0;
+
 	private int id = 0;
 
 	// The branch's user-provided name. Overrides the default name, if supplied.
@@ -45,13 +55,11 @@ public class DendriteBranch {
 		return id;
 	}
 
-	private DendriteBranch(List<DendritePixel> dendritePixels, DscImageProcessor imageProcessor) {
+	private DendriteBranch(List<DendritePixel> dendritePixels) {
 		this.dendritePixels = dendritePixels;
-		this.imageProcessor = imageProcessor;
 
-		if (this.imageProcessor != null) {
-			this.roi = generatePolygonRoi();
-		}
+		this.lengthInPixels = computeLengthInPixels();
+		this.roi = generatePolygonRoi();
 
 		this.id = nextId;
 		nextId++;
@@ -73,7 +81,7 @@ public class DendriteBranch {
 			return null;
 		}
 
-		DendriteBranch dendrite = new DendriteBranch(dendritePixels, imageProcessor);
+		DendriteBranch dendrite = new DendriteBranch(dendritePixels);
 
 		return dendrite;
 	}
@@ -147,8 +155,8 @@ public class DendriteBranch {
 			return points;
 		}
 
-		int xcoords[] = roi.getXCoordinates();
-		int ycoords[] = roi.getYCoordinates();
+		int xcoords[] = roi.getPolygon().xpoints;
+		int ycoords[] = roi.getPolygon().ypoints;
 
 		if (xcoords.length != ycoords.length) {
 			throw new IllegalArgumentException(
@@ -157,8 +165,8 @@ public class DendriteBranch {
 		}
 
 		for (int i = 0; i < xcoords.length; i++) {
-			int x = (int) (xcoords[i] + roi.getXBase());
-			int y = (int) (ycoords[i] + roi.getYBase());
+			int x = (int) (xcoords[i]);
+			int y = (int) (ycoords[i]);
 			Point2D point = new Point2D.Double(x, y);
 			points.add(point);
 		}
@@ -166,6 +174,10 @@ public class DendriteBranch {
 	}
 
 	public double getLengthInPixels() {
+		return this.lengthInPixels;
+	}
+
+	public double computeLengthInPixels() {
 		DendritePixel lastPoint = null;
 		double totalLength = 0;
 		for (DendritePixel dpixel : dendritePixels) {
@@ -282,5 +294,29 @@ public class DendriteBranch {
 	public double getAverageWidthInPixels() {
 		double avgWidth = this.getAreaInPixels() / this.getLengthInPixels();
 		return avgWidth;
+	}
+
+	@SuppressWarnings("unchecked")
+	public JSONObject saveToJsonObject() {
+		JSONObject jsonDendrite = new JSONObject();
+
+		jsonDendrite.put("id", this.id);
+		jsonDendrite.put("name", this.name);
+		jsonDendrite.put("length_in_pixels", this.lengthInPixels);
+
+		JSONObject jsonPolygon = new JSONObject();
+
+		JSONArray jsonXPoints = new JSONArray();
+		JSONArray jsonYPoints = new JSONArray();
+		Polygon polygon = this.roi.getPolygon();
+		for (int i = 0; i < polygon.npoints; i++) {
+			jsonXPoints.add(polygon.xpoints[i]);
+			jsonYPoints.add(polygon.ypoints[i]);
+		}
+		jsonPolygon.put("x", jsonXPoints);
+		jsonPolygon.put("y", jsonYPoints);
+
+		jsonDendrite.put("polygon", jsonPolygon);
+		return jsonDendrite;
 	}
 }
