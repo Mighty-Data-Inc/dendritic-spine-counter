@@ -1,15 +1,11 @@
 package com.MightyDataInc.DendriticSpineCounter.UI;
 
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -21,7 +17,6 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -30,20 +25,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
@@ -52,22 +41,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 //import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.JSONParser;
-import org.scijava.InstantiableException;
-import org.scijava.plugin.PluginInfo;
 
 import com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.CalibrationPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.ClassifySpinesPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.DscBasePanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.FindSpinesPanel;
+import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.ReportPanel;
 import com.MightyDataInc.DendriticSpineCounter.UI.tabpanels.TraceDendritesPanel;
 import com.MightyDataInc.DendriticSpineCounter.model.DendriteSegment;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
-import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel;
-import com.MightyDataInc.DendriticSpineCounter.model.SearchPixel.PathSide;
-
-import ij.IJ;
-import ij.measure.Calibration;
 
 public class DscControlPanelDialog extends JDialog {
 
@@ -81,30 +64,16 @@ public class DscControlPanelDialog extends JDialog {
 	private CalibrationPanel panelCalibration;
 	private TraceDendritesPanel panelTraceDendrites;
 	private FindSpinesPanel panelFindSpines;
-	private ClassifySpinesPanel classifyFindSpines;
+	private ClassifySpinesPanel panelClassifySpines;
+	private ReportPanel panelReport;
 
 	// --------------------------------------
 	// Data-bound UI components
 
 	private JTabbedPane tabbedPane;
 
-	private JButton btnCopyTableDataToClipboard;
-
 	private JButton btnSaveDataToFile;
 	private JButton btnLoadDataFromFile;
-
-	private JCheckBox chkIncludeHeadersInCopyPaste;
-
-	private JTextField textfieldResultTableResearcher;
-	private JTextField textfieldResultTableImageDesignation;
-	private JTextField textfieldResultTableImageCustomLabel;
-
-	private DefaultListModel<DendriteSegment> pathListModel;
-	private JTable resultsTable;
-	private JScrollPane resultsTableHolder;
-	private Object[][] resultsTableData = new Object[0][4];
-	private String[] resultsTableColumns = { "Dendrite Segment", "Length", "Avg Width", "Spine Count",
-			"Spine Density" };
 
 	private String getApplicationVersion(Dendritic_Spine_Counter plugin) {
 		if (plugin == null || plugin.pomProjectVersion == null) {
@@ -183,8 +152,11 @@ public class DscControlPanelDialog extends JDialog {
 			panelFindSpines = new FindSpinesPanel(this);
 			tabbedPane.addTab("Find spines", panelFindSpines);
 
-			classifyFindSpines = new ClassifySpinesPanel(this);
-			tabbedPane.addTab("Classify spines", classifyFindSpines);
+			panelClassifySpines = new ClassifySpinesPanel(this);
+			tabbedPane.addTab("Classify spines", panelClassifySpines);
+
+			panelReport = new ReportPanel(this);
+			tabbedPane.addTab("Report results", panelReport);
 
 			// Add a listener to tell when the active pane has been changed.
 			// Quickly do whatever work is necessary before the pane appears.
@@ -226,132 +198,6 @@ public class DscControlPanelDialog extends JDialog {
 		setPreferredSize(new Dimension(800, 768));
 		pack();
 		setVisible(true);
-	}
-
-	/**
-	 * This last panel lets users place points to mark spines, and generates a
-	 * report table.
-	 * 
-	 * @return The panel that it created. Add this to whatever master outer panel
-	 *         you're building.
-	 */
-	private JPanel createReportPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-
-		GridBagConstraints gridbagConstraints = standardPanelGridbagConstraints();
-		gridbagConstraints.insets.top = 8;
-		gridbagConstraints.insets.left = 16;
-		gridbagConstraints.insets.right = 16;
-
-		gridbagConstraints.gridwidth = 2;
-
-		{
-			JLabel label = new JLabel("<html>" + "<p>This plug-in automatically "
-					+ "goes through all of the spines you've currently selected with "
-					+ "the Multi-point Tool. It will associate each spine with its "
-					+ "nearest dendrite segment, and tabulate statistics about "
-					+ "the spine counts and densities for each dendrite segment.</p>" + "</html>");
-			gridbagConstraints.insets.bottom = 8;
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-			gridbagConstraints.insets.bottom = 4;
-		}
-
-		{
-			this.resultsTableHolder = new JScrollPane();
-
-			resultsTableHolder.setPreferredSize(new Dimension(250, 160));
-			resultsTableHolder.setMinimumSize(new Dimension(250, 160));
-
-			panel.add(resultsTableHolder, gridbagConstraints);
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			JLabel label = new JLabel("<html>" + "<p>You can copy this tab-delimited table data to your clipboard, and "
-					+ "paste it directly into spreadsheet software (e.g. Microsoft Excel).</p><br/>"
-					+ "<p>If you wish, you may optionally specify additional labels, so that "
-					+ "if you make multiple copy-pastes into the same spreadsheet "
-					+ "then your data will retain annotations of your choosing. These labels "
-					+ "will appear as additional columns in your copy-pasted data, with every "
-					+ "row bearing the value you've entered.</p>" + "</html>");
-			gridbagConstraints.insets.bottom = 8;
-			panel.add(label, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-			gridbagConstraints.insets.bottom = 4;
-			gridbagConstraints.gridwidth = 1;
-		}
-
-		{
-			JLabel label = new JLabel("<html>Optional column: Image designation label</html>");
-			panel.add(label, gridbagConstraints);
-			gridbagConstraints.gridx++;
-
-			textfieldResultTableImageDesignation = new JTextField();
-			panel.add(textfieldResultTableImageDesignation, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			JLabel label = new JLabel("<html>Optional column: Researcher</html>");
-			panel.add(label, gridbagConstraints);
-			gridbagConstraints.gridx++;
-
-			textfieldResultTableResearcher = new JTextField();
-			panel.add(textfieldResultTableResearcher, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			JLabel label = new JLabel("<html>Optional column: Custom label</html>");
-			panel.add(label, gridbagConstraints);
-			gridbagConstraints.gridx++;
-
-			textfieldResultTableImageCustomLabel = new JTextField();
-			panel.add(textfieldResultTableImageCustomLabel, gridbagConstraints);
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		{
-			chkIncludeHeadersInCopyPaste = new JCheckBox("Copy with headers");
-			panel.add(chkIncludeHeadersInCopyPaste, gridbagConstraints);
-			chkIncludeHeadersInCopyPaste.setSelected(true);
-
-			gridbagConstraints.gridx++;
-
-			String pathToImage = "images/icons/copy.png";
-			ImageIcon myIcon = new ImageIcon(getClass().getClassLoader().getResource(pathToImage));
-
-			btnCopyTableDataToClipboard = new JButton("Copy table data to clipboard", myIcon);
-			gridbagConstraints.insets.bottom = 8;
-			panel.add(btnCopyTableDataToClipboard, gridbagConstraints);
-
-			btnCopyTableDataToClipboard.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					copyResultsTableToClipboard();
-				}
-			});
-
-			gridbagConstraints.gridx = 0;
-			gridbagConstraints.gridy++;
-		}
-
-		addEmptySpaceFillerLabel(panel, gridbagConstraints);
-
-		return panel;
 	}
 
 	/**
@@ -442,15 +288,15 @@ public class DscControlPanelDialog extends JDialog {
 					}
 
 					// json.put("featuresizepixels", getFeatureDetectionWindowSizeInPixels());
-					json.put("researcher", textfieldResultTableResearcher.getText().trim());
-					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
-					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
+//					json.put("researcher", textfieldResultTableResearcher.getText().trim());
+//					json.put("imagedesignation", textfieldResultTableImageDesignation.getText().trim());
+//					json.put("customlabel", textfieldResultTableImageCustomLabel.getText().trim());
 
 					JSONArray jsonDends = new JSONArray();
-					for (Object dendriteObj : pathListModel.toArray()) {
-						JSONObject jsonDend = ((DendriteSegment) dendriteObj).toJSON();
-						jsonDends.add(jsonDend);
-					}
+//					for (Object dendriteObj : pathListModel.toArray()) {
+//						JSONObject jsonDend = ((DendriteSegment) dendriteObj).toJSON();
+//						jsonDends.add(jsonDend);
+//					}
 
 					json.put("dendrites", jsonDends);
 
@@ -557,114 +403,6 @@ public class DscControlPanelDialog extends JDialog {
 	public void update() {
 	}
 
-	public void clearSpineAssociations() {
-		Object[] segments = this.pathListModel.toArray();
-		for (Object segment : segments) {
-			DendriteSegment dendrite = (DendriteSegment) segment;
-			dendrite.spines.clear();
-		}
-	}
-
-	public void populateResultsTable() {
-		resultsTableColumns = new String[5];
-		resultsTableColumns[0] = "Dendrite Segment";
-		resultsTableColumns[3] = "Spine Count";
-
-		Calibration cal = null; // ownerPlugin.getImageProcessor().getDimensions();
-		if (cal == null) {
-			resultsTableColumns[1] = "Length (pixels)";
-			resultsTableColumns[2] = "Avg. Width (pixels)";
-			resultsTableColumns[4] = "Spine Density (count/pixel)";
-		} else {
-			resultsTableColumns[1] = "Length (" + cal.getUnits() + ")";
-			resultsTableColumns[2] = "Avg. Width (" + cal.getUnits() + ")";
-			resultsTableColumns[4] = "Spine Density (count/" + cal.getUnit() + ")";
-		}
-
-		Object[] segments = this.pathListModel.toArray();
-		this.resultsTableData = new Object[segments.length][resultsTableColumns.length];
-		for (int iSegment = 0; iSegment < segments.length; iSegment++) {
-			DendriteSegment dendrite = (DendriteSegment) (segments[iSegment]);
-
-			Object[] resultRow = resultsTableData[iSegment];
-			resultRow[0] = dendrite.getName();
-
-			double dendriteLength = dendrite.minimumSeparation * dendrite.path.size();
-			if (cal != null) {
-				dendriteLength = cal.getX(dendriteLength);
-			}
-
-			double dendriteWidth = dendrite.MeanPixelWidth();
-			if (cal != null) {
-				dendriteWidth = cal.getX(dendriteWidth);
-			}
-
-			resultRow[1] = String.format("%.2f", dendriteLength);
-			resultRow[2] = String.format("%.2f", dendriteWidth);
-
-			resultRow[3] = String.format("%d", dendrite.spines.size());
-
-			double spinesPerUnit = ((double) dendrite.spines.size()) / dendriteLength;
-			resultRow[4] = String.format("%.5f", spinesPerUnit);
-		}
-
-		this.resultsTable = new JTable(resultsTableData, resultsTableColumns);
-		this.resultsTableHolder.setViewportView(this.resultsTable);
-		this.resultsTable.setFillsViewportHeight(true);
-	}
-
-	public void copyResultsTableToClipboard() {
-		String s = "";
-
-		String strImageDes = this.textfieldResultTableImageDesignation.getText().trim();
-		String strResearcher = this.textfieldResultTableResearcher.getText().trim();
-		String strCustomLbl = this.textfieldResultTableImageCustomLabel.getText().trim();
-
-		if (this.chkIncludeHeadersInCopyPaste.isSelected()) {
-			for (String columnName : this.resultsTableColumns) {
-				s += columnName + "\t";
-			}
-
-			if (!strImageDes.isEmpty()) {
-				s += "Image Designator\t";
-			}
-			if (!strResearcher.isEmpty()) {
-				s += "Researcher\t";
-			}
-			if (!strCustomLbl.isEmpty()) {
-				s += "Custom Label\t";
-			}
-
-			// Trim the last tab.
-			s = s.substring(0, s.length() - 1);
-			s += "\n";
-		}
-
-		for (Object[] row : this.resultsTableData) {
-			for (Object rowItem : row) {
-				s += rowItem.toString() + "\t";
-			}
-
-			if (!strImageDes.isEmpty()) {
-				s += strImageDes + "\t";
-			}
-			if (!strResearcher.isEmpty()) {
-				s += strResearcher + "\t";
-			}
-			if (!strCustomLbl.isEmpty()) {
-				s += strCustomLbl + "\t";
-			}
-
-			s = s.substring(0, s.length() - 1);
-			s += "\n";
-		}
-
-		// https://stackoverflow.com/questions/6710350/copying-text-to-the-clipboard-using-java
-		StringSelection stringSelection = new StringSelection(s);
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		clipboard.setContents(stringSelection, null);
-	}
-
 	private void addEmptySpaceFillerLabel(JPanel panel, GridBagConstraints gridbagConstraints) {
 		JLabel emptyLabel = new JLabel(" ");
 		gridbagConstraints.insets.top = 20;
@@ -712,14 +450,14 @@ public class DscControlPanelDialog extends JDialog {
 		// FeatureDetectionWindowSizeUnitsEnum.PIXELS;
 		// this.textfieldFeatureDetectionWindowSize.setText(String.format(v.toString()));
 
-		v = jsonObj.get("researcher");
-		this.textfieldResultTableResearcher.setText(String.format(v.toString()));
-
-		v = jsonObj.get("imagedesignation");
-		this.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
-
-		v = jsonObj.get("customlabel");
-		this.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
+//		v = jsonObj.get("researcher");
+//		this.textfieldResultTableResearcher.setText(String.format(v.toString()));
+//
+//		v = jsonObj.get("imagedesignation");
+//		this.textfieldResultTableImageDesignation.setText(String.format(v.toString()));
+//
+//		v = jsonObj.get("customlabel");
+//		this.textfieldResultTableImageCustomLabel.setText(String.format(v.toString()));
 
 		JSONArray jsonDends = (JSONArray) jsonObj.get("dendrites");
 		List<Point2D> allspines = new ArrayList<Point2D>();
@@ -728,8 +466,8 @@ public class DscControlPanelDialog extends JDialog {
 			DendriteSegment dendrite = new DendriteSegment();
 			dendrite.fromJSON(jsonDend, ownerPlugin.getImageProcessor().workingImg);
 
-			this.pathListModel.addElement(dendrite);
-			// ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
+//			this.pathListModel.addElement(dendrite);
+//			// ownerPlugin.getImageProcessor().addPathToDrawOverlay(dendrite);
 
 			allspines.addAll(dendrite.spines);
 		}
@@ -737,7 +475,7 @@ public class DscControlPanelDialog extends JDialog {
 		// Add all the spines as visible ROI points in one big blast.
 		// ownerPlugin.getImageProcessor().AddPointRoisAsSpineMarkers(allspines);
 
-		populateResultsTable();
+//		populateResultsTable();
 
 		update();
 		ownerPlugin.getImageProcessor().update();

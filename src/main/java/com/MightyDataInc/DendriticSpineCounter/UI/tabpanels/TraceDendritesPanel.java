@@ -179,7 +179,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 					}
 					controlPanel.getPlugin().getModel().removeDendrite(currentDendrite);
 					pathListModel.removeElement(currentDendrite);
-					
+
 					update();
 					controlPanel.getPlugin().getImageProcessor().update();
 				}
@@ -237,12 +237,11 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	@Override
 	protected void onTimer() {
-		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor()
-				.getCurrentImagePolylinePathPoints(Roi.POLYLINE);
+		List<Point2D> pathPoints = myImageProcessor().getCurrentImagePolylinePathPoints(Roi.POLYLINE);
 		boolean isThereACurrentPath = pathPoints != null;
 		btnTraceCurrentPolyline.setEnabled(isThereACurrentPath);
 
-		controlPanel.getPlugin().getImageProcessor().drawDendriteOverlays();
+		myImageProcessor().drawDendriteOverlays();
 	}
 
 	private void onBtnTrace() {
@@ -258,7 +257,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 		controlPanel.getPlugin().getModel().addDendrite(dendrite);
 		this.pathListModel.addElement(dendrite);
-		
+
 		controlPanel.getPlugin().getModel().findNearestDendritesForAllSpines();
 
 		this.updateCurrentDendriteSelection(dendrite);

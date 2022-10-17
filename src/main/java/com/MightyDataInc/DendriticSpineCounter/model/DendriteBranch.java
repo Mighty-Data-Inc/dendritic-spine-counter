@@ -2,7 +2,6 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,8 +10,6 @@ import com.MightyDataInc.DendriticSpineCounter.UI.DscImageProcessor;
 
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class DendriteBranch {
 	private List<DendritePixel> dendritePixels = new ArrayList<DendritePixel>();
@@ -257,5 +254,33 @@ public class DendriteBranch {
 		}
 
 		return ptsOutSpaced;
+	}
+
+	public double getAreaInPixels() {
+		List<Point2D> points = getRoiPoints();
+		if (points.size() < 3) {
+			return 0;
+		}
+		// Use the Slicker algorithm.
+		// https://www.geeksforgeeks.org/slicker-algorithm-to-find-the-area-of-a-polygon-in-java/
+
+		double total = 0;
+		for (int i = 0; i < points.size(); i++) {
+			int iNext = (i + 1) % points.size();
+
+			Point2D pt = points.get(i);
+			Point2D ptNext = points.get(iNext);
+
+			double thisTerm = (pt.getX() * ptNext.getY()) - (ptNext.getX() * pt.getY());
+			total += thisTerm;
+		}
+
+		double area = total / 2;
+		return area;
+	}
+
+	public double getAverageWidthInPixels() {
+		double avgWidth = this.getAreaInPixels() / this.getLengthInPixels();
+		return avgWidth;
 	}
 }
