@@ -40,7 +40,8 @@ public class ReportPanel extends DscBasePanel {
 	private Object[][] detailsTableData = new Object[0][];
 	private String[] detailsTableColumns;
 
-	private JCheckBox chkIncludeHeadersInCopyPaste;
+	private JCheckBox chkIncludeSummaryHeadersInCopyPaste;
+	private JCheckBox chkIncludeDetailsHeadersInCopyPaste;
 
 	public ReportPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
@@ -93,9 +94,9 @@ public class ReportPanel extends DscBasePanel {
 		}
 
 		{
-			chkIncludeHeadersInCopyPaste = new JCheckBox("Include headers when copying");
-			this.add(chkIncludeHeadersInCopyPaste, gridbagConstraints);
-			chkIncludeHeadersInCopyPaste.setSelected(true);
+			chkIncludeSummaryHeadersInCopyPaste = new JCheckBox("Include headers when copying");
+			this.add(chkIncludeSummaryHeadersInCopyPaste, gridbagConstraints);
+			chkIncludeSummaryHeadersInCopyPaste.setSelected(true);
 
 			gridbagConstraints.gridx++;
 
@@ -109,7 +110,12 @@ public class ReportPanel extends DscBasePanel {
 			btnSummary.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					copySummaryTableToClipboard();
+					String[] columns = null;
+					if (chkIncludeSummaryHeadersInCopyPaste.isSelected()) {
+						columns = summaryTableColumns;
+					}
+					String s = getTableExport(summaryTableData, columns, "\t");
+					copyToClipboard(s);
 				}
 			});
 		}
@@ -127,9 +133,8 @@ public class ReportPanel extends DscBasePanel {
 			btnExportSummary.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					// https://stackoverflow.com/questions/7211107/how-to-use-filedialog
-					String s = getSummaryTableExport(",");
-					saveFileData("Save summary table to file", s);
+					String s = getTableExport(summaryTableData, summaryTableColumns, ",");
+					exportFileData("Save summary table to file", s);
 				}
 			});
 
@@ -163,6 +168,9 @@ public class ReportPanel extends DscBasePanel {
 		}
 
 		{
+			chkIncludeDetailsHeadersInCopyPaste = new JCheckBox("Include headers when copying");
+			this.add(chkIncludeDetailsHeadersInCopyPaste, gridbagConstraints);
+			chkIncludeDetailsHeadersInCopyPaste.setSelected(true);
 			gridbagConstraints.gridx++;
 
 			String pathToImage = "images/icons/copy.png";
@@ -175,11 +183,16 @@ public class ReportPanel extends DscBasePanel {
 			btn.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					copySummaryTableToClipboard();
+					String[] columns = null;
+					if (chkIncludeDetailsHeadersInCopyPaste.isSelected()) {
+						columns = detailsTableColumns;
+					}
+					String s = getTableExport(detailsTableData, columns, "\t");
+					copyToClipboard(s);
 				}
 			});
 		}
-		
+
 		{
 			gridbagConstraints.gridy++;
 			gridbagConstraints.insets.top = 2;
@@ -193,16 +206,14 @@ public class ReportPanel extends DscBasePanel {
 			btnExportSummary.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					// https://stackoverflow.com/questions/7211107/how-to-use-filedialog
-					String s = getSummaryTableExport(",");
-					saveFileData("Save details table to file", s);
+					String s = getTableExport(detailsTableData, detailsTableColumns, ",");
+					exportFileData("Save details table to file", s);
 				}
 			});
 
 			gridbagConstraints.gridx = 0;
 			gridbagConstraints.gridy++;
 		}
-		
 
 		addNextButton("Next: Save/Load", "images/icons/file-save-24.png");
 
@@ -217,6 +228,7 @@ public class ReportPanel extends DscBasePanel {
 	@Override
 	public void update() {
 		populateSummaryTable();
+		populateDetailsTable();
 	}
 
 	@Override
@@ -257,9 +269,9 @@ public class ReportPanel extends DscBasePanel {
 	private void populateSummaryTable() {
 		summaryTableColumns = generateSummaryTableColumns();
 
-		summaryTableData = new Object[myModel().getDendrites().size()][summaryTableColumns.length];
-
 		List<DendriteBranch> dendrites = myModel().getDendrites();
+		summaryTableData = new Object[dendrites.size()][summaryTableColumns.length];
+
 		for (int iDendrite = 0; iDendrite < dendrites.size(); iDendrite++) {
 			DendriteBranch dendrite = dendrites.get(iDendrite);
 
@@ -313,11 +325,79 @@ public class ReportPanel extends DscBasePanel {
 		this.summaryTable.setFillsViewportHeight(true);
 	}
 
-	public String getSummaryTableExport(String delimiter) {
+	private String[] generateDetailsTableColumns() {
+		List<String> headers = new ArrayList<String>();
+
+		headers.add("Spine ID");
+		headers.add("Dendrite Branch");
+
+		headers.add("Classification");
+
+		String unitname = "px";
+		if (myModel().imageHasValidPhysicalUnitScale()) {
+			unitname = myModel().getImageScalePhysicalUnitName();
+		}
+
+		headers.add(String.format("Neck Length (%s)", unitname));
+		headers.add(String.format("Neck Width (%s)", unitname));
+		headers.add(String.format("Head Width (%s)", unitname));
+
+		headers.add("Notes");
+
+		// https://www.geeksforgeeks.org/arraylist-toarray-method-in-java-with-examples/
+		String arr[] = new String[headers.size()];
+		arr = headers.toArray(arr);
+
+		return arr;
+	}
+
+	private void populateDetailsTable() {
+		detailsTableColumns = generateDetailsTableColumns();
+
+		List<DendriteSpine> spines = myModel().getSpines();
+		detailsTableData = new Object[myModel().getSpines().size()][detailsTableColumns.length];
+
+		for (int iSpine = 0; iSpine < spines.size(); iSpine++) {
+			Object[] row = detailsTableData[iSpine];
+
+			DendriteSpine spine = spines.get(iSpine);
+
+			int iCol = 0;
+			row[iCol++] = spine.getId();
+
+			String dendriteName = null;
+			DendriteBranch dendrite = spine.getNearestDendrite();
+			if (dendrite != null) {
+				dendriteName = dendrite.name;
+			}
+			if (dendriteName == null || dendriteName.length() == 0) {
+				dendriteName = String.format("Dendrite branch #%d", dendrite.getId());
+			}
+
+			row[iCol++] = dendriteName;
+
+			row[iCol++] = spine.getClassification();
+
+			row[iCol++] = String.format("%.3f",
+					myModel().convertImageScaleFromPixelsToPhysicalUnits(spine.neckLengthInPixels));
+			row[iCol++] = String.format("%.3f",
+					myModel().convertImageScaleFromPixelsToPhysicalUnits(spine.neckWidthInPixels));
+			row[iCol++] = String.format("%.3f",
+					myModel().convertImageScaleFromPixelsToPhysicalUnits(spine.headWidthInPixels));
+
+			row[iCol++] = spine.notes;
+		}
+
+		this.detailsTable = new JTable(detailsTableData, detailsTableColumns);
+		this.detailsTableHolder.setViewportView(detailsTable);
+		this.detailsTable.setFillsViewportHeight(true);
+	}
+
+	private static String getTableExport(Object[][] tableData, String[] tableColumns, String delimiter) {
 		String s = "";
 
-		if (this.chkIncludeHeadersInCopyPaste.isSelected()) {
-			for (String columnName : this.summaryTableColumns) {
+		if (tableColumns != null) {
+			for (String columnName : tableColumns) {
 				s += columnName + delimiter;
 			}
 
@@ -326,7 +406,7 @@ public class ReportPanel extends DscBasePanel {
 			s += "\n";
 		}
 
-		for (Object[] row : this.summaryTableData) {
+		for (Object[] row : tableData) {
 			for (Object rowItem : row) {
 				s += rowItem.toString() + delimiter;
 			}
@@ -337,18 +417,15 @@ public class ReportPanel extends DscBasePanel {
 		return s;
 	}
 
-	public String copySummaryTableToClipboard() {
-		String s = getSummaryTableExport("\t");
-
+	private String copyToClipboard(String s) {
 		// https://stackoverflow.com/questions/6710350/copying-text-to-the-clipboard-using-java
 		StringSelection stringSelection = new StringSelection(s);
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		clipboard.setContents(stringSelection, null);
-
 		return s;
 	}
-	
-	public void saveFileData(String sPrompt, String sdata) {
+
+	private void exportFileData(String sPrompt, String sdata) {
 		// https://stackoverflow.com/questions/7211107/how-to-use-filedialog
 		FileDialog fd = new FileDialog(controlPanel, sPrompt, FileDialog.SAVE);
 		fd.setFile("*.csv");
