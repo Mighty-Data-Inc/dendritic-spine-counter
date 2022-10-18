@@ -374,10 +374,26 @@ public class DscModel {
 		return jsonObj;
 	}
 
-	public static DscModel loadFromJsonObject(JSONObject jsonObj) {
-		return null;
-		// DscModel model = new DscModel();
-		// return model;
+	public static DscModel loadFromJsonObject(JSONObject jsonModel) {
+		DscModel model = new DscModel();
+		
+		model.featureWindowSizeInPixels = (double)jsonModel.get("feature_window_size_in_pixels");
+		model.imageScalePhysicalUnitName = (String)jsonModel.get("image_scale_physical_unit_name");
+		model.imageScalePhysicalUnitsPerPixel = (double)jsonModel.get("image_scale_physical_units_per_pixel");
+
+		JSONArray jsonSpineClasses = (JSONArray)jsonModel.get("spine_classes");
+		model.spineClasses.clear();
+		for (Object spineClass : jsonSpineClasses) {
+			model.spineClasses.add((String)spineClass);
+		}
+		
+		// TODO: Deserialize dendrites.
+		
+		// TODO: Deserialize spines.
+		
+		// TODO: Set spines to dendrites.
+		
+		return model;
 	}
 
 	@SuppressWarnings("unchecked")

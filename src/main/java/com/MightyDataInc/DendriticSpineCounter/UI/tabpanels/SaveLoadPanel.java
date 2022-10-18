@@ -158,7 +158,7 @@ public class SaveLoadPanel extends DscBasePanel {
 						return;
 					}
 
-					if (versionNumber != myPlugin().getApplicationVersion()) {
+					if (!versionNumber.equals(myPlugin().getApplicationVersion())) {
 						JOptionPane.showMessageDialog(null, "<html>This JSON file appears to be from a different "
 								+ "version of this application. <br/>We're very sorry, but older save files are no longer "
 								+ "compatible with new updates. <br/>You'll have to re-tag your images. We normally try "
@@ -167,7 +167,7 @@ public class SaveLoadPanel extends DscBasePanel {
 						return;
 					}
 
-					DscModel newModel = DscModel.loadFromJsonObject(jsonObj);
+					DscModel newModel = DscModel.loadFromJsonObject((JSONObject)jsonObj.get("model"));
 					if (newModel != null) {
 						myPlugin().setModel(newModel);
 					}
