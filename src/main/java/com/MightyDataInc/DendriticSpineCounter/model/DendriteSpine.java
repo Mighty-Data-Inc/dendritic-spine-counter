@@ -1,13 +1,11 @@
 package com.MightyDataInc.DendriticSpineCounter.model;
 
 import java.awt.Color;
-import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import ij.gui.OvalRoi;
@@ -77,6 +75,10 @@ public class DendriteSpine extends Point2D {
 		this.createRoiAtCurrentLocation();
 	}
 
+	// Empty constructor for deserialization.
+	private DendriteSpine() {
+	}
+
 	@Override
 	public void setLocation(double x, double y) {
 		this.x = x;
@@ -120,7 +122,11 @@ public class DendriteSpine extends Point2D {
 
 	public void setNearestDendrite(DendriteBranch dendrite) {
 		this.nearestDendrite = dendrite;
-		this.nearestDendriteId = dendrite.getId();
+		if (dendrite != null) {
+			this.nearestDendriteId = dendrite.getId();
+		} else {
+			this.nearestDendriteId = -1;
+		}
 	}
 
 	public DendriteBranch findNearestDendrite(Collection<DendriteBranch> dendrites) {
@@ -229,4 +235,34 @@ public class DendriteSpine extends Point2D {
 
 		return jsonSpine;
 	}
+
+	public static DendriteSpine loadFromJsonObject(JSONObject jsonSpine) {
+		DendriteSpine spine = new DendriteSpine();
+
+		spine.id = ((Long) jsonSpine.get("id")).intValue();
+		if (spine.id >= nextId) {
+			nextId = spine.id + 1;
+		}
+
+		spine.nearestDendriteId = ((Long) jsonSpine.get("nearest_dendrite_id")).intValue();
+		if (spine.id >= nextId) {
+			nextId = spine.id + 1;
+		}
+
+		spine.x = ((Long) jsonSpine.get("x")).floatValue();
+		spine.y = ((Long) jsonSpine.get("x")).floatValue();
+
+		spine.neckLengthInPixels = (double) jsonSpine.get("neck_length_in_pixels");
+		spine.neckWidthInPixels = (double) jsonSpine.get("neck_width_in_pixels");
+		spine.headWidthInPixels = (double) jsonSpine.get("head_width_in_pixels");
+
+		spine.contrast = (double) jsonSpine.get("contrast");
+		spine.angle = (double) jsonSpine.get("angle");
+		spine.featureWindowSize = (double) jsonSpine.get("feature_window_size");
+
+		spine.notes = (String) jsonSpine.get("notes");
+
+		return spine;
+	}
+
 }

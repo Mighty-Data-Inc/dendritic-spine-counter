@@ -97,7 +97,6 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	@Override
 	public JPanel init() {
 		this.imgSpineSize = 300;
-		DscModel model = controlPanel.getPlugin().getModel();
 
 		ptDragStart = null;
 		ptDragSpineOrigPosition = null;
@@ -311,7 +310,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			btnPrevSpine.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					currentSpine = model.findPreviousSpine(currentSpine);
+					currentSpine = myModel().findPreviousSpine(currentSpine);
 					radioNeckLength.doClick();
 					update();
 				}
@@ -324,7 +323,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			btnNextSpine.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					currentSpine = model.findNextSpine(currentSpine);
+					currentSpine = myModel().findNextSpine(currentSpine);
 					radioNeckLength.doClick();
 					update();
 				}
@@ -351,7 +350,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			btnNextUnclassified.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					currentSpine = model.findNextUnclassifiedSpine(currentSpine);
+					currentSpine = myModel().findNextUnclassifiedSpine(currentSpine);
 					radioNeckLength.doClick();
 					update();
 				}

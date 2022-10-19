@@ -376,29 +376,44 @@ public class DscModel {
 
 	public static DscModel loadFromJsonObject(JSONObject jsonModel) {
 		DscModel model = new DscModel();
-		
-		model.featureWindowSizeInPixels = (double)jsonModel.get("feature_window_size_in_pixels");
-		model.imageScalePhysicalUnitName = (String)jsonModel.get("image_scale_physical_unit_name");
-		model.imageScalePhysicalUnitsPerPixel = (double)jsonModel.get("image_scale_physical_units_per_pixel");
 
-		JSONArray jsonSpineClasses = (JSONArray)jsonModel.get("spine_classes");
+		model.featureWindowSizeInPixels = (double) jsonModel.get("feature_window_size_in_pixels");
+		model.imageScalePhysicalUnitName = (String) jsonModel.get("image_scale_physical_unit_name");
+		model.imageScalePhysicalUnitsPerPixel = (double) jsonModel.get("image_scale_physical_units_per_pixel");
+
+		JSONArray jsonSpineClasses = (JSONArray) jsonModel.get("spine_classes");
 		model.spineClasses.clear();
 		for (Object spineClass : jsonSpineClasses) {
-			model.spineClasses.add((String)spineClass);
+			model.spineClasses.add((String) spineClass);
 		}
-		
-		// TODO: Deserialize dendrites.
-		JSONArray jsonDendrites = (JSONArray)jsonModel.get("dendrites");
+
+		// Deserialize dendrites.
+		JSONArray jsonDendrites = (JSONArray) jsonModel.get("dendrites");
 		model.dendrites.clear();
 		for (Object jsonDendrite : jsonDendrites) {
-			DendriteBranch dendrite = DendriteBranch.loadFromJsonObject((JSONObject)jsonDendrite);
+			DendriteBranch dendrite = DendriteBranch.loadFromJsonObject((JSONObject) jsonDendrite);
+			if (dendrite == null) {
+				continue;
+			}
 			model.dendrites.put(dendrite.getId(), dendrite);
 		}
-		
+
 		// TODO: Deserialize spines.
-		
-		// TODO: Set spines to dendrites.
-		
+		JSONArray jsonSpines = (JSONArray) jsonModel.get("spines");
+		model.spines.clear();
+		for (Object jsonSpine : jsonSpines) {
+			DendriteSpine spine = DendriteSpine.loadFromJsonObject((JSONObject) jsonSpine);
+			if (spine == null) {
+				continue;
+			}
+
+			// Connect the spine to its nearest dendrite, if it's legit.
+			DendriteBranch nearestDendrite = model.dendrites.get(spine.getNearestDendriteId());
+			spine.setNearestDendrite(nearestDendrite);
+
+			model.spines.put(spine.getId(), spine);
+		}
+
 		return model;
 	}
 

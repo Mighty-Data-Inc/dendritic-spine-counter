@@ -1,38 +1,23 @@
 package com.MightyDataInc.DendriticSpineCounter.UI.tabpanels;
 
-import java.awt.Dimension;
-import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.filechooser.FileFilter;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.MightyDataInc.DendriticSpineCounter.UI.DscControlPanelDialog;
-import com.MightyDataInc.DendriticSpineCounter.model.DendriteBranch;
-import com.MightyDataInc.DendriticSpineCounter.model.DendriteSpine;
 import com.MightyDataInc.DendriticSpineCounter.model.DscModel;
 
 /**
