@@ -224,7 +224,7 @@ public class FindSpinesPanel extends DscBasePanel {
 
 	@Override
 	public void onTimer() {
-		if (myPlugin().getCurrentToolName() == "multipoint") {
+		if (myPlugin().getCurrentToolName().equals("multipoint")) {
 			this.btnActivateMultiPointTool.setEnabled(false);
 		} else {
 			this.btnActivateMultiPointTool.setEnabled(true);
@@ -250,7 +250,7 @@ public class FindSpinesPanel extends DscBasePanel {
 
 	@Override
 	protected void onPanelExited() {
-		if (controlPanel.getPlugin().getCurrentToolName() == "multipoint") {
+		if (controlPanel.getPlugin().getCurrentToolName().equals("multipoint")) {
 			List<Point2D> points = controlPanel.getPlugin().getImageProcessor()
 					.getCurrentImagePolylinePathPoints(Roi.POINT);
 
@@ -276,15 +276,15 @@ public class FindSpinesPanel extends DscBasePanel {
 	}
 
 	private void lockSpines() {
-		List<Point2D> points = controlPanel.getPlugin().getImageProcessor()
+		List<Point2D> points = myPlugin().getImageProcessor()
 				.getCurrentImagePolylinePathPoints(Roi.POINT);
 		if (points == null || points.size() == 0) {
 			return;
 		}
 
-		double featureWindowSize = controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels();
+		double featureWindowSize = myPlugin().getModel().getFeatureWindowSizeInPixels();
 		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
-		DscModel model = controlPanel.getPlugin().getModel();
+		DscModel model = myPlugin().getModel();
 
 		for (Point2D point : points) {
 			DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(), featureWindowSize);
@@ -334,7 +334,7 @@ public class FindSpinesPanel extends DscBasePanel {
 			return;
 		}
 
-		controlPanel.getPlugin().activateMultiPointTool();
+		myPlugin().activateMultiPointTool();
 
 		List<DendriteSpine> points = controlPanel.getPlugin().getModel().getSpines();
 
@@ -349,10 +349,10 @@ public class FindSpinesPanel extends DscBasePanel {
 
 		PointRoi roi = new PointRoi(xPoints, yPoints);
 
-		controlPanel.getPlugin().getModel().clearSpines();
+		myModel().clearSpines();
 
-		controlPanel.getPlugin().getImageProcessor().setCurrentRoi(roi);
-		controlPanel.getPlugin().getImageProcessor().update();
+		myImageProcessor().setCurrentRoi(roi);
+		myImageProcessor().update();
 	}
 
 	private void autoDetectSpines(double contrastThresholdFrac) {

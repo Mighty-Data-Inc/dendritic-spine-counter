@@ -277,7 +277,7 @@ public class ReportPanel extends DscBasePanel {
 
 			String dendriteName = dendrite.name;
 			if (dendriteName == null || dendriteName.length() == 0) {
-				dendriteName = String.format("Dendrite branch #%d", dendrite.getId());
+				dendriteName = dendrite.getName();
 			}
 
 			Object[] row = summaryTableData[iDendrite];
@@ -300,7 +300,7 @@ public class ReportPanel extends DscBasePanel {
 			spinesNoFilo.removeIf(new Predicate<DendriteSpine>() {
 				@Override
 				public boolean test(DendriteSpine arg0) {
-					return arg0.getClassification() == "filopodia";
+					return arg0.getClassification().equals("filopodia");
 				}
 			});
 
@@ -368,10 +368,7 @@ public class ReportPanel extends DscBasePanel {
 			String dendriteName = null;
 			DendriteBranch dendrite = spine.getNearestDendrite();
 			if (dendrite != null) {
-				dendriteName = dendrite.name;
-			}
-			if (dendriteName == null || dendriteName.length() == 0) {
-				dendriteName = String.format("Dendrite branch #%d", dendrite.getId());
+				dendriteName = dendrite.getName();
 			}
 
 			row[iCol++] = dendriteName;

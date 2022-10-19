@@ -410,7 +410,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				@Override
 				public boolean isPressed() {
-					return currentTool == "pan";
+					return currentTool.equals("pan");
 				}
 			});
 			this.add(btnPan, gridbagConstraints);
@@ -491,7 +491,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 				@Override
 				public boolean isPressed() {
-					return currentTool == "measure";
+					return currentTool.equals("measure");
 				}
 			});
 			this.add(btnMeasure, gridbagConstraints);
@@ -534,7 +534,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 	}
 
 	private void setImageCursor(String tool, boolean isAltDown, boolean isControlDown) {
-		if (tool == null || tool.trim() == "") {
+		if (tool == null || tool.trim().length() == 0) {
 			tool = this.currentTool;
 		}
 
@@ -544,9 +544,9 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			tool = "pan";
 		}
 
-		if (tool == "pan") {
+		if (tool.equals("pan")) {
 			lblSpineImg.setCursor(new Cursor(Cursor.MOVE_CURSOR));
-		} else if (tool == "measure") {
+		} else if (tool.equals("measure")) {
 			lblSpineImg.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 		}
 	}
@@ -790,11 +790,11 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		double dragDiffX = x - this.ptDragStart.getX();
 		double dragDiffY = y - this.ptDragStart.getY();
 
-		if (tool == null || tool.trim() == "") {
+		if (tool == null || tool.trim().length() == 0) {
 			tool = this.currentTool;
 		}
 
-		if (tool == "pan") {
+		if (tool.equals("pan")) {
 			double pixelScale = this.getPixelScale();
 			double dragImagePositionDeltaX = dragDiffX * pixelScale;
 			double dragImagePositionDeltaY = dragDiffY * pixelScale;
@@ -808,7 +808,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 			currentSpine.setLocation(newImgX, newImgY);
 			update();
-		} else if (tool == "measure") {
+		} else if (tool.equals("measure")) {
 			if (this.gfxSpine != null) {
 				gfxSpine.drawLine((int) this.ptDragStart.getX(), (int) this.ptDragStart.getY(), x, y);
 				lblSpineImg.repaint();

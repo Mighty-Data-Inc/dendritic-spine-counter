@@ -91,9 +91,9 @@ public class DscModel {
 	}
 
 	public boolean imageHasValidPhysicalUnitScale() {
-		if (imageScalePhysicalUnitName == null || imageScalePhysicalUnitName == ""
-				|| imageScalePhysicalUnitName == "null" || imageScalePhysicalUnitName == "pixel"
-				|| imageScalePhysicalUnitName == "pixels" || imageScalePhysicalUnitName == "pixel(s)") {
+		if (imageScalePhysicalUnitName == null || imageScalePhysicalUnitName.length() == 0
+				|| imageScalePhysicalUnitName.equals("null") || imageScalePhysicalUnitName.equals("pixel")
+				|| imageScalePhysicalUnitName.equals("pixels") || imageScalePhysicalUnitName.equals("pixel(s)")) {
 			return false;
 		}
 		return true;
@@ -388,6 +388,12 @@ public class DscModel {
 		}
 		
 		// TODO: Deserialize dendrites.
+		JSONArray jsonDendrites = (JSONArray)jsonModel.get("dendrites");
+		model.dendrites.clear();
+		for (Object jsonDendrite : jsonDendrites) {
+			DendriteBranch dendrite = DendriteBranch.loadFromJsonObject((JSONObject)jsonDendrite);
+			model.dendrites.put(dendrite.getId(), dendrite);
+		}
 		
 		// TODO: Deserialize spines.
 		

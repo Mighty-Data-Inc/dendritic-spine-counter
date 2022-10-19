@@ -3,6 +3,7 @@ package com.MightyDataInc.DendriticSpineCounter.model;
 import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +64,10 @@ public class DendriteBranch {
 
 		this.id = nextId;
 		nextId++;
+	}
+
+	// Empty constructor, for deserialization only!
+	private DendriteBranch() {
 	}
 
 	public static DendriteBranch fromPathPoints(List<Point2D> pathPoints, double featureWindowSize,
@@ -140,11 +145,15 @@ public class DendriteBranch {
 		}
 
 		PolygonRoi roi = new PolygonRoi(xPoints, yPoints, Roi.POLYGON);
+		roi = decorateRoi(roi);
 
+		return roi;
+	}
+
+	private static PolygonRoi decorateRoi(PolygonRoi roi) {
 		roi.setStrokeColor(Color.BLUE);
 		roi.setStrokeWidth(1.5);
 		roi.setFillColor(new Color(.4f, .6f, 1f, .4f));
-
 		return roi;
 	}
 
@@ -190,6 +199,37 @@ public class DendriteBranch {
 		return totalLength;
 	}
 
+	public Point2D getRepresentativeCoordinates() {
+		// Interestingly enough, this *doesn't* refer to the mean of all
+		// the pixel points or ROI points, because the structure could be
+		// concave. Instead, we're going to pick a "representative" point.
+
+		if (dendritePixels.size() > 3) {
+			// We pick the median dendrite pixel.
+			int iMedian = dendritePixels.size() / 2;
+			Point2D ptMedian = dendritePixels.get(iMedian);
+			return ptMedian;
+		}
+
+		List<Point2D> roiPoints = getRoiPoints();
+		if (roiPoints.size() < 3) {
+			// We have neither a set of dendrite pixels, nor a ROI.
+			// We're just a pointless dude.
+			return null;
+		}
+
+		// We take the point that's 1/4 of the way around the perimeter,
+		// and then we take the point that's 3/4 of the way around the perimeter
+		// because they should be roughly adjacent to one another.
+		int iRoi1Quartile = (int) (roiPoints.size() * 0.25);
+		int iRoi3Quartile = (int) (roiPoints.size() * 0.75);
+		Point2D pt1Qt = roiPoints.get(iRoi1Quartile);
+		Point2D pt3Qt = roiPoints.get(iRoi3Quartile);
+
+		Point2D ptCenter = new Point2D.Double((pt1Qt.getX() + pt3Qt.getX()) / 2.0, (pt1Qt.getY() + pt3Qt.getY()) / 2.0);
+		return ptCenter;
+	}
+
 	public String getName() {
 		String s = this.name;
 		if (s == null) {
@@ -198,17 +238,13 @@ public class DendriteBranch {
 		s = s.trim();
 
 		if (s.isEmpty()) {
-			if (dendritePixels == null || dendritePixels.size() == 0) {
-				s = "Path with no points specified";
-			} else if (dendritePixels.size() == 1) {
-				Point2D pixelFirst = dendritePixels.get(0);
-				s = String.format("Dendrite branch #%d: (%d, %d)", this.id, (int) pixelFirst.getX(),
-						(int) pixelFirst.getY());
+			Point2D ptCenter = getRepresentativeCoordinates();
+
+			if (ptCenter == null) {
+				s = String.format("Dendrite branch #%d", this.id);
 			} else {
-				Point2D pixelFirst = dendritePixels.get(0);
-				Point2D pixelLast = dendritePixels.get(dendritePixels.size() - 1);
-				s = String.format("Dendrite branch #%d: (%d, %d) to (%d, %d)", this.id, (int) pixelFirst.getX(),
-						(int) pixelFirst.getY(), (int) pixelLast.getX(), (int) pixelLast.getY());
+				s = String.format("Dendrite branch #%d @(%d, %d)", this.id, (int) ptCenter.getX(),
+						(int) ptCenter.getY());
 			}
 		}
 		return s;
@@ -301,7 +337,7 @@ public class DendriteBranch {
 		JSONObject jsonDendrite = new JSONObject();
 
 		jsonDendrite.put("id", this.id);
-		jsonDendrite.put("name", this.name);
+		jsonDendrite.put("name", (this.name == null) ? "" : this.name);
 		jsonDendrite.put("length_in_pixels", this.lengthInPixels);
 
 		JSONObject jsonPolygon = new JSONObject();
@@ -318,5 +354,44 @@ public class DendriteBranch {
 
 		jsonDendrite.put("polygon", jsonPolygon);
 		return jsonDendrite;
+	}
+
+	public static DendriteBranch loadFromJsonObject(JSONObject jsonDendrite) {
+		DendriteBranch dendrite = new DendriteBranch();
+
+		dendrite.id = ((Long) jsonDendrite.get("id")).intValue();
+		if (dendrite.id >= nextId) {
+			nextId = dendrite.id + 1;
+		}
+
+		dendrite.name = (String) jsonDendrite.get("name");
+		if (dendrite.name == null) {
+			dendrite.name = "";
+		}
+
+		dendrite.lengthInPixels = (double) jsonDendrite.get("length_in_pixels");
+
+		JSONObject jsonPolygon = (JSONObject) jsonDendrite.get("polygon");
+
+		JSONArray jsonXPoints = (JSONArray) jsonPolygon.get("x");
+		JSONArray jsonYPoints = (JSONArray) jsonPolygon.get("y");
+
+		int npoints = jsonXPoints.size();
+		if (npoints != jsonYPoints.size()) {
+			throw new IllegalArgumentException("PolygonRoi has different number of X and Y coordinates.");
+		}
+
+		float[] xpoints = new float[npoints];
+		float[] ypoints = new float[npoints];
+		for (int iPoint = 0; iPoint < npoints; iPoint++) {
+			xpoints[iPoint] = ((Long) jsonXPoints.get(iPoint)).floatValue();
+			ypoints[iPoint] = ((Long) jsonYPoints.get(iPoint)).floatValue();
+		}
+
+		PolygonRoi roi = new PolygonRoi(xpoints, ypoints, Roi.POLYGON);
+		roi = decorateRoi(roi);
+		dendrite.roi = roi;
+
+		return dendrite;
 	}
 }

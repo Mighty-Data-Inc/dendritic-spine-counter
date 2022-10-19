@@ -218,7 +218,18 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	@Override
 	public void update() {
+		pathListModel.clear();
+		for (DendriteBranch dendrite : myModel().getDendrites()) {
+			this.pathListModel.addElement(dendrite);
+		}
 		pathListBox.updateUI();
+
+		onTimer();
+	}
+
+	@Override
+	protected void onPanelEntered() {
+		update();
 	}
 
 	private void updateCurrentDendriteSelection(DendriteBranch dendrite) {
@@ -229,7 +240,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 			// a new ROI. If you want the user to be able to edit the ROI and to have those
 			// changes stick on the dendrite object, you need to assign the newly created
 			// ROI back to the dendrite.
-			Roi roiBeingEdited = controlPanel.getPlugin().getImageProcessor().setCurrentRoi(dendrite.getRoi());
+			Roi roiBeingEdited = myImageProcessor().setCurrentRoi(dendrite.getRoi());
 			dendrite.setRoi(roiBeingEdited);
 		}
 		this.currentDendrite = dendrite;
@@ -252,14 +263,12 @@ public class TraceDendritesPanel extends DscBasePanel {
 		}
 
 		DendriteBranch dendrite = DendriteBranch.traceDendriteWithThicknessEstimation(
-				controlPanel.getPlugin().getModel().getFeatureWindowSizeInPixels(),
-				controlPanel.getPlugin().getImageProcessor());
+				myModel().getFeatureWindowSizeInPixels(), myPlugin().getImageProcessor());
 
-		controlPanel.getPlugin().getModel().addDendrite(dendrite);
-		this.pathListModel.addElement(dendrite);
-
+		myModel().addDendrite(dendrite);
 		controlPanel.getPlugin().getModel().findNearestDendritesForAllSpines();
 
 		this.updateCurrentDendriteSelection(dendrite);
+		this.update();
 	}
 }
