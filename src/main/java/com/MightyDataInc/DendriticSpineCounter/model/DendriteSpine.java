@@ -114,10 +114,7 @@ public class DendriteSpine extends Point2D {
 	}
 
 	public int getNearestDendriteId() {
-		if (nearestDendrite == null) {
-			return -1;
-		}
-		return nearestDendrite.getId();
+		return nearestDendriteId;
 	}
 
 	public void setNearestDendrite(DendriteBranch dendrite) {
@@ -245,12 +242,9 @@ public class DendriteSpine extends Point2D {
 		}
 
 		spine.nearestDendriteId = ((Long) jsonSpine.get("nearest_dendrite_id")).intValue();
-		if (spine.id >= nextId) {
-			nextId = spine.id + 1;
-		}
 
-		spine.x = ((Long) jsonSpine.get("x")).floatValue();
-		spine.y = ((Long) jsonSpine.get("x")).floatValue();
+		spine.x = (double) jsonSpine.get("x");
+		spine.y = (double) jsonSpine.get("y");
 
 		spine.neckLengthInPixels = (double) jsonSpine.get("neck_length_in_pixels");
 		spine.neckWidthInPixels = (double) jsonSpine.get("neck_width_in_pixels");

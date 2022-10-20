@@ -276,25 +276,22 @@ public class FindSpinesPanel extends DscBasePanel {
 	}
 
 	private void lockSpines() {
-		List<Point2D> points = myPlugin().getImageProcessor()
-				.getCurrentImagePolylinePathPoints(Roi.POINT);
+		List<Point2D> points = myImageProcessor().getCurrentImagePolylinePathPoints(Roi.POINT);
 		if (points == null || points.size() == 0) {
 			return;
 		}
 
-		double featureWindowSize = myPlugin().getModel().getFeatureWindowSizeInPixels();
-		DscImageProcessor imageProcessor = controlPanel.getPlugin().getImageProcessor();
-		DscModel model = myPlugin().getModel();
+		double featureWindowSize = myModel().getFeatureWindowSizeInPixels();
 
 		for (Point2D point : points) {
 			DendriteSpine spine = new DendriteSpine(point.getX(), point.getY(), featureWindowSize);
-			model.addSpine(spine);
+			myModel().addSpine(spine);
 		}
 
-		model.findNearestDendritesForAllSpines();
+		myModel().findNearestDendritesForAllSpines();
 
-		imageProcessor.setCurrentRoi(null);
-		imageProcessor.update();
+		myImageProcessor().setCurrentRoi(null);
+		myImageProcessor().update();
 	}
 
 	private boolean warnMightRemoveClassifications() {

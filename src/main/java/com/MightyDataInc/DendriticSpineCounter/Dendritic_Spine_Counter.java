@@ -89,6 +89,8 @@ public class Dendritic_Spine_Counter implements PlugIn, SciJavaPlugin, Command {
 
 	public void setModel(DscModel model) {
 		this.model = model;
+		this.imageProcessor.setCurrentRoi(null);
+		//this.imageProcessor.drawDendriteOverlays();
 		this.imageProcessor.update();
 	}
 
