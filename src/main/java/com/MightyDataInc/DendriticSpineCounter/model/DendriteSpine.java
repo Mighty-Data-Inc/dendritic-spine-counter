@@ -256,6 +256,8 @@ public class DendriteSpine extends Point2D {
 
 		spine.notes = (String) jsonSpine.get("notes");
 
+		spine.createRoiAtCurrentLocation();
+
 		return spine;
 	}
 
