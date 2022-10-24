@@ -14,7 +14,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.4.3</version>
+	<version>1.4.5</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>
@@ -91,7 +91,11 @@
 
 	<properties>
 		<package-name>com.MightyDataInc.DendriticSpineCounter</package-name>
-		<main-class>com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter</main-class>
+		<!--
+			Commented out because other ImageJ plugins don't seem to have a main class.
+			It might interfere with the plugin's ability to run in ImageJ 1.x. 
+			<main-class>com.MightyDataInc.DendriticSpineCounter.Dendritic_Spine_Counter</main-class>
+		 -->
 		<license.licenseName>gpl_v3</license.licenseName>
 		<license.copyrightOwners>Mighty Data, Inc.</license.copyrightOwners>
 	</properties>
@@ -114,13 +118,24 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-script</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->
+
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+		<!-- Used for SummaryStatistics -->
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-math3</artifactId>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/net.imagej/imagej-legacy -->		
+		<!-- Necessary for working with ROIs, because the new ROI API is so mathematically generalized
+		     that it's pragmatically unusable. Funny thing: If you remove this dependency, then the
+		     code still builds, but none of the service injection works. -->
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-legacy</artifactId>
 		</dependency>
-		<!-- https://crunchify.com/how-to-write-json-object-to-file-in-java/ -->
 
+		<!-- https://crunchify.com/how-to-write-json-object-to-file-in-java/ -->
 		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
