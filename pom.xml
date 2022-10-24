@@ -8,13 +8,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>26.0.0</version>
+		<version>28.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Dendritic_Spine_Counter</artifactId>
-	<version>1.4.2</version>
+	<version>1.4.3</version>
 
 	<name>Dendritic Spine Counter</name>
 	<description>ImageJ plug-in for counting dendritic spines</description>

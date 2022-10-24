@@ -156,7 +156,7 @@ public class DscControlPanelDialog extends JDialog {
 
 		// Clean up dialog's organization/layout and set its size.
 		pack();
-		setPreferredSize(new Dimension(800, 768));
+		setPreferredSize(new Dimension(800, 700));
 		pack();
 		setVisible(true);
 	}
