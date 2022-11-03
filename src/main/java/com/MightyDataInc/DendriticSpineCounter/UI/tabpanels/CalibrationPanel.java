@@ -33,7 +33,7 @@ public class CalibrationPanel extends DscBasePanel {
 	private JTextField textfieldFeatureWindowPhysicalUnits;
 
 	private JLabel lblImageUnits;
-
+	
 	public CalibrationPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
 	}
@@ -259,25 +259,20 @@ public class CalibrationPanel extends DscBasePanel {
 
 	@Override
 	public void update() {
-		DscModel model = getControlPanel().getPlugin().getModel();
-		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
+		Calibration cal = myImageProcessor().getDimensions();
+		myModel().setImageScale(cal);
 
-		if (imageProcessor != null) {
-			Calibration cal = imageProcessor.getDimensions();
-			model.setImageScale(cal);
-		}
+		this.textfieldFeatureWindowPixels.setText(String.format("%f", myModel().getFeatureWindowSizeInPixels()));
 
-		this.textfieldFeatureWindowPixels.setText(String.format("%f", model.getFeatureWindowSizeInPixels()));
-
-		if (model.imageHasValidPhysicalUnitScale()) {
-			this.textfieldCurrentScaleValue.setText(String.format("%f", model.getImageScalePhysicalUnitsPerPixel()));
-			this.textfieldCurrentScaleUnits.setText(model.getImageScalePhysicalUnitName() + "(s) per pixel");
+		if (myModel().imageHasValidPhysicalUnitScale()) {
+			this.textfieldCurrentScaleValue.setText(String.format("%f", myModel().getImageScalePhysicalUnitsPerPixel()));
+			this.textfieldCurrentScaleUnits.setText(myModel().getImageScalePhysicalUnitName() + "(s) per pixel");
 
 			this.textfieldFeatureWindowPhysicalUnits.setEnabled(true);
 			this.textfieldFeatureWindowPhysicalUnits.setText(String.format("%f",
-					model.convertImageScaleFromPixelsToPhysicalUnits(model.getFeatureWindowSizeInPixels())));
+					myModel().convertImageScaleFromPixelsToPhysicalUnits(myModel().getFeatureWindowSizeInPixels())));
 
-			this.lblImageUnits.setText(model.getImageScalePhysicalUnitName() + "(s)");
+			this.lblImageUnits.setText(myModel().getImageScalePhysicalUnitName() + "(s)");
 		} else {
 			String sunk = "(unknown units)";
 			this.textfieldCurrentScaleValue.setText("");
@@ -289,6 +284,7 @@ public class CalibrationPanel extends DscBasePanel {
 			this.lblImageUnits.setText(sunk);
 		}
 
+		this.showFeatureSizeSelector();
 	}
 
 	private void onPixelsTyped(boolean setValueOnModel) {
@@ -342,22 +338,19 @@ public class CalibrationPanel extends DscBasePanel {
 	}
 
 	private void getFeatureSizeFromSelector() {
-		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
-		double pixels = imageProcessor.getFeatureSizeSelectorRoiSizeInPixels();
+		double pixels = myImageProcessor().getFeatureSizeSelectorRoiSizeInPixels();
 		if (pixels == 0) {
 			return;
 		}
 
-		DscModel model = getControlPanel().getPlugin().getModel();
-		boolean didFeatureSizeChange = model.setFeatureWindowSizeInPixels(pixels);
+		boolean didFeatureSizeChange = myModel().setFeatureWindowSizeInPixels(pixels);
 		if (didFeatureSizeChange) {
 			this.update();
 		}
 	}
 
 	private void showFeatureSizeSelector() {
-		DscImageProcessor imageProcessor = getControlPanel().getPlugin().getImageProcessor();
-		imageProcessor.showHideFeatureSizeSelectorRoi(true);
+		myImageProcessor().showHideFeatureSizeSelectorRoi(true);
 	}
 	
 	@Override
@@ -377,7 +370,7 @@ public class CalibrationPanel extends DscBasePanel {
 
 		if (cal.pixelWidth != pwDesired || cal.getUnit() != model.getImageScalePhysicalUnitName()) {
 			model.setImageScale(cal);
-			update();
+			//update();
 		}
 	}
 
@@ -389,7 +382,7 @@ public class CalibrationPanel extends DscBasePanel {
 	@Override
 	protected void onPanelExited() {
 		getFeatureSizeFromSelector();
-		getControlPanel().getPlugin().getImageProcessor().showHideFeatureSizeSelectorRoi(false);
+		myImageProcessor().showHideFeatureSizeSelectorRoi(false);
 	}
 
 }

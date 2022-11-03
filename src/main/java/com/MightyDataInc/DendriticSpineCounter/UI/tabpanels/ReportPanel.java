@@ -300,7 +300,7 @@ public class ReportPanel extends DscBasePanel {
 			spinesNoFilo.removeIf(new Predicate<DendriteSpine>() {
 				@Override
 				public boolean test(DendriteSpine arg0) {
-					return arg0.getClassification().equals("filopodia");
+					return arg0.getClassification().equals("filopodium");
 				}
 			});
 

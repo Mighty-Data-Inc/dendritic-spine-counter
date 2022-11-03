@@ -261,4 +261,112 @@ public class DendriteSpine extends Point2D {
 		return spine;
 	}
 
+	// region Classification functions
+
+	public double getHeadNeckRatio() {
+		if (this.neckWidthInPixels == 0) {
+			return 0;
+		}
+		double headNeckRatio = this.headWidthInPixels / this.neckWidthInPixels;
+		return headNeckRatio;
+	}
+
+	public boolean isNeckDefined() {
+		if (this.neckWidthInPixels == 0) {
+			return false;
+		}
+		boolean retval = getHeadNeckRatio() > 1.1;
+		return retval;
+	}
+
+	public double getLengthHeadRatio() {
+		if (this.headWidthInPixels == 0) {
+			return 0;
+		}
+		double lengthHeadRatio = this.neckLengthInPixels / this.headWidthInPixels;
+		return lengthHeadRatio;
+	}
+
+	public boolean isTall() {
+		if (this.headWidthInPixels == 0) {
+			return false;
+		}
+		boolean retval = getLengthHeadRatio() >= 2.5;
+		return retval;
+	}
+
+	public boolean isVeryLong(double imageScalePhysicalUnitsPerPixel, String imageScalePhysicalUnitName) {
+		if (imageScalePhysicalUnitsPerPixel == 0) {
+			return false;
+		}
+		if (imageScalePhysicalUnitName == null || !imageScalePhysicalUnitName.toLowerCase().startsWith("micron")) {
+			return false;
+		}
+		if (this.neckLengthInPixels == 0) {
+			return false;
+		}
+		double micronsLength = this.neckLengthInPixels * imageScalePhysicalUnitsPerPixel;
+		boolean retval = micronsLength > 3;
+		return retval;
+	}
+
+	public boolean isHeadWide(double imageScalePhysicalUnitsPerPixel, String imageScalePhysicalUnitName) {
+		if (imageScalePhysicalUnitsPerPixel == 0) {
+			return false;
+		}
+		if (imageScalePhysicalUnitName == null || !imageScalePhysicalUnitName.toLowerCase().startsWith("micron")) {
+			return false;
+		}
+		if (this.headWidthInPixels == 0) {
+			return false;
+		}
+		double micronsWidth = this.headWidthInPixels * imageScalePhysicalUnitsPerPixel;
+		boolean retval = micronsWidth >= 0.35;
+		return retval;
+	}
+
+	public String classify(double imageScalePhysicalUnitsPerPixel, String imageScalePhysicalUnitName,
+			Collection<String> spineClasses) {
+		if (spineClasses == null) {
+			// Just create an empty string collection of some kind.
+			spineClasses = new ArrayList<String>();
+			spineClasses.add("stubby");
+			spineClasses.add("filopodium");
+			spineClasses.add("thin");
+			spineClasses.add("mushroom");
+		}
+
+		if (isNeckDefined()) {
+			// Is neck defined? Yes.
+			if (isHeadWide(imageScalePhysicalUnitsPerPixel, imageScalePhysicalUnitName)
+					&& spineClasses.contains("mushroom")) {
+				// Is the head wide? Yes.
+				return "mushroom";
+			}
+		} else {
+			// Is neck defined? No.
+			if (!isTall() && spineClasses.contains("stubby")) {
+				// Is aspect ratio tall? No.
+				return "stubby";
+			}
+		}
+
+		// If we got here, then we are either an undefined neck with a tall aspect
+		// ratio,
+		// or a defined neck but not a wide head.
+
+		if (isVeryLong(imageScalePhysicalUnitsPerPixel, imageScalePhysicalUnitName)
+				&& spineClasses.contains("filopodium")) {
+			return "filopodium";
+		}
+
+		if (spineClasses.contains("thin")) {
+			return "thin";
+		}
+
+		return "";
+	}
+
+	// endregion
+
 }

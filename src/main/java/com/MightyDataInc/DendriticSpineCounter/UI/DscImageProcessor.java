@@ -469,10 +469,15 @@ public class DscImageProcessor {
 			}
 			return null;
 		}
-
+		
 		double pixelRadius = this.ownerPlugin.getModel().getFeatureWindowSizeInPixels() / 2;
 
 		if (featureSizeSelectorRoi != null) {
+			if (getImagePlus() != null && getImagePlus().getRoi() == featureSizeSelectorRoi) {
+				// Nothing needs to change.
+				return featureSizeSelectorRoi;
+			}
+			
 			getOverlay().remove(featureSizeSelectorRoi);
 			getImagePlus().deleteRoi();
 			getImagePlus().updateAndRepaintWindow();

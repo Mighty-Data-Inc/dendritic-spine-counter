@@ -329,7 +329,7 @@ public class DscModel {
 
 	// region Spine classes.
 
-	public ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodia"));
+	public ArrayList<String> spineClasses = new ArrayList<>(Arrays.asList("stubby", "mushroom", "thin", "filopodium"));
 
 	public void setSpineClasses(String[] newClasses) {
 		spineClasses = new ArrayList<String>(Arrays.asList(newClasses));

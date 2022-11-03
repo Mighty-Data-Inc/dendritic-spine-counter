@@ -234,7 +234,7 @@ public class TraceDendritesPanel extends DscBasePanel {
 
 	private void updateCurrentDendriteSelection(DendriteBranch dendrite) {
 		if (dendrite == null) {
-			controlPanel.getPlugin().getImageProcessor().setCurrentRoi(null);
+			myImageProcessor().setCurrentRoi(null);
 		} else {
 			// When you set the current ROI on the image processor, it actually creates
 			// a new ROI. If you want the user to be able to edit the ROI and to have those
@@ -256,17 +256,17 @@ public class TraceDendritesPanel extends DscBasePanel {
 	}
 
 	private void onBtnTrace() {
-		List<Point2D> pathPoints = controlPanel.getPlugin().getImageProcessor()
-				.getCurrentImagePolylinePathPoints(Roi.POLYLINE);
+		List<Point2D> pathPoints = myImageProcessor().getCurrentImagePolylinePathPoints(Roi.POLYLINE);
 		if (pathPoints == null || pathPoints.size() < 2) {
 			return;
 		}
 
+		double thickness = myModel().getFeatureWindowSizeInPixels() * .66; 
 		DendriteBranch dendrite = DendriteBranch.traceDendriteWithThicknessEstimation(
-				myModel().getFeatureWindowSizeInPixels(), myPlugin().getImageProcessor());
+				thickness, myImageProcessor());
 
 		myModel().addDendrite(dendrite);
-		controlPanel.getPlugin().getModel().findNearestDendritesForAllSpines();
+		myModel().findNearestDendritesForAllSpines();
 
 		this.updateCurrentDendriteSelection(dendrite);
 		this.update();

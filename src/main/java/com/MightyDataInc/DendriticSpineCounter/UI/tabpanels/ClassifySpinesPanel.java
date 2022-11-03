@@ -83,6 +83,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 
 	private JTextArea textNotes;
 
+	private JLabel lblRatios;
+
 	public ClassifySpinesPanel(DscControlPanelDialog controlPanel) {
 		super(controlPanel);
 	}
@@ -165,25 +167,28 @@ public class ClassifySpinesPanel extends DscBasePanel {
 					ptDragStart = null;
 					ptDragSpineOrigPosition = null;
 
-					if (currentSpine != null) {
-						if (radioNeckLength.isSelected()) {
-							currentSpine.neckLengthInPixels = measurementInImagePixels();
-							radioNeckWidth.doClick();
-						} else if (radioNeckWidth.isSelected()) {
-							currentSpine.neckWidthInPixels = measurementInImagePixels();
-							radioHeadWidth.doClick();
-						} else if (radioHeadWidth.isSelected()) {
-							currentSpine.headWidthInPixels = measurementInImagePixels();
-							radioNeckLength.doClick();
+					boolean isMeasuring = arg0.isAltDown() || (currentTool.equals("measure") && !arg0.isControlDown());
+
+					if (isMeasuring) {
+						if (currentSpine != null) {
+							if (radioNeckLength.isSelected()) {
+								currentSpine.neckLengthInPixels = measurementInImagePixels();
+								radioNeckWidth.doClick();
+							} else if (radioNeckWidth.isSelected()) {
+								currentSpine.neckWidthInPixels = measurementInImagePixels();
+								radioHeadWidth.doClick();
+							} else if (radioHeadWidth.isSelected()) {
+								currentSpine.headWidthInPixels = measurementInImagePixels();
+								radioNeckLength.doClick();
+							}
+
+							autoClassifyCurrentSpine();
+
+							// Clear the drawing.
+							renderSpineImage();
 						}
-
-						autoClassifyCurrentSpine();
-
-						// Clear the drawing.
-						renderSpineImage();
+						displayMeasurements();
 					}
-
-					displayMeasurements();
 				}
 			});
 			lblSpineImg.addMouseMotionListener(new MouseMotionListener() {
@@ -505,7 +510,7 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			radioNeckLength = new JRadioButton("Neck length:");
 			gridbagConstraints.gridx = 6;
 			gridbagConstraints.gridy++;
-			gridbagConstraints.gridwidth = 6;
+			gridbagConstraints.gridwidth = 4;
 			this.add(radioNeckLength, gridbagConstraints);
 
 			radioNeckWidth = new JRadioButton("Neck width:");
@@ -524,6 +529,16 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			radioMeasurementButtonGroup.add(radioHeadWidth);
 
 			radioNeckLength.doClick();
+		}
+
+		{
+			gridbagConstraints.gridx = 10;
+			gridbagConstraints.gridwidth = 2;
+			gridbagConstraints.gridy -= 2;
+			gridbagConstraints.gridheight = 3;
+			gridbagConstraints.insets.left = 16;
+			lblRatios = new JLabel("");
+			this.add(lblRatios, gridbagConstraints);
 		}
 
 		addNextButton("Next: Generate Report", "images/icons/data-table-results-24.png");
@@ -780,6 +795,39 @@ public class ClassifySpinesPanel extends DscBasePanel {
 		this.radioNeckLength.setText("<html>Neck length: " + this.getMeasurementHtmlString(neckLength) + "</html>");
 		this.radioNeckWidth.setText("<html>Neck width: " + this.getMeasurementHtmlString(neckWidth) + "</html>");
 		this.radioHeadWidth.setText("<html>Head width: " + this.getMeasurementHtmlString(headWidth) + "</html>");
+
+		String sRatios = "";
+		if (this.currentSpine != null) {
+			sRatios = "<html><u>Classification heuristics</u><br/>"
+					+ String.format("Head:Neck = %.2f", this.currentSpine.getHeadNeckRatio());
+			if (this.currentSpine.isNeckDefined()) {
+				sRatios += "<br/>&nbsp;&mdash;<i>(Well-defined neck)</i>";
+			} else {
+				sRatios += "<br/>&nbsp;&mdash;<i>(Indistinct neck)</i>";
+			}
+			sRatios += "<br/>";
+
+			sRatios += String.format("Length:Head = %.2f", this.currentSpine.getLengthHeadRatio());
+			if (this.currentSpine.isTall()) {
+				sRatios += "<br/>&nbsp;&mdash;<i>(Tall aspect ratio)</i>";
+			}
+			sRatios += "<br/>";
+
+			if (!myModel().imageHasValidPhysicalUnitScale() || myModel().getImageScalePhysicalUnitsPerPixel() == 0) {
+				sRatios += "<i>(Image doesn't have a scale defined.)</i>";
+			} else if (!myModel().getImageScalePhysicalUnitName().toLowerCase().startsWith("micron")) {
+				sRatios += "<i>(Image scale isn't defined in microns.)</i>";
+			} else {
+				boolean isHeadWide = this.currentSpine.isHeadWide(this.myModel().getImageScalePhysicalUnitsPerPixel(),
+						this.myModel().getImageScalePhysicalUnitName());
+				boolean isVeryLong = this.currentSpine.isVeryLong(this.myModel().getImageScalePhysicalUnitsPerPixel(),
+						this.myModel().getImageScalePhysicalUnitName());
+
+				sRatios += String.format("Is the head wide? %s<br/>", isHeadWide ? "YES" : "NO");
+				sRatios += String.format("Is the spine very long? %s<br/>", isVeryLong ? "YES" : "NO");
+			}
+		}
+		this.lblRatios.setText(sRatios);
 	}
 
 	private void onSpineImageDragged(int x, int y, String tool) {
@@ -911,30 +959,8 @@ public class ClassifySpinesPanel extends DscBasePanel {
 			return "";
 		}
 
-		String guessedclass = "";
-
-		// Spine descriptions:
-		// https://www.frontiersin.org/articles/10.3389/fnsyn.2020.00031/full
-		if (currentSpine.neckLengthInPixels <= 2) {
-			// "Stubby spines typically do not have a neck."
-			guessedclass = "stubby";
-		} else if (currentSpine.headWidthInPixels < currentSpine.neckWidthInPixels) {
-			// "Filopodia are long, thin dendritic membrane protrusions without a clear
-			// head..."
-			guessedclass = "filopodia";
-		} else if (currentSpine.headWidthInPixels > currentSpine.neckLengthInPixels) {
-			// "Mushroom spines have a large head and a small neck..."
-			guessedclass = "mushroom";
-		} else {
-			// "Thin spines have a structure similar to the mushroom spines,
-			// but their head is smaller relative to the neck."
-			guessedclass = "thin";
-		}
-
-		// Make sure that the guessed class is part of this project.
-		if (!myModel().spineClasses.contains(guessedclass)) {
-			guessedclass = "";
-		}
+		String guessedclass = currentSpine.classify(myModel().getImageScalePhysicalUnitsPerPixel(),
+				myModel().getImageScalePhysicalUnitName(), myModel().spineClasses);
 
 		currentSpine.setClassification(guessedclass);
 		this.updateClassificationProgressBar();
